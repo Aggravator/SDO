@@ -1,0 +1,22 @@
+//---------------------------------------------------------------------------
+
+#ifndef CoreDataH
+#define CoreDataH
+#include <Data.Win.ADODB.hpp>
+#include <vector>
+class ClassRoom{
+public:
+
+private:
+
+	ClassRoom();
+	ClassRoom(ClassRoom&);
+};
+class SDODBImage{
+public:
+	SDODBImage(TADOConnection *connection);
+private:
+	TADOConnection *connection;
+};
+
+#endif
