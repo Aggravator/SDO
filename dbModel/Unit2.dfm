@@ -17,4 +17,9 @@ object Form2: TForm2
     Left = 152
     Top = 64
   end
+  object ADOQuery1: TADOQuery
+    Parameters = <>
+    Left = 80
+    Top = 88
+  end
 end
