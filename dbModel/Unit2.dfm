@@ -13,7 +13,21 @@ object Form2: TForm2
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 13
+  object Button1: TButton
+    Left = 232
+    Top = 40
+    Width = 75
+    Height = 25
+    Caption = 'Button1'
+    TabOrder = 0
+    OnClick = Button1Click
+  end
   object ADOConnection1: TADOConnection
+    ConnectionString = 
+      'Provider=MSDASQL.1;Password=root;Persist Security Info=True;User' +
+      ' ID=root;Data Source=mysql;Initial Catalog=chat'
+    LoginPrompt = False
+    Provider = 'MSDASQL.1'
     Left = 152
     Top = 64
   end

@@ -9,55 +9,143 @@ bool KAEntity::deleteEntity(){
 	dell.push_back(this);
 	return parent->deleteEntities(dell);
 }
-
-Specific::Specific(int id,String* name,Specifics *parent){
-	this->id=id;
-	this->name=*name;
-	this->parent=parent;
+bool KAEntity::updateEntity(KAEntity *entity){
+	if(entity->validate()&&this->isDifferent(entity)){
+		String query;
+		this->updateQueryBuilder(query,entity);
+		parent->parent->connection->Execute(query);
+	}
 }
 
-Specific::Specific(Specific &spec){
+bool KAEntityTable::deleteEntities(std::vector<KAEntity*> &entities){
+	bool result=true;
+	for(int i=0;i<entities.size()&&result;++i){
+		result=this->isHas(entities[i]);
+	}
+	if(result==true){
+		String query;
+		this->deleteQueryBuilder(query,entities);
+		TStringList *queries=new TStringList();
+		queries->Delimiter='\n';
+		queries->DelimitedText=query;
+		for(int i=0;i<queries->Count;++i){
+			parent->connection->Execute((*queries)[i]);
+		}
+		delete queries;
+	}
+}
+bool KAEntityTable::createEntity(KAEntity* entity){
+	std::vector<KAEntity*> entities;
+	entities.push_back(entity);
+	return this->createEntities(entities);
+}
+bool KAEntityTable::isHas(KAEntity* entity){
+	if(find(this->begin(),this->end(),entity)!=this->end())return true;
+	return false;
 }
 
-bool Specific::deleteSpecific(){
-	std::vector<Specific*> sp;
-	sp.push_back(this);
-	parent->deleteSpecifics(st);
+Specific::Specific(String name){
+	this->name=name;
+}
+bool Specific::updateQueryBuilder(String &query,KAEntity *entity){
+	Specific *ent=dynamic_cast<Specific*>(entity);
+	query=String().printf(L"update specificity set specificity_name='%s', specificity_updater=%d where specificity_id=%d",ent->name,parent->parent->getUID(),ent->id);
 	return true;
+}
+bool Specific::validate()const{
+	if(this->name.Length()>=1) return true;
+	return false;
+}
+bool Specific::isDifferent(KAEntity *entity)const{
+	Specific *ent=dynamic_cast<Specific*>(entity);
+	if(ent!=0 && ent->name!=this->name)return true;
+	return false;
 }
 
 Specifics::Specifics(SDODBImage *parent){
 	this->parent=parent;
 }
-
-bool Specifics::createSpecific(String* name){
-	String equ= "Insert into specificity(specificity_name,specificity_creator) values (";
-	parent->connection->Execute(equ+*name+","+IntToStr(parent->getUID())+")");
-	TADOQuery *query=new TADOQuery(0);
-	query->SQL->Add("SELECT specificity_id FROM sdo.specificity order by specificity_createtime desc  limit 1;");
-	query->Active=true;
-	TADOQuery &squery=*query;
-	Specific *spec=new Specific(squery["specificity_id"],name,this);
-	this->push_back(spec);
-	squery.Close();
-	delete query;
+bool Specifics::createEntities(std::vector<KAEntity*> &entities){
+	bool result=true;
+	for(int i=0;i<entities.size() && result;++i)result=!isHas(entities[i]) && entities[i]->validate();
+	if(result){
+		String query;
+		this->createQueryBuilder(query,entities);
+		TStringList *queries=new TStringList();
+		queries->Delimiter='\n';
+		queries->DelimitedText=query;
+		for(int i=0;i<queries->Count;++i){
+			parent->connection->Execute((*queries)[i]);
+		}
+		query=String().printf(L"SELECT specificity_id FROM sdo.specificity order by specificity_createtime desc  limit %d;",entities.size());
+		TADOQuery &queryr=*(new TADOQuery(0));
+		queryr.SQL->Add(query);
+		queryr.Active=true;
+		for(int i=0;i<queryr.RecordCount;++i){
+			Specific *ent=dynamic_cast<Specific*>(entities[entities.size()-1-i]);
+			ent->id=queryr["specificity_id"];
+			this->push_back(ent);
+		}
+		return true;
+	}
+	return false;
+}
+bool Specifics::deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities){
+	Specific *ent;
+	query="delete from specificity where  specificity_id in (";
+	String addString="insert into changes(changes_table,changes_user,changes_time,changes_action) values ";
+	for(int i=0;i<entities.size();++i){
+		ent=dynamic_cast<Specific*>(entities[i]);
+		if(i!=entities.size()-1){
+			query+=String().printf(L"%d,",ent->id);
+			addString+=String().printf(L"('%s',%d,Now(),'DELETE'),","specificity",parent->getUID());
+		}
+		else{
+			query+=String().printf(L"%d);\n",ent->name,parent->getUID());
+			addString+=String().printf(L"('%s',%d,Now(),'DELETE');","specificity",parent->getUID());
+        }
+	}
+	query+=addString;
 	return true;
 }
-std::vector<Specific*>::iterator Specifics::erase(std::vector<Specific*>::iterator position){
-	delete *position;
-	std::vector<Specific*>::erase(position);
-	return position;
-}
-bool Specifics::deleteSpecifics(std::vector<Specific*> &specifics){
-	String queryStr="delete from specificity where specificity_id in (";
-	for(int i=0;i<specifics.size();++i){
-		queryStr+=specifics[i]->id+",";
-		std::vector<Specific*>::iterator pos=std::find(this->begin(),this->end(),specifics[i]);
-		this->erase(pos);
+bool Specifics::createQueryBuilder(String& query,std::vector<KAEntity*> &entities){
+	Specific *ent;
+	query="insert into specificity(specificity_name,creator) values ";
+	for(int i=0;i<entities.size();++i){
+		ent=dynamic_cast<Specific*>(entities[i]);
+		if(i!=entities.size()-1) query+=String().printf(L"('%s',%d),",ent->name,parent->getUID());
+		else query+=String().printf(L"('%s',%d);",ent->name,parent->getUID());
 	}
-	queryStr=queryStr.SubString(0,queryStr.Length()-1)+");";
-	parent->connection->Execute("queryStr");
-    return true;
+	return true;
+}
+
+ClassRoom::ClassRoom(String name,int capacity,bool isrent,std::vector<Specific*> &specifics){
+	this->name=name;
+	this->capacity=capacity;
+	this->isrent=isrent;
+	this->specifics.assign(specifics.begin(),specifics.end());
+}
+bool ClassRoom::updateQueryBuilder(String &query,KAEntity *entity){
+	Specific *ent=dynamic_cast<ClassRoom*>(entity);
+	query=String().printf(L"update specificity set specificity_name='%s', specificity_updater=%d where specificity_id=%d",ent->name,parent->parent->getUID(),ent->id);
+	std::sort(specifics.begin(), specifics.end());
+	std::sort(ent->specifics.begin(), ent->specifics.end());
+	std::vector<Specific*> remove(specifics.size());
+	std::vector<Specific*>::iterator it= std::set_difference(specifics.begin(), specifics.end(),ent->specifics.begin(), ent->specifics.end(),remove.begin());
+	remove.resize(it-remove.begin());
+	std::vector<Specific*> add(specifics.size());
+	it=std::set_difference(ent->specifics.begin(), ent->specifics.end(), specifics.begin(), specifics.end(),add.begin());
+	add.resize(it-add.begin());
+	return true;
+}
+bool ClassRoom::validate()const{
+	if(this->name.Length()>=1) return true;
+	return false;
+}
+bool ClassRoom::isDifferent(ClassRoom *entity)const{
+	Specific *ent=dynamic_cast<Specific*>(entity);
+	if(ent!=0 && ent->name!=this->name)return true;
+	return false;
 }
 //---------------------------------------------------------------------------
 #pragma package(smart_init)

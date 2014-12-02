@@ -7,58 +7,70 @@
 #include <algorithm>
 
 class KAEntityTable;
+class SDODBImage;
+class Specifics;
+class Program;
 class KAEntity{
 public:
 	bool deleteEntity();
-	bool updateEntity();
-private:
-	KAEntityTalbe *parent;
+	bool updateEntity(KAEntity *entity);
+	virtual bool validate()const =0;
+	virtual bool isDifferent(KAEntity *entity)const =0;
+protected:
+	virtual bool updateQueryBuilder(String &query,KAEntity *entity)=0;
+	KAEntityTable *parent;
+	friend class KAEntityTable;
 };
 class KAEntityTable:public std::vector<KAEntity*>{
 public:
-	bool deleteEntities(std::vector<KAEntity*> &entities);
-	bool createEntity(KAEntity *entity);
+	virtual bool deleteEntities(std::vector<KAEntity*> &entities);
+	virtual bool createEntity(KAEntity *entity);
+	virtual bool createEntities(std::vector<KAEntity*> &entities)=0;
+	SDODBImage * parent;
+protected:
+	virtual bool deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities)=0;
+	virtual bool createQueryBuilder(String &query,std::vector<KAEntity*> &entities)=0;
+	bool isHas(KAEntity* entity);
+	friend class KAEntity;
 };
-class Specifics;
-class Program;
-class SDODBImage;
-class Specific{
+
+class Specific:public KAEntity{
 public:
-	bool update();
-	bool deleteSpecific();
-private:
-	Specific();
-	Specific(int id,String* name,Specifics *parent);
-	Specific(Specific &spec);
-	Specifics *parent;
+	Specific(String name);
+	bool validate()const;
+	bool isDifferent(KAEntity *entity)const;
+protected:
 	int id;
 	String name;
+	bool updateQueryBuilder(String &query,KAEntity *entity);
 	friend class Specifics;
 };
-class Specifics:public std::vector<Specific*>{
+
+class Specifics:public KAEntityTable{
 public:
-	bool update();
-	std::vector<Specific*>::iterator erase(std::vector<Specific*>::iterator position);
-	bool createSpecific(String* name);
-	bool deleteSpecifics(std::vector<Specific*> &specifics);
 	Specifics(SDODBImage *parent);
-private:
-	SDODBImage *parent;
+	bool createEntities(std::vector<KAEntity*> &entities);
+protected:
+	bool deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities);
+	bool createQueryBuilder(String &query,std::vector<KAEntity*> &entities);
 };
+
 class ClassRoom{
 public:
-	bool update();
-	bool deleteRoom();
-private:
+	ClassRoom(int id,String name,int capacity,bool isrent,std::vector<Specific*> &specifics);
+	bool validate()const;
+	bool isDifferent(KAEntity *entity)const;
+protected:
+	bool updateQueryBuilder(String &query,KAEntity *entity);
 	int id;
 	String name;
 	int capacity;
 	bool isrent;
 	std::vector<Specific*> specifics;
-	ClassRoom();
-	ClassRoom(ClassRoom&);
+	friend class Rooms;
 };
-class Rooms:public std::vector<ClassRoom*>{
+
+class Rooms:public KAEntityTable{
 public:
 	bool createRoom(String* name,int capacity,bool isrent,std::vector<Specific*> &specifics);
 	bool deleteRooms(std::vector<ClassRoom*>& rooms);
@@ -74,7 +86,6 @@ private:
 	String id;
 	String name;
 	std::vector<std::pair<int,int>*> plan;
-	std::vector<Program*> programs;
 };
 class Groups:public std::vector<Group*>{
 public:
@@ -135,6 +146,8 @@ private:
 	Rooms *rooms;
 	Specifics *specifics;
 	TADOConnection *connection;
+	friend class KAEntity;
+	friend class KAEntityTable;
 	friend class Specifics;
 	friend class Rooms;
 	friend class Groups;

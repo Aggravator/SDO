@@ -4,7 +4,7 @@ USE `sdo`;
 --
 -- Host: localhost    Database: sdo
 -- ------------------------------------------------------
--- Server version	5.6.15-log
+-- Server version	5.6.14
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -25,22 +25,15 @@ DROP TABLE IF EXISTS `changes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `changes` (
+  `changes_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `changes_table` varchar(40) NOT NULL,
   `changes_user` int(11) NOT NULL,
   `changes_time` datetime NOT NULL,
-  `changes_action` enum('CREATE','UPDATE','DELETE') NOT NULL
-) ENGINE=MEMORY DEFAULT CHARSET=utf8;
+  `changes_action` enum('CREATE','UPDATE','DELETE') NOT NULL,
+  `changes_rid` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`changes_id`)
+) ENGINE=MEMORY AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `changes`
---
-
-LOCK TABLES `changes` WRITE;
-/*!40000 ALTER TABLE `changes` DISABLE KEYS */;
-INSERT INTO `changes` VALUES ('class',1,'2014-12-01 16:44:11','CREATE'),('class',1,'2014-12-01 16:47:06','UPDATE'),('specificity',1,'2014-12-01 20:36:01','CREATE'),('specificity',1,'2014-12-01 20:36:16','CREATE'),('specificity',1,'2014-12-01 20:49:17','CREATE');
-/*!40000 ALTER TABLE `changes` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `class`
@@ -62,18 +55,8 @@ CREATE TABLE `class` (
   KEY `classupdater_user_idx` (`updater`),
   CONSTRAINT `classcreator_user` FOREIGN KEY (`creator`) REFERENCES `user` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `classupdater_user` FOREIGN KEY (`updater`) REFERENCES `user` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `class`
---
-
-LOCK TABLES `class` WRITE;
-/*!40000 ALTER TABLE `class` DISABLE KEYS */;
-INSERT INTO `class` VALUES (2,'416',33,'\0',1,1,'2014-12-01 20:12:34');
-/*!40000 ALTER TABLE `class` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
@@ -85,7 +68,7 @@ UNLOCK TABLES;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `class_AINS` AFTER INSERT ON `class` FOR EACH ROW
 begin
-	INSERT into changes(changes_table,changes_user,changes_action,changes_time) values ('class',NEW.creator,'CREATE',NOW());
+	INSERT into changes(changes_table,changes_user,changes_action,changes_rid,changes_time) values ('class',NEW.creator,'CREATE',NEW.class_id,NOW());
 end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -103,7 +86,7 @@ DELIMITER ;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `class_AUPD` AFTER UPDATE ON `class` FOR EACH ROW
 begin
-	INSERT into changes(changes_table,changes_user,changes_action,changes_time) values ('class',NEW.updater,'UPDATE',NOW());
+	INSERT into changes(changes_table,changes_user,changes_action,changes_rid,changes_time) values ('class',NEW.updater,'UPDATE',NEW.class_id,NOW());
 end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -129,15 +112,6 @@ CREATE TABLE `datesplantable` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `datesplantable`
---
-
-LOCK TABLES `datesplantable` WRITE;
-/*!40000 ALTER TABLE `datesplantable` DISABLE KEYS */;
-/*!40000 ALTER TABLE `datesplantable` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `datesrealtable`
 --
 
@@ -155,15 +129,6 @@ CREATE TABLE `datesrealtable` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `datesrealtable`
---
-
-LOCK TABLES `datesrealtable` WRITE;
-/*!40000 ALTER TABLE `datesrealtable` DISABLE KEYS */;
-/*!40000 ALTER TABLE `datesrealtable` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `group`
 --
 
@@ -176,15 +141,6 @@ CREATE TABLE `group` (
   PRIMARY KEY (`group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `group`
---
-
-LOCK TABLES `group` WRITE;
-/*!40000 ALTER TABLE `group` DISABLE KEYS */;
-/*!40000 ALTER TABLE `group` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `groupplan`
@@ -201,15 +157,6 @@ CREATE TABLE `groupplan` (
   CONSTRAINT `groupplan_group` FOREIGN KEY (`group_id`) REFERENCES `group` (`group_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `groupplan`
---
-
-LOCK TABLES `groupplan` WRITE;
-/*!40000 ALTER TABLE `groupplan` DISABLE KEYS */;
-/*!40000 ALTER TABLE `groupplan` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `plantable`
@@ -232,15 +179,6 @@ CREATE TABLE `plantable` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `plantable`
---
-
-LOCK TABLES `plantable` WRITE;
-/*!40000 ALTER TABLE `plantable` DISABLE KEYS */;
-/*!40000 ALTER TABLE `plantable` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `program`
 --
 
@@ -257,15 +195,6 @@ CREATE TABLE `program` (
   PRIMARY KEY (`program_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `program`
---
-
-LOCK TABLES `program` WRITE;
-/*!40000 ALTER TABLE `program` DISABLE KEYS */;
-/*!40000 ALTER TABLE `program` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `programgroups`
@@ -285,15 +214,6 @@ CREATE TABLE `programgroups` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `programgroups`
---
-
-LOCK TABLES `programgroups` WRITE;
-/*!40000 ALTER TABLE `programgroups` DISABLE KEYS */;
-/*!40000 ALTER TABLE `programgroups` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `programplan`
 --
 
@@ -310,15 +230,6 @@ CREATE TABLE `programplan` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `programplan`
---
-
-LOCK TABLES `programplan` WRITE;
-/*!40000 ALTER TABLE `programplan` DISABLE KEYS */;
-/*!40000 ALTER TABLE `programplan` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `programtime`
 --
 
@@ -333,15 +244,6 @@ CREATE TABLE `programtime` (
   CONSTRAINT `programtime_program` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `programtime`
---
-
-LOCK TABLES `programtime` WRITE;
-/*!40000 ALTER TABLE `programtime` DISABLE KEYS */;
-/*!40000 ALTER TABLE `programtime` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `realtable`
@@ -364,15 +266,6 @@ CREATE TABLE `realtable` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `realtable`
---
-
-LOCK TABLES `realtable` WRITE;
-/*!40000 ALTER TABLE `realtable` DISABLE KEYS */;
-/*!40000 ALTER TABLE `realtable` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `specclass`
 --
 
@@ -382,22 +275,55 @@ DROP TABLE IF EXISTS `specclass`;
 CREATE TABLE `specclass` (
   `class_id` int(11) NOT NULL,
   `specificity_id` tinyint(3) unsigned NOT NULL,
+  `creator` int(11) NOT NULL,
+  `updater` int(11) DEFAULT NULL,
+  `specclass_createtime` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`class_id`,`specificity_id`),
   KEY `specclass_spec_idx` (`specificity_id`),
+  KEY `specclass_user_idx` (`creator`),
+  KEY `specclassu_user_idx` (`updater`),
+  CONSTRAINT `specclassu_user` FOREIGN KEY (`updater`) REFERENCES `user` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `specclass_class` FOREIGN KEY (`class_id`) REFERENCES `class` (`class_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `specclass_spec` FOREIGN KEY (`specificity_id`) REFERENCES `specificity` (`specificity_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `specclass_class` FOREIGN KEY (`class_id`) REFERENCES `class` (`class_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `speclassc_user` FOREIGN KEY (`creator`) REFERENCES `user` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `specclass`
---
-
-LOCK TABLES `specclass` WRITE;
-/*!40000 ALTER TABLE `specclass` DISABLE KEYS */;
-INSERT INTO `specclass` VALUES (2,1);
-/*!40000 ALTER TABLE `specclass` ENABLE KEYS */;
-UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `specclass_AINS` AFTER INSERT ON `specclass` FOR EACH ROW
+begin
+	INSERT into changes(changes_table,changes_user,changes_action,changes_time) values ('specclass',NEW.creator,'CREATE',NOW());
+end */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `specclass_AUPD` AFTER UPDATE ON `specclass` FOR EACH ROW
+begin
+	INSERT into changes(changes_table,changes_user,changes_action,changes_time) values ('specclass',NEW.updater,'UPDATE',NOW());
+end */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `specificity`
@@ -419,16 +345,6 @@ CREATE TABLE `specificity` (
   CONSTRAINT `specificityu_user` FOREIGN KEY (`updater`) REFERENCES `user` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `specificity`
---
-
-LOCK TABLES `specificity` WRITE;
-/*!40000 ALTER TABLE `specificity` DISABLE KEYS */;
-INSERT INTO `specificity` VALUES (1,'Word 2007',1,NULL,'2014-12-01 20:36:01'),(3,'adfadf',1,NULL,'2014-12-01 20:49:17');
-/*!40000 ALTER TABLE `specificity` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
@@ -440,7 +356,7 @@ UNLOCK TABLES;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `specificity_AINS` AFTER INSERT ON `specificity` FOR EACH ROW
 begin
-	INSERT into changes(changes_table,changes_user,changes_action,changes_time) values ('specificity',NEW.creator,'CREATE',NOW());
+	INSERT into changes(changes_table,changes_user,changes_action,changes_rid,changes_time) values ('specificity',NEW.creator,'CREATE',NEW.specificity_id,NOW());
 end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -458,7 +374,7 @@ DELIMITER ;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `specificity_AUPD` AFTER UPDATE ON `specificity` FOR EACH ROW
 begin
-	INSERT into changes(changes_table,changes_user,changes_action,changes_time) values ('specificity',NEW.updater,'UPDATE',NOW());
+	INSERT into changes(changes_table,changes_user,changes_action,changes_rid,changes_time) values ('specificity',NEW.updater,'UPDATE',NEW.specificity_id,NOW());
 end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -496,19 +412,10 @@ CREATE TABLE `specprogram` (
   `specificity_id` tinyint(3) unsigned NOT NULL,
   PRIMARY KEY (`program_id`,`specificity_id`),
   KEY `specprog_spec_idx` (`specificity_id`),
-  CONSTRAINT `specprog_spec` FOREIGN KEY (`specificity_id`) REFERENCES `specificity` (`specificity_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `specprog_prog` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `specprog_prog` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `specprog_spec` FOREIGN KEY (`specificity_id`) REFERENCES `specificity` (`specificity_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `specprogram`
---
-
-LOCK TABLES `specprogram` WRITE;
-/*!40000 ALTER TABLE `specprogram` DISABLE KEYS */;
-/*!40000 ALTER TABLE `specprogram` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `user`
@@ -528,16 +435,6 @@ CREATE TABLE `user` (
   PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `user`
---
-
-LOCK TABLES `user` WRITE;
-/*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'aggravator','a12345','Андрей','Клейменов','Анатольевич',NULL);
-/*!40000 ALTER TABLE `user` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -548,4 +445,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-12-02  8:43:43
+-- Dump completed on 2014-12-02 12:57:55
