@@ -12,6 +12,7 @@ TForm2 *Form2;
 __fastcall TForm2::TForm2(TComponent* Owner)
 	: TForm(Owner)
 {
+	db=new SDODBImage(ADOConnection1);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm2::Button1Click(TObject *Sender)
