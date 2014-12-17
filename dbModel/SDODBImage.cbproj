@@ -46,11 +46,12 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
+        <VCL_Custom_Styles>&quot;Metropolis UI Blue|VCLSTYLE|$(PUBLIC)\Documents\RAD Studio\10.0\Styles\MetropolisUIBlue.vsf&quot;</VCL_Custom_Styles>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
         <ProjectType>CppVCLApplication</ProjectType>
         <_TCHARMapping>wchar_t</_TCHARMapping>
         <IncludePath>dbModel\;$(IncludePath)</IncludePath>
-        <AllPackageLibs>rtl.lib;vcl.lib;adortl.lib;dbrtl.lib</AllPackageLibs>
+        <AllPackageLibs>rtl.lib;vcl.lib;adortl.lib;dbrtl.lib;vcldb.lib</AllPackageLibs>
         <Multithreaded>true</Multithreaded>
         <ILINK_LibraryPath>dbModel\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
@@ -101,7 +102,9 @@
         <ILINK_TranslatedLibraryPath>$(BDSLIB)\$(PLATFORM)\debug\$(LANGDIR);$(ILINK_TranslatedLibraryPath)</ILINK_TranslatedLibraryPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-        <LinkPackageImports>rtl.bpi;vcl.bpi;adortl.bpi;dbrtl.bpi</LinkPackageImports>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <LinkPackageImports>rtl.bpi;vcl.bpi;adortl.bpi;dbrtl.bpi;vcldb.bpi</LinkPackageImports>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <Defines>NDEBUG;$(Defines)</Defines>
@@ -111,19 +114,46 @@
         <BCC_PCHName_Clang>SDODBImagePCH1.h</BCC_PCHName_Clang>
     </PropertyGroup>
     <ItemGroup>
+        <CppCompile Include="App.cpp">
+            <DependentOn>App.h</DependentOn>
+            <BuildOrder>8</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="AuthForm.cpp">
+            <Form>Form1</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>AuthForm.h</DependentOn>
+            <BuildOrder>9</BuildOrder>
+        </CppCompile>
         <CppCompile Include="CoreData.cpp">
             <DependentOn>CoreData.h</DependentOn>
             <BuildOrder>3</BuildOrder>
         </CppCompile>
+        <CppCompile Include="ModalEntityForm.cpp">
+            <DependentOn>ModalEntityForm.h</DependentOn>
+            <BuildOrder>12</BuildOrder>
+        </CppCompile>
         <None Include="ModelSupport_SDODBImage\default.txaPackage"/>
         <None Include="ModelSupport_SDODBImage\default.txvpck"/>
         <None Include="ModelSupport_SDODBImage\std\default.txaPackage"/>
+        <None Include="ModelSupport_SDODBImage\std\default.txvpck"/>
         <CppCompile Include="SDODBImage.cpp">
             <BuildOrder>0</BuildOrder>
         </CppCompile>
         <PCHCompile Include="SDODBImagePCH1.h">
             <BuildOrder>1</BuildOrder>
         </PCHCompile>
+        <CppCompile Include="SpecificDialog.cpp">
+            <Form>Form4</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>SpecificDialog.h</DependentOn>
+            <BuildOrder>11</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="SpecificsForm.cpp">
+            <Form>Form3</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>SpecificsForm.h</DependentOn>
+            <BuildOrder>10</BuildOrder>
+        </CppCompile>
         <CppCompile Include="Unit2.cpp">
             <Form>Form2</Form>
             <FormType>dfm</FormType>
@@ -131,6 +161,9 @@
             <BuildOrder>2</BuildOrder>
         </CppCompile>
         <FormResources Include="Unit2.dfm"/>
+        <FormResources Include="AuthForm.dfm"/>
+        <FormResources Include="SpecificsForm.dfm"/>
+        <FormResources Include="SpecificDialog.dfm"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -191,6 +224,12 @@
                 <Source>
                     <Source Name="MainSource">SDODBImage.cpp</Source>
                 </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k170.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp170.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
             </CPlusPlusBuilder.Personality>
             <Deployment/>
             <Platforms>

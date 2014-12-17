@@ -1,0 +1,20 @@
+//---------------------------------------------------------------------------
+
+#ifndef ModalEntityFormH
+#define ModalEntityFormH
+#include <Vcl.Forms.hpp>
+#include "CoreData.h"
+class TModalEntityForm:TForm{
+private:
+	__fastcall TModalEntityForm(TComponent* Owner);
+	KAEntity *entity,*emptyEntity;
+	bool isApplied;
+	void onShow();
+public:
+	bool applyEntity(const KAEntity *entity);
+	virtual void writeToEntity()=0;
+	const KAEntity* getEntity();
+
+};
+//---------------------------------------------------------------------------
+#endif

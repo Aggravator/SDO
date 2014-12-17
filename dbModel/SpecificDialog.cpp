@@ -1,0 +1,41 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "SpecificDialog.h"
+//---------------------------------------------------------------------------
+//#pragma package(smart_init)
+#pragma resource "*.dfm"
+//---------------------------------------------------------------------------
+__fastcall TSpecificDialog::TSpecificDialog(TComponent* Owner)
+	: TForm(Owner)
+{
+
+}
+
+__fastcall TSpecificDialog::TSpecificDialog(TComponent* Owner,Specific* spec):TForm(Owner),specSelf(0)
+{
+	//this->TSpecificDialog(Owner);
+	this->specific=spec;
+	if(specific==0)specSelf=specific=new Specific("");
+	else{
+        Edit1->Text=specific->name;
+    }
+}
+__fastcall TSpecificDialog::~TSpecificDialog(){
+	if(specSelf!=0){
+		delete specSelf;
+		specSelf=specific=0;
+	}
+}
+//---------------------------------------------------------------------------
+void __fastcall TSpecificDialog::Button1Click(TObject *Sender)
+{
+	specific->name=Edit1->Text;
+	this->Visible=false;
+	this->Close();
+}
+//---------------------------------------------------------------------------
+
+

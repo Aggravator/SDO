@@ -1,0 +1,24 @@
+//---------------------------------------------------------------------------
+
+#ifndef SpecificDialogH
+#define SpecificDialogH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include "CoreData.cpp"
+//---------------------------------------------------------------------------
+class TSpecificDialog : public TForm
+{
+__published:	// IDE-managed Components
+private:	// User declarations
+	__fastcall TSpecificDialog(TComponent* Owner);
+public:		// User declaration
+	__fastcall TSpecificDialog(TComponent* Owner,Specific* spec=0);
+    Specific *specific;
+};
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+#endif
