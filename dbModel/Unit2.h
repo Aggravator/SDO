@@ -13,6 +13,7 @@
 #include "CoreData.h"
 #include "App.h"
 #include "SpecificsForm.h"
+#include "GroupsForm.h"
 class TSpecificsForm;
 //---------------------------------------------------------------------------
 class TForm2 : public TForm
@@ -25,11 +26,13 @@ __published:	// IDE-managed Components
 	TButton *Button5;
 	void __fastcall Button1Click(TObject *Sender);
 	void __fastcall Button2Click(TObject *Sender);
+	void __fastcall Button3Click(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	SDODBImage *db;
 	TSpecificDialog *specDialog;
 	TSpecificsForm* specsForm;
+	TGroupsForm *groupsForm;
 	__fastcall TForm2(TComponent* Owner);
 };
 //---------------------------------------------------------------------------

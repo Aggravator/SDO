@@ -46,3 +46,13 @@ void __fastcall TForm2::Button2Click(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+
+void __fastcall TForm2::Button3Click(TObject *Sender)
+{
+	if(groupsForm==0)groupsForm=new TGroupsForm(this);
+	groupsForm->ShowModal();
+	delete groupsForm;
+	groupsForm=0;
+}
+//---------------------------------------------------------------------------
+

@@ -4,6 +4,7 @@
 #define AppH
 #include <Data.Win.ADODB.hpp>
 #include "CoreData.h"
+#include "GroupModal.cpp"
 class App{
 public:
 	static void init();
@@ -18,6 +19,9 @@ public:
 	static int cookie;
 	static SDODBImage *db;
 	static TADOConnection *connection;
+	struct ModalForms{
+        static TGroupModal* groupModal;
+	};
 protected:
 	static wchar_t buffer[MAX_PATH];
 

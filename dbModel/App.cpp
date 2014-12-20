@@ -12,6 +12,7 @@ String App::password="";
 wchar_t App::buffer[MAX_PATH];
 int App::cookie=0;
 SDODBImage *App::db=0;
+TGroupModal *App::ModalForms::groupModal=0;
 void App::init(){
 	bool result = SHGetSpecialFolderPath(0, buffer, CSIDL_LOCAL_APPDATA,false );
 	if(result){
@@ -83,4 +84,4 @@ bool App::isConnectionActive(){
 	return true;
 }
 //---------------------------------------------------------------------------
-#pragma package(smart_init)
+

@@ -1,0 +1,26 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "GroupModal.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+
+//---------------------------------------------------------------------------
+__fastcall TGroupModal::TGroupModal(TComponent* Owner)
+	: TModalEntityForm(Owner)
+{
+	emptyEntity=new Group("",true,0,0);
+	entity=new Group(*emptyEntity);
+	tempEntity==new Group(*emptyEntity);
+}
+
+void TGroupModal::writeToEntity(KAEntity *ent){
+}
+void TGroupModal::writeToForm(KAEntity *ent){
+}
+void __fastcall TGroupModal::FormShow(TObject *Sender){
+}
+//---------------------------------------------------------------------------

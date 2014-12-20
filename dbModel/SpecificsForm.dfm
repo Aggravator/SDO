@@ -22,7 +22,6 @@ object SpecificsForm: TSpecificsForm
     VertScrollBar.Tracking = True
     Align = alClient
     TabOrder = 2
-    ExplicitHeight = 213
     object GridPanel1: TGridPanel
       Left = 0
       Top = 0
@@ -59,8 +58,6 @@ object SpecificsForm: TSpecificsForm
           Value = 35.000000000000000000
         end>
       TabOrder = 0
-      ExplicitLeft = -2
-      ExplicitTop = -2
     end
   end
   object Button5: TButton
@@ -82,7 +79,6 @@ object SpecificsForm: TSpecificsForm
     ParentFont = False
     TabOrder = 1
     OnClick = Button5Click
-    ExplicitTop = 309
   end
   object Button1: TButton
     Left = 0
@@ -99,7 +95,6 @@ object SpecificsForm: TSpecificsForm
     ParentFont = False
     TabOrder = 0
     OnClick = Button1Click
-    ExplicitTop = -4
   end
   object ImageList1: TImageList
     ColorDepth = cd32Bit
@@ -110,7 +105,7 @@ object SpecificsForm: TSpecificsForm
     Left = 256
     Top = 152
     Bitmap = {
-      494C0101020014002C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102001400300019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

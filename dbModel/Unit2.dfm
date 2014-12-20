@@ -32,9 +32,6 @@ object Form2: TForm2
     Font.Style = []
     ParentFont = False
     TabOrder = 1
-    ExplicitLeft = 0
-    ExplicitTop = 20
-    ExplicitWidth = 252
   end
   object Button2: TButton
     AlignWithMargins = True
@@ -52,9 +49,6 @@ object Form2: TForm2
     ParentFont = False
     TabOrder = 2
     OnClick = Button2Click
-    ExplicitLeft = 0
-    ExplicitTop = 60
-    ExplicitWidth = 252
   end
   object Button3: TButton
     AlignWithMargins = True
@@ -71,9 +65,7 @@ object Form2: TForm2
     Font.Style = []
     ParentFont = False
     TabOrder = 3
-    ExplicitLeft = -2
-    ExplicitTop = 186
-    ExplicitWidth = 246
+    OnClick = Button3Click
   end
   object Button4: TButton
     AlignWithMargins = True
@@ -90,9 +82,6 @@ object Form2: TForm2
     Font.Style = []
     ParentFont = False
     TabOrder = 4
-    ExplicitLeft = 0
-    ExplicitTop = 0
-    ExplicitWidth = 252
   end
   object Button5: TButton
     AlignWithMargins = True
@@ -109,8 +98,5 @@ object Form2: TForm2
     Font.Style = []
     ParentFont = False
     TabOrder = 0
-    ExplicitLeft = 0
-    ExplicitTop = -10
-    ExplicitWidth = 252
   end
 end

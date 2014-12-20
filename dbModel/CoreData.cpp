@@ -17,6 +17,7 @@ bool KAEntity::updateEntity(KAEntity *entity){
 		String query;
 		this->updateQueryBuilder(query,entity);
 		parent->parent->connection->Execute(query);
+		*this=*entity;
 	}
 }
 int KAEntity::getID(){return id;}
@@ -27,6 +28,9 @@ void KAEntity::addOwner(KAEntity* entity){
 void KAEntity::removeOwner(KAEntity* entity){
 	std::vector<KAEntity*>::iterator it=std::find(owners.begin(),owners.end(),entity);
 	if(it!=owners.end())owners.erase(it);
+}
+bool KAEntity::hasParent(){
+	return parent!=0;
 }
 void KAEntity::debind(){
 	while(owners.size()>0){
@@ -101,7 +105,7 @@ Specific& Specific::operator =(const KAEntity& entity){
 bool Specific::updateQueryBuilder(String &query,KAEntity *entity){
 	Specific *ent=dynamic_cast<Specific*>(entity);
 	name=ent->name;
-	query=String().sprintf(L"update specificity set specificity_name='%s', updater=%d where specificity_id=%d",ent->name,parent->parent->getUID(),ent->id);
+	query=String().sprintf(L"update specificity set specificity_name='%s', updater=%d where specificity_id=%d",ent->name,parent->parent->getUID(),this->id);
 	return true;
 }
 bool Specific::validate()const{
@@ -187,6 +191,8 @@ void ClassRoom::init(String name,int capacity,bool isrent,std::vector<Specific*>
 	this->name=name;
 	this->capacity=capacity;
 	this->isrent=isrent;
+	for(int i=0;i<this->specifics.size();++i)this->specifics[i]->removeOwner(this);
+	this->specifics.clear();
 	if(specifics!=0){
 		this->specifics.assign(specifics->begin(),specifics->end());
 		for(int i=0;i<specifics->size();++i)specifics->at(i)->addOwner(this);
@@ -201,7 +207,7 @@ bool ClassRoom::updateQueryBuilder(String &query,KAEntity *entity){
 	ClassRoom *ent=dynamic_cast<ClassRoom*>(entity);
 	int diff=this->isDifferent(entity);
 	if(diff&1){
-		query=String().sprintf(L"update class set class_name='%s', class_stcapacity=%d, class_isrent=%d, updater=%d where class_id=%d",ent->name, ent->capacity,ent->isrent,parent->parent->getUID(),ent->id);
+		query=String().sprintf(L"update class set class_name='%s', class_stcapacity=%d, class_isrent=%d, updater=%d where class_id=%d",ent->name, ent->capacity,ent->isrent,parent->parent->getUID(),this->id);
 		name=ent->name;
 		isrent=ent->isrent;
 		capacity=ent->capacity;
@@ -374,16 +380,18 @@ Group& Group::operator =(const KAEntity& entity){
 void Group::init(String name,bool isactual,const std::vector<std::pair<int,int>*> *plan){
 	this->name=name;
 	this->isactual=isactual;
+	for(int i=0;i<this->plan.size();++i)delete this->plan[i];
+	this->plan.clear();
 	if(plan!=0){
 		this->plan.resize(plan->size());
-		for(int i=0;i<plan->size();++i)this->plan[i]=new std::pair<int,int>(*plan->at(i));
+		for(int i=0;i<this->plan.size();++i)this->plan[i]=new std::pair<int,int>(*plan->at(i));
 	}
 }
 bool Group::updateQueryBuilder(String &query,KAEntity *entity){
 	Group *ent=dynamic_cast<Group*>(entity);
 	int diff=this->isDifferent(entity);
 	if(diff&1){
-		query=String().sprintf(L"update group set group_name='%s', updater=%d where group_id=%d",ent->name,parent->parent->getUID(),ent->id);
+		query=String().sprintf(L"update sdo.group set group_name='%s', updater=%d where group_id=%d",ent->name,parent->parent->getUID(),this->id);
 	}
 	if(diff&2){
 		std::sort(plan.begin(), plan.end(),isEqPlan);
@@ -562,14 +570,18 @@ void Program::init(String name,String key,int capacity,bool istraining,bool isac
 	this->istraining=istraining;
 	this->isactual=isactual;
 	this->color=color;
+	for(int i=0;i<this->plan.size();++i)delete this->plan[i];
+	this->plan.clear();
 	if(plan!=0){
 		this->plan.resize(plan->size());
 		for(int i=0;i<plan->size();++i)this->plan[i]=new std::pair<int,int>(*plan->at(i));
 	}
+	for(int i=0;i<this->specifics.size();++i)this->specifics[i]->removeOwner(this);
 	if(specifics!=0){
 		this->specifics.assign(specifics->begin(),specifics->end());
 		for(int i=0;i<specifics->size();++i)specifics->at(i)->addOwner(this);
 	}
+	for(int i=0;i<this->groups.size();++i)this->groups[i]->removeOwner(this);
 	if(groups!=0){
 		this->groups.assign(groups->begin(),groups->end());
 		for(int i=0;i<groups->size();++i)groups->at(i)->addOwner(this);
@@ -580,7 +592,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 	Program *ent=dynamic_cast<Program*>(entity);
 	int diff=this->isDifferent(entity);
 	if(diff&1){
-		query=String().sprintf(L"update program set program_name='%s',program_key='%s',program_istraining=%d,program_isactual=%d,program_stcapacity=%d,program_color=%d, updater=%d where program_id=%d",ent->name,ent->key,ent->istraining,ent->isactual,ent->capacity,ent->color,parent->parent->getUID(),ent->id);
+		query=String().sprintf(L"update program set program_name='%s',program_key='%s',program_istraining=%d,program_isactual=%d,program_stcapacity=%d,program_color=%d, updater=%d where program_id=%d",ent->name,ent->key,ent->istraining,ent->isactual,ent->capacity,ent->color,parent->parent->getUID(),this->id);
 	}
 	if(diff&2){
 		std::sort(plan.begin(), plan.end(),isEqPlan);
@@ -938,6 +950,8 @@ void Course::init(Program* program,TDateTime start,TDateTime end,const std::vect
 	program->addOwner(this);
 	this->start=start;
 	this->end=end;
+	for(int i=0;i<this->dates.size();++i)delete this->dates[i];
+	this->dates.clear();
 	if(dates!=0){
 		this->dates.resize(dates->size());
 		for(int i=0;i<dates->size();++i)this->dates[i]=new DateLesson(*dates->at(i));
@@ -949,7 +963,7 @@ bool Course::updateQueryBuilder(String &query,KAEntity *entity){
 	int diff=this->isDifferent(entity);
 	String tbn=dynamic_cast<CourseTable*>(parent)->tableName;
 	if(diff&1){
-		query=String().sprintf(L"update %s set program_id=%d,%s_timestart='%s',%s_timeend='%s',%s_desc='%s' updater=%d where %s_id=%d",tbn,ent->program->getID(),tbn,ent->start.FormatString("hh:nn"),tbn,ent->end.FormatString("hh:nn"),tbn,ent->desc,parent->parent->getUID(),tbn,ent->id);
+		query=String().sprintf(L"update %s set program_id=%d,%s_timestart='%s',%s_timeend='%s',%s_desc='%s' updater=%d where %s_id=%d",tbn,ent->program->getID(),tbn,ent->start.FormatString("hh:nn"),tbn,ent->end.FormatString("hh:nn"),tbn,ent->desc,parent->parent->getUID(),tbn,this->id);
 	}
 	if(diff&2){
 		std::sort(dates.begin(), dates.end(),isEqLesson);
@@ -1405,4 +1419,4 @@ SDODBImage::~SDODBImage(){
 }
 
 //---------------------------------------------------------------------------
-#pragma package(smart_init)
+

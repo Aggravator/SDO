@@ -16,6 +16,7 @@ class KAEntity{
 public:
 	bool deleteEntity();
 	bool updateEntity(KAEntity *entity);
+	bool hasParent();
 	virtual const KAEntity& operator= (const KAEntity& entity)=0;
 	virtual bool validate()const =0;
 	virtual int isDifferent(KAEntity *entity)const =0;
@@ -118,13 +119,14 @@ public:
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
 	~Group();
+	String name;
+	bool isactual;
+	std::vector<std::pair<int,int>*> plan;
 private:
 	void init(String name,bool isactual,const std::vector<std::pair<int,int>*> *plan=0);
 protected:
 	bool updateQueryBuilder(String &query,KAEntity *entity);
-	String name;
-	bool isactual;
-	std::vector<std::pair<int,int>*> plan;
+
 	friend class Groups;
 	friend class Programs;
 	friend class SDODBImage;

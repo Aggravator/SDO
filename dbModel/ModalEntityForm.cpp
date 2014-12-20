@@ -4,6 +4,9 @@
 
 #include "ModalEntityForm.h"
 __fastcall TModalEntityForm::TModalEntityForm(TComponent* Owner):TForm(Owner){
+	entity=0;
+	emptyEntity=0;
+	tempEntity=0;
 }
 bool TModalEntityForm::applyEntity(const KAEntity *entity){
 	*this->entity=*entity;
@@ -13,12 +16,25 @@ const KAEntity* TModalEntityForm::getEntity(){
 	return entity;
 }
 void TModalEntityForm::onshow(){
+	*tempEntity=*emptyEntity;
 	if(!isApplied)*entity=*emptyEntity;
 	isApplied=false;
 }
+void __fastcall TModalEntityForm::FormShow(TObject *Sender){
+    writeToForm(entity);
+}
 void __fastcall TModalEntityForm::FormOk(TObject *Sender){
-	writeToEnt();
-	if(entity->validate())this->Close();
+	writeToEntity(tempEntity);
+	if(tempEntity->validate()){
+		*entity=*tempEntity;
+		ModalResult = mrOk;
+		this->Close();
+	}
+}
+__fastcall TModalEntityForm::~TModalEntityForm(){
+	if(entity!=0)delete entity;
+	if(emptyEntity!=0)delete emptyEntity;
+	if(tempEntity!=0)delete tempEntity;
 }
 //---------------------------------------------------------------------------
 #pragma package(smart_init)

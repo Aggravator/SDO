@@ -5,7 +5,7 @@
 
 #include "AuthForm.h"
 //---------------------------------------------------------------------------
-#pragma package(smart_init)
+
 #pragma resource "*.dfm"
 //---------------------------------------------------------------------------
 __fastcall TAuthForm::TAuthForm(TComponent* Owner): TForm(Owner)
