@@ -97,7 +97,7 @@ object ProgramModal: TProgramModal
     Layout = tlCenter
   end
   object Label6: TLabel
-    Left = 306
+    Left = 311
     Top = 140
     Width = 39
     Height = 18
@@ -113,7 +113,7 @@ object ProgramModal: TProgramModal
     Layout = tlCenter
   end
   object Label7: TLabel
-    Left = 64
+    Left = 192
     Top = 297
     Width = 55
     Height = 18
@@ -144,6 +144,22 @@ object ProgramModal: TProgramModal
     ParentFont = False
     Layout = tlCenter
   end
+  object Label9: TLabel
+    Left = 21
+    Top = 292
+    Width = 50
+    Height = 18
+    Align = alCustom
+    Alignment = taCenter
+    Caption = #1057#1084#1077#1085#1099':'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = 18
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    Layout = tlCenter
+  end
   object Edit1: TEdit
     Left = 84
     Top = 8
@@ -158,7 +174,6 @@ object ProgramModal: TProgramModal
     Font.Style = []
     ParentFont = False
     TabOrder = 0
-    ExplicitWidth = 233
   end
   object CheckBox1: TCheckBox
     Left = 100
@@ -183,8 +198,6 @@ object ProgramModal: TProgramModal
     ModalResult = 1
     ParentFont = False
     TabOrder = 2
-    ExplicitTop = 288
-    ExplicitWidth = 319
   end
   object GridPanel1: TGridPanel
     Left = 3
@@ -228,7 +241,6 @@ object ProgramModal: TProgramModal
         SizeStyle = ssAuto
       end>
     TabOrder = 3
-    ExplicitWidth = 262
     DesignSize = (
       276
       112)
@@ -247,8 +259,6 @@ object ProgramModal: TProgramModal
       MultiSelect = True
       ParentFont = False
       TabOrder = 0
-      ExplicitWidth = 139
-      ExplicitHeight = 109
     end
     object Panel1: TPanel
       Left = 119
@@ -258,8 +268,6 @@ object ProgramModal: TProgramModal
       Anchors = []
       BevelOuter = bvNone
       TabOrder = 1
-      ExplicitLeft = 140
-      ExplicitTop = 19
       object Button2: TButton
         Left = 3
         Top = 2
@@ -296,15 +304,12 @@ object ProgramModal: TProgramModal
       MultiSelect = True
       ParentFont = False
       TabOrder = 2
-      ExplicitLeft = 179
-      ExplicitWidth = 140
-      ExplicitHeight = 109
     end
   end
   object Edit3: TEdit
     Left = 49
     Top = 46
-    Width = 47
+    Width = 76
     Height = 27
     Align = alCustom
     Font.Charset = DEFAULT_CHARSET
@@ -323,7 +328,7 @@ object ProgramModal: TProgramModal
     TabOrder = 5
   end
   object StringGrid1: TStringGrid
-    Left = 298
+    Left = 303
     Top = 169
     Width = 169
     Height = 112
@@ -339,9 +344,9 @@ object ProgramModal: TProgramModal
       81)
   end
   object GridPanel2: TGridPanel
-    Left = 64
-    Top = 324
-    Width = 313
+    Left = 192
+    Top = 321
+    Width = 277
     Height = 112
     Anchors = [akLeft, akTop, akRight]
     BevelOuter = bvNone
@@ -381,12 +386,12 @@ object ProgramModal: TProgramModal
       end>
     TabOrder = 7
     DesignSize = (
-      313
+      277
       112)
     object ListBox3: TListBox
       Left = 0
       Top = 0
-      Width = 136
+      Width = 118
       Height = 112
       Align = alClient
       Font.Charset = DEFAULT_CHARSET
@@ -398,17 +403,17 @@ object ProgramModal: TProgramModal
       MultiSelect = True
       ParentFont = False
       TabOrder = 0
-      ExplicitWidth = 138
+      ExplicitWidth = 136
     end
     object Panel2: TPanel
-      Left = 137
+      Left = 119
       Top = 20
       Width = 37
       Height = 71
       Anchors = []
       BevelOuter = bvNone
       TabOrder = 1
-      ExplicitLeft = 139
+      ExplicitLeft = 137
       object Button4: TButton
         Left = 3
         Top = 2
@@ -431,9 +436,9 @@ object ProgramModal: TProgramModal
       end
     end
     object ListBox4: TListBox
-      Left = 176
+      Left = 158
       Top = 0
-      Width = 137
+      Width = 119
       Height = 112
       Align = alClient
       Font.Charset = DEFAULT_CHARSET
@@ -445,8 +450,8 @@ object ProgramModal: TProgramModal
       MultiSelect = True
       ParentFont = False
       TabOrder = 2
-      ExplicitLeft = 178
-      ExplicitWidth = 138
+      ExplicitLeft = 176
+      ExplicitWidth = 137
     end
   end
   object colorButton: TButtonColor
@@ -458,6 +463,22 @@ object ProgramModal: TProgramModal
     OnClick = colorButtonClick
     SymbolWidth = 20
   end
+  object StringGrid2: TStringGrid
+    Left = 8
+    Top = 321
+    Width = 169
+    Height = 112
+    Anchors = [akLeft, akTop, akRight]
+    ColCount = 2
+    FixedCols = 0
+    RowCount = 2
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goTabs]
+    TabOrder = 9
+    OnKeyUp = StringGrid1KeyUp
+    ColWidths = (
+      77
+      81)
+  end
   object ImageList1: TImageList
     ColorDepth = cd32Bit
     Height = 25
@@ -465,7 +486,7 @@ object ProgramModal: TProgramModal
     Left = 192
     Top = 32
     Bitmap = {
-      494C010102000800200019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102000800240019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000

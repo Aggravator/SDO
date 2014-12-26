@@ -48,6 +48,8 @@ __published:	// IDE-managed Components
 	TLabel *Label8;
 	TColorDialog *ColorDialog1;
 	TButtonColor *colorButton;
+	TStringGrid *StringGrid2;
+	TLabel *Label9;
 	void __fastcall Button2Click(TObject *Sender);
 	void __fastcall StringGrid1KeyUp(TObject *Sender, WORD &Key, TShiftState Shift);
 	void __fastcall Button3Click(TObject *Sender);

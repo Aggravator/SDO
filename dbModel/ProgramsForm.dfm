@@ -70,7 +70,6 @@ object ProgramsForm: TProgramsForm
         Value = 100.000000000000000000
       end>
     TabOrder = 0
-    ExplicitWidth = 341
     DesignSize = (
       500
       25)
@@ -132,7 +131,6 @@ object ProgramsForm: TProgramsForm
     ParentFont = False
     TabOrder = 1
     OnClick = Button5Click
-    ExplicitWidth = 341
   end
   object Button2: TButton
     Left = 0
@@ -149,7 +147,6 @@ object ProgramsForm: TProgramsForm
     ParentFont = False
     TabOrder = 2
     OnClick = Button2Click
-    ExplicitWidth = 341
   end
   object ScrollBox1: TScrollBox
     Left = 0
@@ -161,7 +158,6 @@ object ProgramsForm: TProgramsForm
     BevelOuter = bvNone
     BorderStyle = bsNone
     TabOrder = 3
-    ExplicitWidth = 341
   end
   object ImageList1: TImageList
     ColorDepth = cd32Bit
@@ -172,7 +168,7 @@ object ProgramsForm: TProgramsForm
     Left = 223
     Top = 184
     Bitmap = {
-      494C010102001400540019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101020014005C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

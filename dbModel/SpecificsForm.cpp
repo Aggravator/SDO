@@ -49,6 +49,7 @@ void __fastcall TSpecificsForm::Button1Click(TObject *Sender)
 
 void __fastcall TSpecificsForm::Button5Click(TObject *Sender)
 {
+	this->Visible=false;
 	while(epa->deleteEnt.size()>0){
 		if(App::db->getSpecifics()->isHas(epa->deleteEnt[0]->old))epa->deleteEnt[0]->old->deleteEntity();
 		delete epa->deleteEnt[0]->old;

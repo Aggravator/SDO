@@ -785,7 +785,7 @@ bool Program::validate()const{
 	if(this->name.Length()<1) result=false;
 	if(this->color>16777215) result=false;
 	for(int i=0;i<plan.size() && result;++i)
-		if(plan[i]->first>2000 && plan[i]->second>=0)result=false;
+		if(!(plan[i]->first>2000 && plan[i]->second>=0))result=false;
 	for(int i=0;i<times.size() && result;++i)
 		if(times[i]->first>times[i]->second)result=false;
 	KAEntityTable *specs=App::db->getSpecifics();
@@ -869,6 +869,7 @@ bool Programs::createEntities(std::vector<KAEntity*> &entities){
 		query=String().sprintf(L"SELECT program_id FROM program order by program_createtime desc  limit %d;",entities.size());
 		TADOQuery &queryr=*(new TADOQuery(0));
 		queryr.SQL->Add(query);
+		queryr.Connection=parent->connection;
 		queryr.Active=true;
 		KAEntity *ent;
 		for(int i=0;i<queryr.RecordCount;++i){

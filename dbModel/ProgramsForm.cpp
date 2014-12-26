@@ -47,7 +47,7 @@ ProgramRow::ProgramRow(ProgramRows *parent):EntityRow(parent){
 	parent->ControlCollection->AddControl(name);
 	name->Parent=parent;
 	parent->ControlCollection->AddControl(key);
-	isTraining->Parent=parent;
+	key->Parent=parent;
 	parent->ControlCollection->AddControl(isTraining);
 	isTraining->Parent=parent;
 	parent->ControlCollection->AddControl(deleteButton);
@@ -91,6 +91,8 @@ ProgramRow::~ProgramRow(){
 }
 
 EntityRow* ProgramRows::addRow(KAEntity *entity){
+	this->RowCollection->BeginUpdate();
+	this->ControlCollection->BeginUpdate();
 	ProgramRow *cr=new ProgramRow(this);
 	cr->init(entity);
 	TCellItem *ci=this->RowCollection->operator [](RowCollection->Count-1);
@@ -98,6 +100,8 @@ EntityRow* ProgramRows::addRow(KAEntity *entity){
 	ci->Value=rowHeight;
 	this->Height+=rowHeight;
 	rows.push_back(cr);
+	this->ControlCollection->EndUpdate();
+	this->RowCollection->EndUpdate();
 }
 
 __fastcall ProgramRows::ProgramRows(TComponent *Owner):RowsPanel(Owner){
@@ -153,6 +157,7 @@ void __fastcall TProgramsForm::Button2Click(TObject *Sender)
 	int hy=modalForm[0]->ShowModal();
 	if(hy==mrOk){
 		*pr=*modalForm[0]->getEntity();
+
 		panel->addRow(pr);
 	}
 }

@@ -50,7 +50,7 @@ __fastcall TTableForm::TTableForm(TComponent* Owner)
 	planTable->loadMonth(month);
 	planTable->loadMonth(IncMonth( month, -1 ));
 	planTable->loadMonth(IncMonth( month, 1 ));
-	this->sstringRedraw();
+	//this->sstringRedraw();
 	ccf=new TCourseCreate(this,this);
 }
 __fastcall TTableForm::~TTableForm(){
@@ -393,6 +393,7 @@ ProgTables* TTableForm::getProgTableByRow(int row){
 				++tempRow;
 			}
 			if(tempRow==row)return progs[i];
+			++tempRow;
 		}
 	}
 	return NULL;
@@ -658,6 +659,12 @@ void __fastcall TTableForm::StringGrid1StartDrag(TObject *Sender, TDragObject *&
 {
 	dragCell=cells[itscr-2]->at(itscc);
 	dragRow=cells[itscr-2];
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::FormShow(TObject *Sender)
+{
+	this->sstringRedraw();
 }
 //---------------------------------------------------------------------------
 

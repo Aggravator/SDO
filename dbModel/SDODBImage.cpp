@@ -29,6 +29,7 @@ int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 		App::init();
 		Application->Initialize();
 		Application->MainFormOnTaskBar = true;
+		TStyleManager::TrySetStyle("Amethyst Kamri");
 		Application->CreateForm(__classid(TForm2), &Form2);
 		Application->Run();
 		App::destruct();

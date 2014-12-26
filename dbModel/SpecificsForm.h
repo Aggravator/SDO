@@ -96,6 +96,7 @@ private:	// User declarations
 				gPanel->Height-=35;
 			}
 			void insert(){
+				gPanel->ControlCollection->BeginUpdate();
 				gPanel->ControlCollection->AddControl(editButton);
 				editButton->Parent=gPanel;
 				gPanel->ControlCollection->AddControl(name);
@@ -105,6 +106,7 @@ private:	// User declarations
 				gPanel->Height+=35;
 				gPanel->RowCollection->operator [](gPanel->RowCollection->Count-1)->SizeStyle=ssAbsolute;
 				gPanel->RowCollection->operator [](gPanel->RowCollection->Count-1)->Value=35;
+				gPanel->ControlCollection->EndUpdate();
 			}
 			~specE(){
 				delete name;

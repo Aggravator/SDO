@@ -12,13 +12,14 @@ object TableForm: TTableForm
   Font.Style = []
   OldCreateOrder = False
   OnResize = FormResize
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object StringGrid1: TStringGrid
     Left = 0
-    Top = 222
+    Top = 123
     Width = 875
-    Height = 189
+    Height = 288
     Align = alClient
     DefaultRowHeight = 20
     DefaultDrawing = False
@@ -37,6 +38,8 @@ object TableForm: TTableForm
     OnMouseUp = StringGrid1MouseUp
     OnSelectCell = StringGrid1SelectCell
     OnStartDrag = StringGrid1StartDrag
+    ExplicitTop = 222
+    ExplicitHeight = 189
     ColWidths = (
       64
       64
@@ -54,7 +57,7 @@ object TableForm: TTableForm
     Left = 0
     Top = 0
     Width = 875
-    Height = 97
+    Height = 79
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 1
@@ -99,17 +102,17 @@ object TableForm: TTableForm
   end
   object Panel2: TPanel
     Left = 0
-    Top = 97
+    Top = 79
     Width = 875
-    Height = 91
+    Height = 10
     Align = alTop
-    BevelOuter = bvLowered
+    BevelOuter = bvNone
     TabOrder = 2
     object Label1: TLabel
       Left = 7
       Top = 6
-      Width = 193
-      Height = 27
+      Width = 91
+      Height = 21
       Caption = #1055#1088#1086#1075#1088#1072#1084#1084#1072':'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -147,12 +150,13 @@ object TableForm: TTableForm
   end
   object Panel3: TPanel
     Left = 0
-    Top = 188
+    Top = 89
     Width = 875
     Height = 34
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 4
+    ExplicitTop = 188
     DesignSize = (
       875
       34)
@@ -202,7 +206,7 @@ object TableForm: TTableForm
     Left = 408
     Top = 384
     Bitmap = {
-      494C0101020008004C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102000800500019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
