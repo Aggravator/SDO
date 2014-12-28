@@ -12,8 +12,8 @@ __fastcall TCourseCreate::TCourseCreate(TComponent* Owner,TTableForm *pp)
 	: TForm(Owner)
 {
 	this->pp=pp;
-	this->widthPlus=30;
-	this->heightPlus=50;
+	this->widthPlus=6;
+	this->heightPlus=25;
 }
 //---------------------------------------------------------------------------
 void __fastcall TCourseCreate::FormShow(TObject *Sender)
@@ -21,8 +21,8 @@ void __fastcall TCourseCreate::FormShow(TObject *Sender)
 	if(isPlan==isReal){
 		this->Panel1->SetBounds(0,0,Panel1->Width,Panel1->Height);
 		this->Panel1->Visible=true;
-		this->Width=Panel1->Width;
-		this->Height=Panel1->Height;
+		this->Width=Panel1->Width+widthPlus;
+		this->Height=Panel1->Height+heightPlus;
 	}
 }
 //---------------------------------------------------------------------------
@@ -49,7 +49,7 @@ bool TCourseCreate::checkRoom(KAEntity* r){
 	ClassRoom *room=(ClassRoom*)r;
 	if(prog==NULL)return true;
 	else{
-		if(prog->specifics.size()!=room->specifics.size())return false;
+		if(prog->specifics.size()>room->specifics.size())return false;
 		else{
 			for(int i=0;i<prog->specifics.size();++i){
 				if(std::find(room->specifics.begin(),room->specifics.end(),prog->specifics[i])==room->specifics.end())
@@ -61,12 +61,13 @@ bool TCourseCreate::checkRoom(KAEntity* r){
 }
 bool TCourseCreate::checkProgram(KAEntity *p){
 	Program *pr=(Program*)p;
+	if(pr->isactual==false)return false;
 	if(room==NULL)return true;
 	else{
-		if(pr->specifics.size()!=room->specifics.size())return false;
+		if(pr->specifics.size()>room->specifics.size())return false;
 		else{
-			for(int i=0;i<room->specifics.size();++i){
-				if(std::find(pr->specifics.begin(),pr->specifics.end(),room->specifics[i])==pr->specifics.end())
+			for(int i=0;i<pr->specifics.size();++i){
+				if(std::find(room->specifics.begin(),room->specifics.end(),pr->specifics[i])==room->specifics.end())
 					return false;
 			}
 		}
@@ -76,7 +77,7 @@ bool TCourseCreate::checkProgram(KAEntity *p){
 void TCourseCreate::showPrograms(){
 	this->Panel2->SetBounds(0,0,Panel2->Width,Panel2->Height);
 	this->Width=Panel2->Width+widthPlus;
-	this->Height=Panel2->Height;
+	this->Height=Panel2->Height+heightPlus;
 	ListBox1->Clear();
 	Programs *prg=App::db->getPrograms();
 	std::sort(prg->begin(),prg->end(),sortP);
@@ -90,8 +91,8 @@ void TCourseCreate::showPrograms(){
 }
 void TCourseCreate::showSmena(){
 	this->Panel4->SetBounds(0,0,Panel4->Width,Panel4->Height);
-	this->Width=Panel4->Width;
-	this->Height=Panel4->Height;
+	this->Width=Panel4->Width+widthPlus;
+	this->Height=Panel4->Height+heightPlus;
 	ListBox3->Clear();
 	std::sort(prog->times.begin(),prog->times.end(),sortT);
 	for(int i=0;i<prog->times.size();++i){
@@ -101,8 +102,8 @@ void TCourseCreate::showSmena(){
 }
 void TCourseCreate::showRooms(){
 	this->Panel3->SetBounds(0,0,Panel3->Width,Panel3->Height);
-	this->Width=Panel3->Width;
-	this->Height=Panel3->Height;
+	this->Width=Panel3->Width+widthPlus;
+	this->Height=Panel3->Height+heightPlus;
 	ListBox2->Clear();
 	Rooms *prg=App::db->getRooms();
 	std::sort(prg->begin(),prg->end(),sortR);
@@ -116,8 +117,8 @@ void TCourseCreate::showRooms(){
 }
 void TCourseCreate::showStudents(){
 	this->Panel5->SetBounds(0,0,Panel5->Width,Panel5->Height);
-	this->Width=Panel5->Width;
-	this->Height=Panel5->Height;
+	this->Width=Panel5->Width+widthPlus;
+	this->Height=Panel5->Height+heightPlus;
 	this->Edit1->Text="";
 	this->Panel5->Visible=true;
 }
@@ -208,6 +209,7 @@ void __fastcall TCourseCreate::ListBox2DblClick(TObject *Sender)
 
 void __fastcall TCourseCreate::Button3Click(TObject *Sender)
 {
+	Panel5->Visible=false;
 	this->studentsC=StrToInt(Edit1->Text);
 	ModalResult = mrOk;
 }

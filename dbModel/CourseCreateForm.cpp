@@ -18,6 +18,10 @@ __fastcall TCourseCreate::TCourseCreate(TComponent* Owner,TTableForm *pp)
 //---------------------------------------------------------------------------
 void __fastcall TCourseCreate::FormShow(TObject *Sender)
 {
+	this->Panel1->Visible=false;
+	this->Panel2->Visible=false;
+	this->Panel3->Visible=false;
+	this->Panel4->Visible=false;
 	if(isPlan==isReal){
 		this->Panel1->SetBounds(0,0,Panel1->Width,Panel1->Height);
 		this->Panel1->Visible=true;

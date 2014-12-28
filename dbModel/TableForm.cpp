@@ -474,6 +474,7 @@ void __fastcall TTableForm::StringGrid1DblClick(TObject *Sender)
 	p=StringGrid1->ScreenToClient(Mouse->CursorPos);
 	int col,row;
 	StringGrid1->MouseToCell(p.X,p.Y,col,row);
+
 	if(showAllPrograms==false){
 		if(col>=fixcols && (row<3 || (StringGrid1->RowCount==3 && row==3))){
 			ccf->prog=NULL;
@@ -493,6 +494,7 @@ void __fastcall TTableForm::StringGrid1DblClick(TObject *Sender)
 				if(ccf->isPlan)App::db->getPlanTable()->createEntity(c);
 				else App::db->getRealTable()->createEntity(c);
 				for(int i=0;i<ccf->prog->days;++i) delete dl.at(i);
+
 				this->sstringRedraw();
 				return;
             }
@@ -628,7 +630,7 @@ void __fastcall TTableForm::StringGrid1MouseDown(TObject *Sender, TMouseButton B
 	hasCtrlPressedMC=false;
 	if(col>3 && row>2){
 		//this->Caption=IntToStr(row-2)+" "+IntToStr(col);
-		if(cells[itscr-2]->at(itscc)->courseP!=NULL || cells[itscr-2]->at(itscc)->courseR!=NULL){
+		if(cells[itscr-2]->at(itscc)->courseP!=NULL || cells[itscr-2]->at(itscc)->courseR!=NULL && !Shift.Contains(ssDouble)){
 			hasCtrlPressedMC=Shift.Contains(ssCtrl);
 			dragCell=cells[itscr-2]->at(itscc);
 			StringGrid1->BeginDrag(False, 4);

@@ -108,7 +108,7 @@ TDateTime getMaxDateFromCourse(Course* cr){
 bool isIntoMonth(Course *cr, TDate month){
 	unsigned short year1,year2,month1,month2,day;
 	month.DecodeDate(&year1,&month1,&day);
-	for(int i=0;i<cr->dates.size();+i){
+	for(int i=0;i<cr->dates.size();++i){
 		cr->dates[i]->date.DecodeDate(&year2,&month2,&day);
         if(year2==year1 && month1==month2) return true;
 	}
@@ -121,6 +121,14 @@ int TTableForm::gatherStCountForMonth(Program *pr,TDate month){
 			res+=cr->students;
 		}
 	}
+	TDate currentD=TDate::CurrentDate();
+    for(int i=0;i<this->planTable->size();++i){
+		Course *cr=dynamic_cast<Course*>(this->planTable->at(i));
+		if(cr->program==pr && getMaxDateFromCourse(cr)>currentD){
+			res+=cr->students;
+		}
+	}
+	return res;
 }
 void TTableForm::prTableToVector(ProgTables* pt,std::vector<Cell*>* row){
 	int fixcols=4;
@@ -193,6 +201,8 @@ void TTableForm::sstringRedraw(){
 		}
 		StringGrid1->Cells[StringGrid1->ColCount-2][1]="Ìוסÿצ";
 		StringGrid1->Cells[StringGrid1->ColCount-1][1]="Ãמה";
+		StringGrid1->Cells[StringGrid1->ColCount-2][0]="";
+		StringGrid1->Cells[StringGrid1->ColCount-1][0]="";
 		lastMonthRedraw=month;
     }
 	std::vector<Course*> plan,real;
@@ -464,6 +474,7 @@ void __fastcall TTableForm::StringGrid1DblClick(TObject *Sender)
 	p=StringGrid1->ScreenToClient(Mouse->CursorPos);
 	int col,row;
 	StringGrid1->MouseToCell(p.X,p.Y,col,row);
+	StringGrid1->
 	if(showAllPrograms==false){
 		if(col>=fixcols && (row<3 || (StringGrid1->RowCount==3 && row==3))){
 			ccf->prog=NULL;
