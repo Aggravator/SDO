@@ -1,0 +1,561 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "ReportFirst.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+
+//---------------------------------------------------------------------------
+
+String months[]={"Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"};
+String dayOfWeek[]={"Вс","Пн","Вт","Ср","Чт","Пт","Сб"};
+
+Cell::Cell(){
+	hspan=vspan=1;
+	cellType=EUsual;
+	courseR=courseP=0;
+	lessonR=lessonP=0;
+}
+void Cell::setSpan(int hs,int vs,String text,unsigned int flags){
+	hspan=hs;
+	vspan=vs;
+	this->text=text;
+	this->cellType=ESpan;
+	this->flags=flags;
+}
+void Cell::setCourseSpan(int hs){
+	hspan=hs;
+	this->flags= DT_WORDBREAK|DT_CENTER;
+	this->cellType=ECourseS;
+}
+void Cell::setStaticS(int hs,int vs,String text,unsigned int flags){
+	hspan=hs;
+	vspan=vs;
+	this->text=text;
+	this->cellType=EStaticS;
+	this->flags=flags;
+}
+
+
+__fastcall TReportFirst::TReportFirst(TComponent* Owner)
+	: TForm(Owner)
+{
+	showReal=showPlan=true;
+	showAllPrograms=true;
+	this->ComboBox1->Items->Add("1");
+	this->ComboBox1->Items->Add("2");
+	this->ComboBox1->Items->Add("3");
+	this->ComboBox1->Items->Add("4");
+	this->ComboBox1->Items->Add("5");
+	this->ComboBox1->Items->Add("6");
+	this->ComboBox1->Items->Add("7");
+	this->ComboBox1->Items->Add("8");
+	this->ComboBox1->Items->Add("9");
+	this->ComboBox1->Items->Add("10");
+	this->ComboBox1->Items->Add("11");
+	this->ComboBox1->Items->Add("12");
+	this->ComboBox2->Items->Add("1");
+	this->ComboBox2->Items->Add("2");
+	this->ComboBox2->Items->Add("3");
+	this->ComboBox2->Items->Add("4");
+	this->ComboBox2->Items->Add("5");
+	this->ComboBox2->Items->Add("6");
+	this->ComboBox2->Items->Add("7");
+	this->ComboBox1->Items->Add("8");
+	this->ComboBox2->Items->Add("9");
+	this->ComboBox2->Items->Add("10");
+	this->ComboBox2->Items->Add("11");
+	this->ComboBox2->Items->Add("12");
+	this->realTable=App::db->getRealTable();
+	this->planTable=App::db->getPlanTable();
+}
+
+__fastcall TReportFirst::~TReportFirst(){
+	clearCells();
+	clearProgs();
+}
+//---------------------------------------------------------------------------
+void TReportFirst::startEndToForm(){
+	unsigned short year,day,month;
+	start.DecodeDate(&year,&month,&day);
+	Edit1->Text=IntToStr(year);
+	ComboBox1->ItemIndex=month-1;
+	end.DecodeDate(&year,&month,&day);
+	ComboBox2->ItemIndex=month;
+}
+void TReportFirst::startEndFromForm(){
+	unsigned short year,day,month;
+	year=StrToInt(Edit1->Text);
+	month=ComboBox1->ItemIndex+1;
+	start=EncodeDate(year,month,1);
+	month=ComboBox2->ItemIndex+1;
+	end=EncodeDate(year,month,1);
+}
+void __fastcall TReportFirst::FormShow(TObject *Sender)
+{
+	unsigned short year,month,day;
+	TDate::CurrentDate().DecodeDate(&year,&month,&day);
+	start=EncodeDate(year,1,1);
+	end=EncodeDate(year,month,1);
+	startEndToForm();
+}
+bool TReportFirst::isIntoPeriod(KAEntity* ent){
+	Course *cr=dynamic_cast<Course*>(ent);
+	TDate start=month;
+	TDate end=IncMonth( month, 1 );
+	for(int i=0;i<cr->dates.size();++i){
+		TDate dd=cr->dates[i]->date;
+		if(cr->dates[i]->date>=start && cr->dates[i]->date<=end)return true;
+	}
+	return false;
+}
+bool sortPT (ProgTables* i,ProgTables* j) {
+	if(i->prog->istraining!=j->prog->istraining){
+		return i->prog->istraining>j->prog->istraining;
+	}else if(i->prog->key!=j->prog->key){
+		return i->prog->key<j->prog->key;
+	}else if(i->prog->name!=j->prog->name){
+		return i->prog->name<j->prog->name;
+	}else return i->time.first<j->time.first;
+}
+void TReportFirst::clearCells(){
+	for(int i=0;i<cells.size();++i){
+		for(int j=0;j<cells[i]->size();++j){
+			delete cells[i]->at(j);
+		}
+		delete cells[i];
+	}
+	cells.clear();
+}
+void  TReportFirst::clearProgs(){
+	for(int i=0;i<progs.size();++i){
+		delete progs[i];
+	}
+	progs.clear();
+}
+TDateTime getMaxDateFromCourse(Course* cr){
+	TDate maxDate=0;
+	for(int i=0;i<cr->dates.size();++i)
+		if(cr->dates[i]->date>maxDate)maxDate=cr->dates[i]->date;
+	return maxDate;
+}
+bool dateIntoMonth(TDate date,TDate month){
+	unsigned short year1,year2,month1,month2,day;
+	month.DecodeDate(&year1,&month1,&day);
+	date.DecodeDate(&year2,&month2,&day);
+	if(year2==year1 && month1==month2) return true;
+	return false;
+}
+bool isIntoMonth(Course *cr, TDate month){
+	for(int i=0;i<cr->dates.size();++i){
+		if(dateIntoMonth(cr->dates[i]->date,month))return true;
+	}
+	return false;
+}
+
+void TReportFirst::refreshStCSInf(std::vector<ProgTables*> &prgs){
+	progStCountS.clear();
+	for(int i=0;i<prgs.size();++i){
+		progStCountS[prgs[i]->prog]=0;
+	}
+	Programs * prms=App::db->getPrograms();
+	for(int i=0;i<prms->size();++i)progStCountS[(Program*)prms->at(i)]=0;
+	unsigned short year,month1,day;
+	this->month.DecodeDate(&year,&month1,&day);
+	TDate firstM=EncodeDate(year,1,1);
+	for(int i=1;i<month1;++i){
+		if(planTable->hasMonth(firstM))break;
+		firstM=IncMonth(firstM,1);
+	}
+	TDate lDate=firstM;
+	std::map<Program*,int>::iterator it;
+	firstM=EncodeDate(year,1,1);
+	lDate-=1;
+	if(lDate>firstM){
+		String queryTemplate=String().sprintf(L"select program_id, sum(plantable_students) as stC from plantable inner join (select subsubPQ.plantable_id, max(datesplantable_date) as mdate from datesplantable inner join (select plantable_id from plantable where program_id in (%%s)) as subsubPQ on (datesplantable.plantable_id=subsubPQ.plantable_id) group by subsubPQ.plantable_id having mdate<='%s' and mdate>Date(Now())) as subPQ on (plantable.plantable_id=subPQ.plantable_id) group by program_id",lDate.FormatString("yyyy-mm-dd"));
+		queryTemplate+="\nunion\n";
+		queryTemplate+=String().sprintf(L"select program_id, sum(realtable_students) as stC from realtable inner join (select subsubRQ.realtable_id, max(datesrealtable_date) as mdate from datesrealtable inner join (select realtable_id from realtable where program_id in (%%s)) as subsubRQ on (datesrealtable.realtable_id=subsubRQ.realtable_id) group by subsubRQ.realtable_id having mdate<='%s') as subRQ on (realtable.realtable_id=subRQ.realtable_id) group by program_id;",lDate.FormatString("yyyy-mm-dd"));
+		String progs="";
+		for(it=progStCountS.begin();it!=progStCountS.end();++it){
+			progs+=IntToStr((*it).first->getID())+",";
+		}
+		if(progs.Length()>0){
+			progs=progs.SubString(0,progs.Length()-1);
+			queryTemplate=String().sprintf(queryTemplate.w_str(),progs,progs);
+			TADOQuery &query=*(new TADOQuery(0));
+			query.SQL->Add(queryTemplate);
+			query.Connection=App::connection;
+			query.Active=true;
+			for(int i=0;i<query.RecordCount;++i){
+				progStCountS[(Program*)prms->getById(query["program_id"])]+=query["stC"].operator int();
+				query.Next();
+			}
+			query.Close();
+			delete &query;
+		}
+	}
+}
+void TReportFirst::refreshStCCInf(std::vector<ProgTables*> &prgs){
+	progStCountC.clear();
+	for(int i=0;i<prgs.size();++i){
+		progStCountC[prgs[i]->prog]=0;
+	}
+	Programs * prms=App::db->getPrograms();
+	for(int i=0;i<prms->size();++i)progStCountC[(Program*)prms->at(i)]=0;
+	unsigned short year,month1,day;
+	this->month.DecodeDate(&year,&month1,&day);
+	TDate firstM=EncodeDate(year,1,1);
+	for(int i=1;i<month1;++i){
+		if(planTable->hasMonth(firstM))break;
+		firstM=IncMonth(firstM,1);
+	}
+	TDate lDate=firstM;
+	std::map<Program*,int>::iterator it;
+	while(!dateIntoMonth(firstM,IncMonth(month,1))){
+		for(it=progStCountC.begin();it!=progStCountC.end();++it){
+			(*it).second+=gatherStCountForMonth((*it).first,firstM);
+		}
+		firstM=IncMonth(firstM,1);
+	}
+}
+void  TReportFirst::refreshGrCC(){
+	groupCountC.clear();
+	Groups *grps=App::db->getGroups();
+	Programs * prms=App::db->getPrograms();
+	for(int i=0;i<grps->size();++i){
+		if(((Group*)grps->at(i))->isactual)	groupCountC[(Group*)grps->at(i)]=0;
+	}
+	std::map<Group*,int>::iterator it;
+	std::vector<Group*>::iterator git;
+	std::map<Program*,int>::iterator pit;
+	Program *pr;
+	for(it=groupCountC.begin();it!=groupCountC.end();++it){
+		for(pit=progStCountC.begin();pit!=progStCountC.end();++pit){
+			pr=(*pit).first;
+			if(std::find(pr->groups.begin(),pr->groups.end(),(*it).first)!=pr->groups.end())(*it).second+=(*pit).second;
+        }
+    }
+}
+void  TReportFirst::refreshGrCS(){
+	groupCountS.clear();
+	Groups * grps=App::db->getGroups();
+	Programs * prms=App::db->getPrograms();
+	for(int i=0;i<grps->size();++i){
+		if(((Group*)grps->at(i))->isactual)	groupCountS[(Group*)grps->at(i)]=0;
+	}
+	std::map<Group*,int>::iterator it;
+	std::vector<Group*>::iterator git;
+	std::map<Program*,int>::iterator pit;
+	Program *pr;
+	for(it=groupCountS.begin();it!=groupCountS.end();++it){
+		for(pit=progStCountS.begin();pit!=progStCountS.end();++pit){
+			pr=(*pit).first;
+			if(std::find(pr->groups.begin(),pr->groups.end(),(*it).first)!=pr->groups.end())(*it).second+=(*pit).second;
+        }
+	}
+}
+int TReportFirst::gatherStCountForMonth(Program *pr,TDate month){
+	int res=0;
+	TDate maxDate;
+	for(int i=0;i<this->realTable->size();++i){
+		Course *cr=dynamic_cast<Course*>(this->realTable->at(i));
+		maxDate=getMaxDateFromCourse(cr);
+		if(cr->program==pr && dateIntoMonth(maxDate,month)){
+			res+=cr->students;
+		}
+	}
+	TDate currentD=TDate::CurrentDate();
+    for(int i=0;i<this->planTable->size();++i){
+		Course *cr=dynamic_cast<Course*>(this->planTable->at(i));
+		maxDate=getMaxDateFromCourse(cr);
+		if(cr->program==pr && dateIntoMonth(maxDate,month) && maxDate>currentD){
+			res+=cr->students;
+		}
+	}
+	return res;
+}
+
+int TReportFirst::gatherStCFMG(Group* gr,TDate month){
+	int res=0;
+	Programs *prgs=App::db->getPrograms();
+	Program *pr;
+	std::vector<Group*>::iterator git;
+	for(int i=0;i<prgs->size();++i){
+		pr=dynamic_cast<Program*>(prgs->at(i));
+		if(std::find(pr->groups.begin(),pr->groups.end(),gr)!=pr->groups.end()){
+			res+=this->gatherStCountForMonth(pr,month);
+		}
+	}
+	return res;
+}
+void TReportFirst::sstringRedraw(){
+	this->clearProgs();
+	static TDate lastMonthRedraw=TDate::CurrentDate()-10000;
+	int fixcols=4;
+	unsigned short year1,month1,day,year2,month2;
+	month.DecodeDate(&year1,&month1,&day);
+	lastMonthRedraw.DecodeDate(&year2,&month2,&day);
+	if(year1!=year2 || month1!=month2){
+		//monthLabel->Caption=months[month1-1]+", "+IntToStr(year1);
+		int dayCount=MonthDays[IsLeapYear(year1)][month1-1];
+		//StringGrid1->ColCount=dayCount+8+fixcols+2;
+		TDate firstDate=EncodeDate(year1,month1,1);
+		for(int i=0;i<dayCount+8;++i){
+			TDate dd=firstDate-4+i;
+			dd.DecodeDate(&year1,&month1,&day);
+			//StringGrid1->Cells[fixcols+i][0]=dayOfWeek[DayOfWeek(dd)-1];
+			//StringGrid1->Cells[fixcols+i][1]=IntToStr(day);
+		}
+		//StringGrid1->Cells[StringGrid1->ColCount-2][1]="Месяц";
+		//StringGrid1->Cells[StringGrid1->ColCount-1][1]="Год";
+		//StringGrid1->Cells[StringGrid1->ColCount-2][0]="";
+		//StringGrid1->Cells[StringGrid1->ColCount-1][0]="";
+		lastMonthRedraw=month;
+    }
+	std::vector<Course*> plan,real;
+	for(int i=0;i<planTable->size();++i){
+		if(isIntoPeriod(planTable->at(i)))
+			plan.push_back(dynamic_cast<Course*>(planTable->at(i)));
+	}
+	for(int i=0;i<realTable->size();++i){
+		if(isIntoPeriod(realTable->at(i)))real.push_back(dynamic_cast<Course*>(realTable->at(i)));
+	}
+	FindPlanTByCourse finder;
+	std::vector<ProgTables*>::iterator it;
+	for(int i=0;i<plan.size();++i){
+		finder.course=plan[i];
+		it=std::find_if(progs.begin(),progs.end(),finder);
+		if(it!=progs.end()){
+			(*it)->plan.push_back(finder.course);
+		}else{
+			ProgTables *pt= new ProgTables();
+			pt->prog=finder.course->program;
+			pt->time=std::pair<TDateTime,TDateTime>(finder.course->start,finder.course->end);
+			pt->plan.push_back(finder.course);
+			progs.push_back(pt);
+		}
+	}
+	for(int i=0;i<real.size();++i){
+		finder.course=real[i];
+		it=std::find_if(progs.begin(),progs.end(),finder);
+		if(it!=progs.end()){
+			(*it)->real.push_back(finder.course);
+		}else{
+			ProgTables *pt= new ProgTables();
+			pt->prog=finder.course->program;
+			pt->time=std::pair<TDateTime,TDateTime>(finder.course->start,finder.course->end);
+			pt->real.push_back(finder.course);
+			progs.push_back(pt);
+		}
+	}
+	if(showAllPrograms){
+		FindPlanTByProgTime finder2;
+		Programs *pps=App::db->getPrograms();
+		for(int i=0;i<pps->size();++i){
+			if(((Program*)pps->at(i))->isactual==false)continue;
+			finder2.prog=dynamic_cast<Program*>(pps->at(i));
+			for(int j=0;j<finder2.prog->times.size();++j){
+				finder2.time=finder2.prog->times[j];
+				it=std::find_if(progs.begin(),progs.end(),finder2);
+				if(it==progs.end()){
+					ProgTables *pt= new ProgTables();
+					pt->prog=finder2.prog;
+					pt->time=*finder2.time;
+					progs.push_back(pt);
+				}
+            }
+		}
+	}
+
+	std::sort(progs.begin(),progs.end(),sortPT);
+	refreshStCSInf(progs);
+	refreshGrCS();
+	regenerateCells(progs);
+}
+bool groupSort(KAEntity *a,KAEntity *b){
+	Group *gp1=dynamic_cast<Group*>(a);
+	Group *gp2=dynamic_cast<Group*>(b);
+	if(gp1->isactual!=gp2->isactual){
+		return gp1->isactual>gp2->isactual;
+	}else return gp1->name<gp2->name;
+}
+void TReportFirst::regenerateCells(std::vector<ProgTables*> &progs){
+	refreshStCCInf(progs);
+	refreshGrCC();
+	this->clearCells();
+	if(progs.size()>0){
+		unsigned short year1,month1,day1;
+		month.DecodeDate(&year1,&month1,&day1);
+		//monthLabel->Caption=months[month1-1]+", "+IntToStr(year1);
+		int dayCount=MonthDays[IsLeapYear(year1)][month1-1];
+		int fixcols=0,grCount=0;
+		Groups *grps=App::db->getGroups();
+		std::sort(grps->begin(),grps->end(),groupSort);
+		Group *gr;
+		for(int i=0;i<grps->size();++i)if(((Group*)grps->at(i))->isactual)++grCount; else break;
+		if(progs[0]->prog->istraining!=(*--progs.end())->prog->istraining)cells.resize(2+progs.size()+grCount+2);
+		else cells.resize(1+progs.size()+grCount+2);
+
+		for(int i=0;i<cells.size();++i){
+			cells[i]=new std::vector<Cell*>(dayCount+fixcols+2);
+			for(int j=0;j<cells[i]->size();++j){
+				cells[i]->at(j)=new Cell();
+			}
+		}
+		int row=2;
+		int i=0;
+		Cell *cl;
+		for(i;i<progs.size() && progs[i]->prog->istraining;++i){
+			if(i==0){
+				cl=cells[row-2]->at(0);
+				cl->setSpan(cells[i]->size(),1,"Повышение квалификации",DT_CENTER|DT_SINGLELINE|DT_VCENTER);
+				for(int j=1;j<cells[i]->size();++j)cells[row-2]->at(j)->cellType=EEmpty;
+				++row;
+			}
+			cells[row-2]->at(0)->setSpan(1,1,progs[i]->prog->key);
+			cells[row-2]->at(1)->setSpan(1,1,progs[i]->prog->name,DT_LEFT|DT_WORDBREAK);
+			cells[row-2]->at(2)->setSpan(1,1,IntToStr(progs[i]->prog->hours));
+			cells[row-2]->at(3)->setSpan(1,1,progs[i]->time.first.FormatString("hh:nn")+"-"+progs[i]->time.second.FormatString("hh:nn"));
+			prTableToVector(progs[i],cells[row-2]);
+			if(i!=0 && progs[i]->prog==progs[i-1]->prog){
+				cells[row-2]->at(cells[row-2]->size()-2)->cellType=EStaticUS;
+				cells[row-2]->at(cells[row-2]->size()-1)->cellType=EStaticUS;
+				int Ssr=row-3;
+				for(Ssr;cells[Ssr]->at(cells[Ssr]->size()-2)->cellType!=EStaticS;--Ssr);
+				cells[Ssr]->at(cells[Ssr]->size()-2)->vspan+=1;
+				cells[Ssr]->at(cells[Ssr]->size()-1)->vspan+=1;
+			}else{
+				cells[row-2]->at(cells[row-2]->size()-2)->setStaticS(1,1,IntToStr(gatherStCountForMonth(progs[i]->prog,month)));
+				cells[row-2]->at(cells[row-2]->size()-1)->setStaticS(1,1,IntToStr(progStCountS[progs[i]->prog]+progStCountC[progs[i]->prog]));
+            }
+			++row;
+		}
+		if(i!=progs.size()){
+			cells[row-2]->at(0)->setSpan(cells[i]->size(),1,"Семинары",DT_CENTER|DT_SINGLELINE|DT_VCENTER);
+			for(int j=1;j<cells[i]->size();++j)cells[row-2]->at(j)->cellType=EEmpty;
+			++row;
+		}
+		for(i;i<progs.size();++i){
+			cells[row-2]->at(0)->setSpan(1,1,progs[i]->prog->key);
+			cells[row-2]->at(1)->setSpan(1,1,progs[i]->prog->name,DT_LEFT|DT_WORDBREAK);
+			cells[row-2]->at(2)->setSpan(1,1,IntToStr(progs[i]->prog->hours));
+			cells[row-2]->at(3)->setSpan(1,1,progs[i]->time.first.FormatString("hh:nn")+"-"+progs[i]->time.second.FormatString("hh:nn"));
+			prTableToVector(progs[i],cells[row-2]);
+			if(i!=0 && progs[i]->prog==progs[i-1]->prog){
+				cells[row-2]->at(cells[row-2]->size()-2)->cellType=EStaticUS;
+				cells[row-2]->at(cells[row-2]->size()-1)->cellType=EStaticUS;
+				int Ssr=row-3;
+				for(Ssr;cells[Ssr]->at(cells[Ssr]->size()-2)->cellType!=EStaticS;--Ssr);
+				cells[Ssr]->at(cells[Ssr]->size()-2)->vspan+=1;
+				cells[Ssr]->at(cells[Ssr]->size()-1)->vspan+=1;
+			}else{
+				cells[row-2]->at(cells[row-2]->size()-2)->setStaticS(1,1,IntToStr(gatherStCountForMonth(progs[i]->prog,month)));
+				cells[row-2]->at(cells[row-2]->size()-1)->setStaticS(1,1,IntToStr(progStCountS[progs[i]->prog]+progStCountC[progs[i]->prog]));
+			}
+			++row;
+		}
+
+		for(i=0;i<grps->size();++i){
+			gr=dynamic_cast<Group*>(grps->at(i));
+			if(gr->isactual==false)break;
+			cells[row-2]->at(0)->setSpan(cells[i]->size()-2,1,gr->name,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			for(int j=1;j<cells[i]->size()-2;++j)cells[row-2]->at(j)->cellType=EEmpty;
+			cells[row-2]->at(cells[i]->size()-1)->setStaticS(1,1,IntToStr(groupCountS[gr]+groupCountC[gr]));
+			cells[row-2]->at(cells[i]->size()-2)->setStaticS(1,1,IntToStr(gatherStCFMG(gr,month)));
+			++row;
+		}
+		{
+			int progC=0,progCC=0,semC=0,semCC=0;
+			Programs *prgs=App::db->getPrograms();
+			for(int i=0;i<prgs->size();++i){
+				Program *pr=dynamic_cast<Program*>(prgs->at(i));
+				if(pr->istraining){
+					progC+=gatherStCountForMonth(pr,month);
+					progCC+=progStCountS[pr]+progStCountC[pr];
+				}else{
+					semC+=gatherStCountForMonth(pr,month);
+					semCC+=progStCountS[pr]+progStCountC[pr];
+                }
+			}
+			cells[row-2]->at(0)->setSpan(cells[i]->size()-2,1,"Повышение квалафикации",DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			for(int j=1;j<cells[i]->size()-2;++j)cells[row-2]->at(j)->cellType=EEmpty;
+			cells[row-2]->at(cells[i]->size()-1)->setStaticS(1,1,IntToStr(progCC));
+			cells[row-2]->at(cells[i]->size()-2)->setStaticS(1,1,IntToStr(progC));
+			++row;
+			cells[row-2]->at(0)->setSpan(cells[i]->size()-2,1,"Семинары",DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			for(int j=1;j<cells[i]->size()-2;++j)cells[row-2]->at(j)->cellType=EEmpty;
+			cells[row-2]->at(cells[i]->size()-1)->setStaticS(1,1,IntToStr(semCC));
+			cells[row-2]->at(cells[i]->size()-2)->setStaticS(1,1,IntToStr(semC));
+			++row;
+		}
+	}
+}
+void TReportFirst::prTableToVector(ProgTables* pt,std::vector<Cell*>* row){
+	int fixcols=4;
+	unsigned short year1,month1,day1;
+	month.DecodeDate(&year1,&month1,&day1);
+	int dayCount=MonthDays[IsLeapYear(year1)][month1-1];
+	double diff;
+	int cellPos;
+	for(int i=0;i<pt->real.size();++i){
+		pt->real[i]->sortDates();
+		for(int j=0;j<pt->real[i]->dates.size();++j){
+			diff=(int)((double)(pt->real[i]->dates[j]->date-month));
+			if(diff>=0 && diff<=dayCount){
+				cellPos=fixcols+diff;
+				row->at(cellPos)->courseR=pt->real[i];
+				row->at(cellPos)->lessonR=pt->real[i]->dates[j];
+			}
+		}
+	}
+	for(int i=0;i<pt->plan.size();++i){
+		pt->plan[i]->sortDates();
+		for(int j=0;j<pt->plan[i]->dates.size();++j){
+			diff=(int)((double)(pt->plan[i]->dates[j]->date-month));
+			if(diff>=0 && diff<=dayCount){
+				cellPos=fixcols+diff;
+				row->at(cellPos)->courseP=pt->plan[i];
+				row->at(cellPos)->lessonP=pt->plan[i]->dates[j];
+			}
+		}
+	}
+	Course *spanCourse=NULL;
+	Course *active=NULL;
+	int spanPos=-1;
+	for(int i=fixcols;i<row->size();++i){
+		if(showReal && row->at(i)->courseR!=NULL && ((row->at(i)->courseP!=selectedCourse || selectedCourse==NULL) || !showPlan))
+			active=row->at(i)->courseR;
+		else if(showPlan && row->at(i)->courseP!=NULL)
+			active=row->at(i)->courseP;
+		else
+			active=NULL;
+		if(active==spanCourse && active!=NULL){
+			row->at(i)->cellType=ECourseUS;
+			row->at(spanPos)->hspan+=1;
+		}else if(spanCourse!=active){
+			spanCourse=active;
+			if(active!=NULL){
+				spanPos=i;
+				row->at(i)->setCourseSpan(1);
+			}
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TReportFirst::Button1Click(TObject *Sender)
+{
+	this->startEndFromForm();
+	TDate it=start;
+	for(it;it<=end;it=IncMonth(it,1)){
+		month=it;
+		realTable->loadMonth(month);
+		planTable->loadMonth(month);
+		this->sstringRedraw();
+	}
+}
+//---------------------------------------------------------------------------
+

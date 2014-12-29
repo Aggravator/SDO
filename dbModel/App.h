@@ -19,6 +19,7 @@ public:
 	static bool isConnectionActive();
 	static String login;
 	static String password;
+	static String progFolder;
 	static int uid;
 	static int cookie;
 	static SDODBImage *db;

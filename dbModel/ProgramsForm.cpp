@@ -85,10 +85,10 @@ void __fastcall ProgramRow::deleteBClick(TObject *Sender){
 	ondelete();
 }
 ProgramRow::~ProgramRow(){
-	//delete name;
-	//delete key;
-	//delete isActive;
-	//delete isProgram;
+	delete name;
+	delete key;
+	delete isActive;
+	delete isProgram;
 }
 
 EntityRow* ProgramRows::addRow(KAEntity *entity){

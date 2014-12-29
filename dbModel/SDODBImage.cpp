@@ -9,18 +9,8 @@
 #include <Vcl.Themes.hpp>
 
 
-USEFORM("RoomsForm.cpp", Form7);
-USEFORM("RoomModal.cpp", Form8);
-USEFORM("TableForm.cpp", Form9);
 USEFORM("Unit2.cpp", Form2);
-USEFORM("SpecificsForm.cpp", Form3);
-USEFORM("SpecificDialog.cpp", Form4);
-USEFORM("CourseCreateForm.cpp", Form10);
-USEFORM("AuthForm.cpp", Form1);
-USEFORM("GroupModal.cpp", Form6);
-USEFORM("GroupsForm.cpp", Form5);
-USEFORM("ProgramModal.cpp", ProgramModal);
-USEFORM("ProgramsForm.cpp", ProgramsForm);
+
 //---------------------------------------------------------------------------
 int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {

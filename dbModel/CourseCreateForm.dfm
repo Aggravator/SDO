@@ -1,6 +1,7 @@
 object CourseCreate: TCourseCreate
   Left = 0
   Top = 0
+  BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = #1050#1091#1088#1089
   ClientHeight = 459
@@ -13,7 +14,7 @@ object CourseCreate: TCourseCreate
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  Position = poDesktopCenter
+  Position = poScreenCenter
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -30,7 +31,7 @@ object CourseCreate: TCourseCreate
       Top = 61
       Width = 161
       Height = 41
-      Caption = #1056#1077#1072#1083#1100#1085#1086#1089#1090#1100
+      Caption = #1055#1086' '#1092#1072#1082#1090#1091
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -19
@@ -45,7 +46,7 @@ object CourseCreate: TCourseCreate
       Top = 8
       Width = 161
       Height = 41
-      Caption = #1055#1083#1072#1085
+      Caption = #1055#1086' '#1087#1083#1072#1085#1091
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -19

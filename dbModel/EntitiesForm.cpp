@@ -69,7 +69,7 @@ void RowsPanel::deleteRow(EntityRow *entityRow) {
 			deleteEntities.push_back(entityRow->initEntity);
 		}
 		this->debindRowControls(entityRow);
-		delete *it;
+		//delete *it;
 		this->RowCollection->Delete(it - rows.begin());
 		this->Height -= rowHeight;
 		rows.erase(it);
@@ -86,7 +86,6 @@ void RowsPanel::debindRowControls(EntityRow *entityRow) {
 			for (int j = 0; j<this->ColumnCollection->Count ; ++j) {
 				TControl *c=this->ControlCollection->Controls[j][i];
 				this->ControlCollection->RemoveControl(c);
-				c->Parent=0;
 			}
 		}
 	}

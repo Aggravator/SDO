@@ -18,7 +18,7 @@ bool KAEntity::updateEntity(KAEntity *entity){
 		this->updateQueryBuilder(query,entity);
 		TStringList *queries=new TStringList();
 		queries->StrictDelimiter=true;
-		queries->Delimiter='\n';
+		queries->Delimiter='\t';
 		queries->DelimitedText=query;
 		for(int i=0;i<queries->Count;++i){
 			String ht=(*queries)[i];
@@ -40,9 +40,12 @@ void KAEntity::removeOwner(KAEntity* entity){
 bool KAEntity::hasParent(){
 	return parent!=0;
 }
+KAEntityTable *KAEntity::getParent(){
+	return parent;
+}
 void KAEntity::debind(){
 	while(owners.size()>0){
-		owners[0]->removeSlave(this);
+		if(owners[0]!=NULL)	owners[0]->removeSlave(this);
 		owners.erase(owners.begin());
 	}
 }
@@ -67,7 +70,7 @@ bool KAEntityTable::deleteEntities(std::vector<KAEntity*> &entities){
 		this->deleteQueryBuilder(query,entities);
 		TStringList *queries=new TStringList();
 		queries->StrictDelimiter=true;
-		queries->Delimiter='\n';
+		queries->Delimiter='\t';
 		queries->DelimitedText=query;
 		for(int i=0;i<queries->Count;++i){
 			String ht=(*queries)[i];
@@ -139,7 +142,7 @@ bool Specifics::createEntities(std::vector<KAEntity*> &entities){
 		this->createQueryBuilder(query,entities);
 		TStringList *queries=new TStringList();
 		queries->StrictDelimiter=true;
-		queries->Delimiter='\n';
+		queries->Delimiter='\t';
 		queries->DelimitedText=query;
 		for(int i=0;i<queries->Count;++i){
 			parent->connection->Execute((*queries)[i]);
@@ -173,7 +176,7 @@ bool Specifics::deleteQueryBuilder(String& query,std::vector<KAEntity*> &entitie
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE'),",L"specificity",parent->getUID(),ent->id);
 		}
 		else{
-			query+=String().sprintf(L"%d);\n",ent->id);
+			query+=String().sprintf(L"%d);\t",ent->id);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"specificity",parent->getUID(),ent->id);
         }
 	}
@@ -234,7 +237,7 @@ bool ClassRoom::updateQueryBuilder(String &query,KAEntity *entity){
 		add.resize(it-add.begin());
 		Specific *spec;
 		if(remove.size()>0){
-			if(diff&1)query+="\n";
+			if(diff&1)query+="\t";
 			query+=String().sprintf(L"delete from specclass where class_id=%d and specificity_id in (",this->id);
 			String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 			for(int i=0;i<remove.size()-1;++i){
@@ -247,12 +250,12 @@ bool ClassRoom::updateQueryBuilder(String &query,KAEntity *entity){
 			spec=dynamic_cast<Specific*>(remove[remove.size()-1]);
 			it=std::find(specifics.begin(),specifics.end(),remove[remove.size()-1]);
 			specifics.erase(it);
-			query+=String().sprintf(L"%d)\n",spec->getID());
+			query+=String().sprintf(L"%d)\t",spec->getID());
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"specclass",parent->parent->getUID(),this->id);
 			query+=addString;
 		}
 		if(add.size()>0){
-            if(diff&1 || remove.size()>0)query+="\n";
+            if(diff&1 || remove.size()>0)query+="\t";
 			query+="insert into specclass (class_id,specificity_id,creator) values ";
 			for(int i=0;i<add.size()-1;++i){
 				specifics.push_back(add[i]);
@@ -342,7 +345,7 @@ bool Rooms::deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities){
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE'),",L"class",parent->getUID(),ent->id);
 		}
 		else{
-			query+=String().sprintf(L"%d);\n",ent->id);
+			query+=String().sprintf(L"%d);\t",ent->id);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"class",parent->getUID(),ent->id);
         }
 	}
@@ -418,7 +421,7 @@ bool Group::updateQueryBuilder(String &query,KAEntity *entity){
 		add.resize(it-add.begin());
 		std::pair<int,int>* yplan;
 		if(remove.size()>0){
-			if(diff&1)query+="\n";
+			if(diff&1)query+="\t";
 			query+=String().sprintf(L"delete from groupplan where group_id=%d and groupplan_year in (",this->id);
 			String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 			for(int i=0;i<remove.size()-1;++i){
@@ -430,7 +433,7 @@ bool Group::updateQueryBuilder(String &query,KAEntity *entity){
 				plan.erase(it);
 			}
 			yplan=dynamic_cast<std::pair<int,int>*>(remove[remove.size()-1]);
-			query+=String().sprintf(L"%d)\n",yplan->first);
+			query+=String().sprintf(L"%d)\t",yplan->first);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"groupplan",parent->parent->getUID(),this->id);
 			query+=addString;
 			it=std::find(plan.begin(),plan.end(),remove[remove.size()-1]);
@@ -438,7 +441,7 @@ bool Group::updateQueryBuilder(String &query,KAEntity *entity){
 			plan.erase(it);
 		}
 		if(add.size()>0){
-            if(diff&1 || remove.size()>0)query+="\n";
+            if(diff&1 || remove.size()>0)query+="\t";
 			query+="insert into groupplan (group_id, groupplan_year, groupplan_count,creator) values ";
 			for(int i=0;i<add.size()-1;++i){
 				yplan=dynamic_cast<std::pair<int,int>*>(add[i]);
@@ -526,7 +529,7 @@ bool Groups::deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities){
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE'),",L"group",parent->getUID(),ent->id);
 		}
 		else{
-			query+=String().sprintf(L"%d);\n",ent->id);
+			query+=String().sprintf(L"%d);\t",ent->id);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"group",parent->getUID(),ent->id);
         }
 	}
@@ -634,7 +637,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 		add.resize(it-add.begin());
 		std::pair<int,int>* yplan;
 		if(remove.size()>0){
-			if(diff&1)query+="\n";
+			if(diff&1)query+="\t";
 			query+=String().sprintf(L"delete from programplan where program_id=%d and programplan_year in (",this->id);
 			String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 			for(int i=0;i<remove.size()-1;++i){
@@ -646,7 +649,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 				plan.erase(it);
 			}
 			yplan=dynamic_cast<std::pair<int,int>*>(remove[remove.size()-1]);
-			query+=String().sprintf(L"%d)\n",yplan->first);
+			query+=String().sprintf(L"%d)\t",yplan->first);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"programplan",parent->parent->getUID(),this->id);
 			query+=addString;
 			it=std::find(plan.begin(),plan.end(),remove[remove.size()-1]);
@@ -654,7 +657,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 			plan.erase(it);
 		}
 		if(add.size()>0){
-            if(diff&1 || remove.size()>0)query+="\n";
+            if(diff&1 || remove.size()>0)query+="\t";
 			query+="insert into programplan (program_id, programplan_year, programplan_count,creator) values ";
 			for(int i=0;i<add.size()-1;++i){
 				yplan=dynamic_cast<std::pair<int,int>*>(add[i]);
@@ -677,7 +680,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 		add.resize(it-add.begin());
 		Specific *spec;
 		if(remove.size()>0){
-			if(diff&1 || diff&2)query+="\n";
+			if(diff&1 || diff&2)query+="\t";
 			query+=String().sprintf(L"delete from specclass where class_id=%d and specificity_id in (",this->id);
 			String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 			for(int i=0;i<remove.size()-1;++i){
@@ -690,12 +693,12 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 			spec=dynamic_cast<Specific*>(remove[remove.size()-1]);
 			it=std::find(specifics.begin(),specifics.end(),remove[remove.size()-1]);
 			specifics.erase(it);
-			query+=String().sprintf(L"%d)\n",spec->getID());
+			query+=String().sprintf(L"%d)\t",spec->getID());
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"specclass",parent->parent->getUID(),this->id);
 			query+=addString;
 		}
 		if(add.size()>0){
-			if(diff&1 || diff&2 || remove.size()>0)query+="\n";
+			if(diff&1 || diff&2 || remove.size()>0)query+="\t";
 			query+="insert into specprogram (program_id,specificity_id,creator) values ";
 			for(int i=0;i<add.size()-1;++i){
 				specifics.push_back(add[i]);
@@ -718,7 +721,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 		add.resize(it-add.begin());
 		Group *grp;
 		if(remove.size()>0){
-			if(diff&1 || diff&2 || diff&4)query+="\n";
+			if(diff&1 || diff&2 || diff&4)query+="\t";
 			query+=String().sprintf(L"delete from programgroups where program_id=%d and group_id in (",this->id);
 			String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 			for(int i=0;i<remove.size()-1;++i){
@@ -731,12 +734,12 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 			grp=dynamic_cast<Group*>(remove[remove.size()-1]);
 			it=std::find(groups.begin(),groups.end(),remove[remove.size()-1]);
 			groups.erase(it);
-			query+=String().sprintf(L"%d)\n",grp->getID());
+			query+=String().sprintf(L"%d)\t",grp->getID());
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"specclass",parent->parent->getUID(),this->id);
 			query+=addString;
 		}
 		if(add.size()>0){
-			if(diff&1 || diff&2 || diff&4 || remove.size()>0)query+="\n";
+			if(diff&1 || diff&2 || diff&4 || remove.size()>0)query+="\t";
 			query+="insert into programgroups (program_id,group_id,creator) values ";
 			for(int i=0;i<add.size()-1;++i){
 				groups.push_back(add[i]);
@@ -759,7 +762,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 		add.resize(it-add.begin());
 		std::pair<TDateTime,TDateTime>* time;
 		if(remove.size()>0){
-			if(diff&1 || diff&2 || diff&4 || diff&8)query+="\n";
+			if(diff&1 || diff&2 || diff&4 || diff&8)query+="\t";
 			query+=String().sprintf(L"delete from programtime where program_id=%d and (",this->id);
 			String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 			for(int i=0;i<remove.size()-1;++i){
@@ -771,7 +774,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 				times.erase(it);
 			}
 			time=dynamic_cast<std::pair<TDateTime,TDateTime>*>(remove[remove.size()-1]);
-			query+=String().sprintf(L"(programtime_start='%s' and programtime_end='%s'));\n",time->first.FormatString("hh:nn:00"),time->second.FormatString("hh:nn:00"));
+			query+=String().sprintf(L"(programtime_start='%s' and programtime_end='%s'));\t",time->first.FormatString("hh:nn:00"),time->second.FormatString("hh:nn:00"));
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"programtime",parent->parent->getUID(),this->id);
 			query+=addString;
 			it=std::find(times.begin(),times.end(),remove[remove.size()-1]);
@@ -779,7 +782,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 			times.erase(it);
 		}
 		if(add.size()>0){
-            if(diff&1 || diff&2 || diff&4 || diff&8 || remove.size()>0)query+="\n";
+            if(diff&1 || diff&2 || diff&4 || diff&8 || remove.size()>0)query+="\t";
 			query+="insert into programtime (program_id, programtime_start, programtime_end,creator) values ";
 			for(int i=0;i<add.size()-1;++i){
 				time=dynamic_cast<std::pair<TDateTime,TDateTime>*>(add[i]);
@@ -897,7 +900,7 @@ bool Programs::createEntities(std::vector<KAEntity*> &entities){
 		if(this->createSubQueryBuilder(query,entities)){
 			TStringList *queries=new TStringList();
 			queries->StrictDelimiter=true;
-			queries->Delimiter='\n';
+			queries->Delimiter='\t';
 			queries->DelimitedText=query;
 			for(int i=0;i<queries->Count;++i){
 				parent->connection->Execute((*queries)[i]);
@@ -908,17 +911,17 @@ bool Programs::createEntities(std::vector<KAEntity*> &entities){
 	return false;
 }
 bool Programs::deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities){
-	Group *ent;
+	Program *ent;
 	query="delete from program where  program_id in (";
 	String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 	for(int i=0;i<entities.size();++i){
-		ent=dynamic_cast<Group*>(entities[i]);
+		ent=dynamic_cast<Program*>(entities[i]);
 		if(i!=entities.size()-1){
 			query+=String().sprintf(L"%d,",ent->id);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE'),",L"program",parent->getUID(),ent->id);
 		}
 		else{
-			query+=String().sprintf(L"%d);\n",ent->id);
+			query+=String().sprintf(L"%d);\t",ent->id);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"program",parent->getUID(),ent->id);
 		}
 	}
@@ -957,10 +960,10 @@ bool Programs::createSubQueryBuilder(String &query,std::vector<KAEntity*> &entit
 			queryTime+=String().sprintf(L"(%d,'%s','%s',%d),",ent->getID(),ent->times[j]->first.FormatString("hh:nn:00"),ent->times[j]->second.FormatString("hh:nn:00"),parent->getUID());
 		}
 	}
-	if(*queryPlan.LastChar()==L',')query+=queryPlan.SubString(0,queryPlan.Length()-1)+";\n";
-	if(*querySpecific.LastChar()==L',')query+=querySpecific.SubString(0,querySpecific.Length()-1)+";\n";
-	if(*queryGroups.LastChar()==L',')query+=queryGroups.SubString(0,queryGroups.Length()-1)+";\n";
-	if(*queryTime.LastChar()==L',')query+=queryTime.SubString(0,queryTime.Length()-1)+";\n";
+	if(*queryPlan.LastChar()==L',')query+=queryPlan.SubString(0,queryPlan.Length()-1)+";\t";
+	if(*querySpecific.LastChar()==L',')query+=querySpecific.SubString(0,querySpecific.Length()-1)+";\t";
+	if(*queryGroups.LastChar()==L',')query+=queryGroups.SubString(0,queryGroups.Length()-1)+";\t";
+	if(*queryTime.LastChar()==L',')query+=queryTime.SubString(0,queryTime.Length()-1)+";\t";
 	if(query.Length()>0){
 		query=query.SubString(0,query.Length()-1);
 		return true;
@@ -988,24 +991,30 @@ Course& Course::operator =(const KAEntity& entity){
 }
 void Course::init(Program* program,TDateTime start,TDateTime end,int students,const std::vector<DateLesson*> *dates,String desc){
 	this->program=program;
-	program->addOwner(this);
+	if(program!=0)program->addOwner(this);
 	this->start=start;
 	this->end=end;
 	this->students=students;
-	for(int i=0;i<this->dates.size();++i)delete this->dates[i];
+	//for(int i=0;i<this->dates.size();++i)delete this->dates[i];
 	this->dates.clear();
 	if(dates!=0){
-		this->dates.resize(dates->size());
-		for(int i=0;i<dates->size();++i)this->dates[i]=new DateLesson(*dates->at(i));
+		//this->dates.resize(dates->size());
+		for(int i=0;i<dates->size();++i){
+			DateLesson *dl=(DateLesson*)malloc(sizeof(DateLesson));
+			dl->date=dates->at(i)->date;
+			dl->room=dates->at(i)->room;
+			this->dates.push_back(dl);
+		}
 	}
-	this->desc=desc;
+	this->desc="";
+	this->desc+=desc;
 }
 bool Course::updateQueryBuilder(String &query,KAEntity *entity){
 	Course *ent=dynamic_cast<Course*>(entity);
 	int diff=this->isDifferent(entity);
 	String tbn=dynamic_cast<CourseTable*>(parent)->tableName;
 	if(diff&1){
-		query=String().sprintf(L"update %s set program_id=%d,%s_timestart='%s',%s_timeend='%s',%s_students='%d',%s_desc='%s' updater=%d where %s_id=%d",tbn,ent->program->getID(),tbn,ent->start.FormatString("hh:nn"),tbn,ent->end.FormatString("hh:nn"),tbn,ent->students,tbn,ent->desc,parent->parent->getUID(),tbn,this->id);
+		query=String().sprintf(L"update %s set program_id=%d,%s_timestart='%s',%s_timeend='%s',%s_students=%d,%s_desc='%s', updater=%d where %s_id=%d",tbn,ent->program->getID(),tbn,ent->start.FormatString("hh:nn"),tbn,ent->end.FormatString("hh:nn"),tbn,ent->students,tbn,ent->desc.w_str(),parent->parent->getUID(),tbn,this->id);
 	}
 	if(diff&2){
 		std::sort(dates.begin(), dates.end(),isEqLesson);
@@ -1018,7 +1027,7 @@ bool Course::updateQueryBuilder(String &query,KAEntity *entity){
 		add.resize(it-add.begin());
 		DateLesson* dl;
 		if(remove.size()>0){
-			if(diff&1)query+="\n";
+			if(diff&1)query+="\t";
 			query+=String().sprintf(L"delete from dates%s where %s_id=%d and dates%s_date in (",tbn,tbn,this->id,tbn);
 			String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 			for(int i=0;i<remove.size()-1;++i){
@@ -1030,7 +1039,7 @@ bool Course::updateQueryBuilder(String &query,KAEntity *entity){
 				dates.erase(it);
 			}
 			dl=dynamic_cast<DateLesson*>(remove[remove.size()-1]);
-			query+=String().sprintf(L"'%s');\n",dl->date.FormatString("yyyy-mm-dd"));
+			query+=String().sprintf(L"'%s');\t",dl->date.FormatString("yyyy-mm-dd"));
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"datesplantable",parent->parent->getUID(),this->id);
 			query+=addString;
 			it=std::find(dates.begin(),dates.end(),remove[remove.size()-1]);
@@ -1038,7 +1047,7 @@ bool Course::updateQueryBuilder(String &query,KAEntity *entity){
 			dates.erase(it);
 		}
 		if(add.size()>0){
-			if(diff&1 || remove.size()>0)query+="\n";
+			if(diff&1 || remove.size()>0)query+="\t";
 			query+=String().sprintf(L"insert into dates%s (%s_id, dates%s_date, dates%s_class,creator) values ",tbn,tbn,tbn,tbn);
 			for(int i=0;i<add.size()-1;++i){
 				dl=dynamic_cast<DateLesson*>(add[i]);
@@ -1133,7 +1142,7 @@ bool CourseTable::createEntities(std::vector<KAEntity*> &entities){
 		if(this->createSubQueryBuilder(query,entities)){
 			TStringList *queries=new TStringList();
 			queries->StrictDelimiter=true;
-			queries->Delimiter='\n';
+			queries->Delimiter='\t';
 			queries->DelimitedText=query;
 			for(int i=0;i<queries->Count;++i){
 				parent->connection->Execute((*queries)[i]);
@@ -1144,17 +1153,17 @@ bool CourseTable::createEntities(std::vector<KAEntity*> &entities){
 	return false;
 }
 bool CourseTable::deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities){
-	Group *ent;
+	Course *ent;
 	query=String().sprintf(L"delete from %s where  %s_id in (",tableName,tableName);
 	String addString="insert into changes(changes_table,changes_user,changes_time,changes_rid,changes_action) values ";
 	for(int i=0;i<entities.size();++i){
-		ent=dynamic_cast<Group*>(entities[i]);
+		ent=dynamic_cast<Course*>(entities[i]);
 		if(i!=entities.size()-1){
 			query+=String().sprintf(L"%d,",ent->id);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE'),",tableName,parent->getUID(),ent->id);
 		}
 		else{
-			query+=String().sprintf(L"%d);\n",ent->id);
+			query+=String().sprintf(L"%d);\t",ent->id);
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",tableName,parent->getUID(),ent->id);
 		}
 	}
@@ -1166,7 +1175,7 @@ bool CourseTable::createQueryBuilder(String& query,std::vector<KAEntity*> &entit
 	query=String().sprintf(L"insert into %s(program_id,%s_timestart,%s_timeend,%s_students, %s_desc,creator) values ",tableName,tableName,tableName,tableName,tableName,tableName);
 	for(int i=0;i<entities.size();++i){
 		ent=dynamic_cast<Course*>(entities[i]);
-		query+=String().sprintf(L"(%d,'%s','%s',%d,'%s',%d)",ent->program->getID(),ent->start.FormatString("hh:nn"),ent->end.FormatString("hh:nn"),ent->students,ent->desc,parent->getUID());
+		query+=String().sprintf(L"(%d,'%s','%s',%d,'%s',%d)",ent->program->getID(),ent->start.FormatString("hh:nn"),ent->end.FormatString("hh:nn"),ent->students,ent->desc.w_str(),parent->getUID());
 		if(i!=entities.size()-1)query+=",";else query+=";";
 	}
 	return true;
@@ -1195,14 +1204,18 @@ void CourseTable::addMonth(TDate month){
 	}
 	this->months.push_back(month);
 }
-bool CourseTable::loadMonth(TDate date){
+bool CourseTable::hasMonth(TDate month){
 	unsigned short year,monthh,day,year2,month2;
-	date.DecodeDate(&year2,&month2,&day);
+	month.DecodeDate(&year2,&month2,&day);
 	for(int i=0;i<this->months.size();++i){
 		months[i].DecodeDate(&year,&monthh,&day);
 		if(year==year2 && monthh==month2)return true;
 	}
-	months.push_back(date);
+	return false;
+}
+bool CourseTable::loadMonth(TDate date){
+	if(hasMonth(date))return true;
+	else months.push_back(date);
 	String qS=String().sprintf(L"SELECT %s_id as id,dates%s_date as date, dates%s_class as class FROM dates%s where ",tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str());
 	qS+=String().sprintf(L"(dates%s_date>='%s' and dates%s_date<'%s');",tableName.w_str(),date.FormatString("yyyy-mm-01"),tableName.w_str(),(date+32).FormatString("yyyy-mm-01").w_str());
 	TADOQuery &query=*(new TADOQuery(0));

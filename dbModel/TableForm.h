@@ -10,23 +10,26 @@
 #include <Vcl.ExtCtrls.hpp>
 #include <Vcl.Grids.hpp>
 #include <Vcl.ImgList.hpp>
+#include <Vcl.ComCtrls.hpp>
 #include <algorithm>
 #include <vector>
 #include "CoreData.h"
 #include "CourseCreateForm.h"
 #include <set>
+#include <map>
+#include "ReportFirst.h"
 //using namespace std;
 //---------------------------------------------------------------------------
 class TCourseCreate;
-struct ProgTables{
+/*struct ProgTables{
 	Program *prog;
 	std::pair<TDateTime,TDateTime> time;
 	std::vector<Course*> plan;
 	std::vector<Course*> real;
-};
-enum CellType{EUsual,EEmpty,ESpan,ECourseS,ECourseUS,EStaticS,EStaticUS};
+};  */
+//enum CellType{EUsual,EEmpty,ESpan,ECourseS,ECourseUS,EStaticS,EStaticUS};
 
-class Cell{
+/*class Cell{
 public:
 	Cell();
 	void setSpan(int hs,int vs,String text,unsigned int flags=DT_CENTER|DT_WORDBREAK);
@@ -38,7 +41,7 @@ public:
 	Course* courseR,*courseP;
 	DateLesson *lessonR,*lessonP;
 	CellType cellType;
-};
+};     */
 
 class TTableForm : public TForm
 {
@@ -48,7 +51,6 @@ __published:	// IDE-managed Components
 	TCheckBox *CheckBox2;
 	TStringGrid *StringGrid1;
 	TPanel *Panel1;
-	TPanel *Panel2;
 	TPanel *Panel3;
 	TImageList *ImageList1;
 	TButton *Button2;
@@ -56,8 +58,13 @@ __published:	// IDE-managed Components
 	TLabel *monthLabel;
 	TGroupBox *GroupBox2;
 	TCheckBox *CheckBox3;
-	TLabel *Label1;
-	TLabel *Label2;
+	TGroupBox *GroupBox3;
+	TButton *Button1;
+	TButton *Button4;
+	TRichEdit *RichEdit1;
+	TGroupBox *GroupBox4;
+	TButton *Button5;
+	TButton *Button6;
 	void __fastcall FormResize(TObject *Sender);
 	void __fastcall StringGrid1DrawCell(TObject *Sender, int ACol, int ARow, TRect &Rect,
           TGridDrawState State);
@@ -78,6 +85,8 @@ __published:	// IDE-managed Components
           int X, int Y);
 	void __fastcall StringGrid1StartDrag(TObject *Sender, TDragObject *&DragObject);
 	void __fastcall FormShow(TObject *Sender);
+	void __fastcall Button1Click(TObject *Sender);
+	void __fastcall Button5Click(TObject *Sender);
 
 
 
@@ -137,11 +146,20 @@ public:		// User declarations
 	};
 	TColor  executedCourseColor;
 	int itscc,itscr;
-	Course *selectedCourse;
+	std::map<Program*,int> progStCountS;
+	std::map<Program*,int> progStCountC;
+	void refreshStCCInf(std::vector<ProgTables*> &prgs);
+	void refreshStCSInf(std::vector<ProgTables*> &prgs);
+	std::map<Group*,int> groupCountS;
+	std::map<Group*,int> groupCountC;
+	void refreshGrCC();
+	void refreshGrCS();
+	Course *selectedCourse,tempSelectedC;
 	bool showReal,showPlan;
 	bool showAllPrograms;
 	bool hasCtrlPressedMC;
 	int gatherStCountForMonth(Program *pr,TDate month);
+	int gatherStCFMG(Group* gr,TDate month);
 	void sstringRedraw();
 	ProgTables* getProgTableByRow(int row);
 	TCourseCreate *ccf;

@@ -23,6 +23,7 @@ public:
 	virtual bool validate()const =0;
 	virtual int isDifferent(KAEntity *entity)const =0;
 	int getID();
+	KAEntityTable *getParent();
 	void addOwner(KAEntity* entity);
 	void removeOwner(KAEntity* entity);
 	virtual void debind();
@@ -217,6 +218,7 @@ public:
 	bool createEntities(std::vector<KAEntity*> &entities);
 	bool loadMonth(TDate date);
 	void addMonth(TDate);
+	bool hasMonth(TDate month);
 protected:
 	String tableName;
 	std::vector<TDate> months;

@@ -9,6 +9,7 @@ TADOConnection * App::connection=0;
 int App::uid=0;
 String App::login="";
 String App::password="";
+String App::progFolder="";
 wchar_t App::buffer[MAX_PATH];
 int App::cookie=0;
 SDODBImage *App::db=0;
@@ -19,7 +20,9 @@ void App::init(){
 	bool result = SHGetSpecialFolderPath(0, buffer, CSIDL_LOCAL_APPDATA,false );
 	if(result){
 		String path=buffer;
-		path+="//SDO//auth.ini";
+		progFolder=path;
+		progFolder+="//SDO//";
+		path=progFolder+"auth.ini";
 		if(FileExists(path)){
 			FILE *f=_wfopen(path.w_str(),L"r");
 			buffer[0]='\0';

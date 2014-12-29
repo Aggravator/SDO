@@ -12,8 +12,8 @@ __fastcall TCourseCreate::TCourseCreate(TComponent* Owner,TTableForm *pp)
 	: TForm(Owner)
 {
 	this->pp=pp;
-	this->widthPlus=6;
-	this->heightPlus=25;
+	this->widthPlus=11;
+	this->heightPlus=33;
 }
 //---------------------------------------------------------------------------
 void __fastcall TCourseCreate::FormShow(TObject *Sender)
@@ -22,11 +22,22 @@ void __fastcall TCourseCreate::FormShow(TObject *Sender)
 	this->Panel2->Visible=false;
 	this->Panel3->Visible=false;
 	this->Panel4->Visible=false;
+	this->Panel5->Visible=false;
 	if(isPlan==isReal){
 		this->Panel1->SetBounds(0,0,Panel1->Width,Panel1->Height);
 		this->Panel1->Visible=true;
 		this->Width=Panel1->Width+widthPlus;
 		this->Height=Panel1->Height+heightPlus;
+	}else if(prog==NULL){
+		showPrograms();
+	}else if(smena==NULL){
+		showSmena();
+	}else if(room==NULL){
+		showRooms();
+	}else if(studentsC<0){
+		showStudents();
+	}else{
+        ModalResult = mrOk;
 	}
 }
 //---------------------------------------------------------------------------

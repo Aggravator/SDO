@@ -1,0 +1,60 @@
+//---------------------------------------------------------------------------
+
+#ifndef ReportFirstH
+#define ReportFirstH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include "CoreData.h"
+#include <map>
+#include      <ComObj.hpp>
+#include      <utilcls.h>
+//---------------------------------------------------------------------------
+class TReportFirst : public TForm
+{
+__published:	// IDE-managed Components
+	TButton *Button1;
+	TComboBox *ComboBox1;
+	TEdit *Edit1;
+	TLabel *Label1;
+	TComboBox *ComboBox2;
+	TEdit *Edit2;
+	TLabel *Label2;
+	void __fastcall FormShow(TObject *Sender);
+	void __fastcall Button1Click(TObject *Sender);
+private:	// User declarations
+	Course * selectedCourse;
+public:		// User declarations
+	__fastcall TReportFirst(TComponent* Owner);
+	Variant  vApp,vBooks,vBook,vSheets,vSheet,vCells,vCell;
+	void startEndToForm();
+	void startEndFromForm();
+	TDate start,end;
+	TDate month;
+	RealTable *realTable;
+	PlanTable *planTable;
+	std::vector<ProgTables*> progs;
+	std::vector<std::vector<Cell*>*> cells;
+	void regenerateCells(std::vector<ProgTables*> &prgs);
+	void clearCells();
+	void clearProgs();
+	std::map<Program*,int> progStCountS;
+	std::map<Program*,int> progStCountC;
+	void refreshStCCInf(std::vector<ProgTables*> &prgs);
+	void refreshStCSInf(std::vector<ProgTables*> &prgs);
+	std::map<Group*,int> groupCountS;
+	std::map<Group*,int> groupCountC;
+	void refreshGrCC();
+	void refreshGrCS();
+	bool showReal,showPlan;
+	bool showAllPrograms;
+	int gatherStCountForMonth(Program *pr,TDate month);
+	int gatherStCFMG(Group* gr,TDate month);
+	void sstringRedraw();
+	ProgTables* getProgTableByRow(int row);
+};
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+#endif

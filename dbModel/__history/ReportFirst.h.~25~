@@ -1,0 +1,121 @@
+//---------------------------------------------------------------------------
+
+#ifndef ReportFirstH
+#define ReportFirstH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include "CoreData.h"
+#include "App.h"
+#include <map>
+#include      <ComObj.hpp>
+#include      <utilcls.h>
+//---------------------------------------------------------------------------
+struct ProgTables{
+	Program *prog;
+	std::pair<TDateTime,TDateTime> time;
+	std::vector<Course*> plan;
+	std::vector<Course*> real;
+};
+enum CellType{EUsual,EEmpty,ESpan,ECourseS,ECourseUS,EStaticS,EStaticUS};
+
+class Cell{
+public:
+	Cell();
+	void setSpan(int hs,int vs,String text,unsigned int flags=DT_CENTER|DT_WORDBREAK);
+	void setCourseSpan(int hs);
+	void setStaticS(int hs,int vs,String text,unsigned int flags=DT_CENTER|DT_SINGLELINE|DT_VCENTER);
+	unsigned int flags;
+	int hspan,vspan;
+	String text;
+	Course* courseR,*courseP;
+	DateLesson *lessonR,*lessonP;
+	CellType cellType;
+};
+class TReportFirst : public TForm
+{
+__published:	// IDE-managed Components
+	TButton *Button1;
+	TComboBox *ComboBox1;
+	TEdit *Edit1;
+	TLabel *Label1;
+	TComboBox *ComboBox2;
+	TLabel *Label2;
+	void __fastcall FormShow(TObject *Sender);
+	void __fastcall Button1Click(TObject *Sender);
+private:	// User declarations
+	Course * selectedCourse;
+public:		// User declarations
+	__fastcall TReportFirst(TComponent* Owner);
+	__fastcall ~TReportFirst();
+		struct FindPlanTByCourse{
+	public:
+		Course *course;
+		bool operator()(ProgTables* ent) const
+		{
+			if(course->program==ent->prog){
+				unsigned short hour1,hour2,min1,min2,sec,msec;
+				course->start.DecodeTime(&hour1,&min1,&sec,&msec);
+				ent->time.first.DecodeTime(&hour2,&min2,&sec,&msec);
+				if(hour1==hour2 && min1==min2){
+					course->end.DecodeTime(&hour1,&min1,&sec,&msec);
+					ent->time.second.DecodeTime(&hour2,&min2,&sec,&msec);
+					if(hour1==hour2 && min1==min2) return true;
+				}
+			}
+			return false;
+		}
+	};
+	struct FindPlanTByProgTime{
+	public:
+		Program *prog;
+		std::pair<TDateTime,TDateTime>* time;
+		bool operator()(ProgTables* ent) const
+		{
+			if(prog==ent->prog){
+				unsigned short hour1,hour2,min1,min2,sec,msec;
+				time->first.DecodeTime(&hour1,&min1,&sec,&msec);
+				ent->time.first.DecodeTime(&hour2,&min2,&sec,&msec);
+				if(hour1==hour2 && min1==min2){
+					time->second.DecodeTime(&hour1,&min1,&sec,&msec);
+					ent->time.second.DecodeTime(&hour2,&min2,&sec,&msec);
+					if(hour1==hour2 && min1==min2) return true;
+				}
+			}
+			return false;
+		}
+	};
+	Variant  vApp,vBooks,vBook,vSheets,vSheet,vCells,vCell;
+	void startEndToForm();
+	void startEndFromForm();
+	TDate start,end;
+	TDate month;
+	RealTable *realTable;
+	PlanTable *planTable;
+	std::vector<ProgTables*> progs;
+	std::vector<std::vector<Cell*>*> cells;
+	void regenerateCells(std::vector<ProgTables*> &prgs);
+	void clearCells();
+	void clearProgs();
+	std::map<Program*,int> progStCountS;
+	std::map<Program*,int> progStCountC;
+	void refreshStCCInf(std::vector<ProgTables*> &prgs);
+	void refreshStCSInf(std::vector<ProgTables*> &prgs);
+	std::map<Group*,int> groupCountS;
+	std::map<Group*,int> groupCountC;
+	void refreshGrCC();
+	void refreshGrCS();
+	bool showReal,showPlan;
+	bool showAllPrograms;
+	int gatherStCountForMonth(Program *pr,TDate month);
+	int gatherStCFMG(Group* gr,TDate month);
+	void prTableToVector(ProgTables* pt,std::vector<Cell*>* row);
+	void sstringRedraw();
+	ProgTables* getProgTableByRow(int row);
+	bool isIntoPeriod(KAEntity* ent);
+};
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+#endif
