@@ -79,7 +79,11 @@ void __fastcall RoomRow::editBClick(TObject *Sender){
 	onedit();
 }
 void __fastcall RoomRow::deleteBClick(TObject *Sender){
+	parent->ControlCollection->BeginUpdate();
+	parent->RowCollection->BeginUpdate();
 	ondelete();
+	parent->RowCollection->EndUpdate();
+	parent->ControlCollection->EndUpdate();
 }
 RoomRow::~RoomRow(){
 	delete name;
@@ -151,7 +155,11 @@ void __fastcall TRoomsForm::Button2Click(TObject *Sender)
 	int hy=modalForm[0]->ShowModal();
 	if(hy==mrOk){
 		*cr=*modalForm[0]->getEntity();
+		panel->RowCollection->BeginUpdate();
+		panel->ControlCollection->BeginUpdate();
 		panel->addRow(cr);
+		panel->ControlCollection->EndUpdate();
+		panel->RowCollection->EndUpdate();
 	}
 }
 //---------------------------------------------------------------------------

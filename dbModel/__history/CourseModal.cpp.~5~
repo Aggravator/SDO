@@ -1,0 +1,22 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "CourseModal.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+
+//---------------------------------------------------------------------------
+__fastcall TCourseModal::TCourseModal(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+
+virtual void TCourseModal::writeToEntity(KAEntity *ent){
+}
+virtual void TCourseModal::writeToForm(KAEntity *ent){
+
+}

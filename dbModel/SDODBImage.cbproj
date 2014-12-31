@@ -143,6 +143,12 @@
             <DependentOn>CourseCreateForm.h</DependentOn>
             <BuildOrder>19</BuildOrder>
         </CppCompile>
+        <CppCompile Include="CourseModal.cpp">
+            <Form>Form12</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>CourseModal.h</DependentOn>
+            <BuildOrder>23</BuildOrder>
+        </CppCompile>
         <CppCompile Include="EntitiesForm.cpp">
             <DependentOn>EntitiesForm.h</DependentOn>
             <BuildOrder>13</BuildOrder>
@@ -227,8 +233,9 @@
         </CppCompile>
         <FormResources Include="RoomModal.dfm"/>
         <FormResources Include="RoomsForm.dfm"/>
-        <FormResources Include="ProgramsForm.dfm"/>
+        <FormResources Include="ReportFirst.dfm"/>
         <FormResources Include="ProgramModal.dfm"/>
+        <FormResources Include="ProgramsForm.dfm"/>
         <FormResources Include="TableForm.dfm"/>
         <FormResources Include="Unit2.dfm"/>
         <FormResources Include="SpecificsForm.dfm"/>
@@ -237,7 +244,7 @@
         <FormResources Include="AuthForm.dfm"/>
         <FormResources Include="GroupModal.dfm"/>
         <FormResources Include="GroupsForm.dfm"/>
-        <FormResources Include="ReportFirst.dfm"/>
+        <FormResources Include="CourseModal.dfm"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

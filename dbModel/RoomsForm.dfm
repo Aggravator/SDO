@@ -70,7 +70,6 @@ object RoomsForm: TRoomsForm
         Value = 100.000000000000000000
       end>
     TabOrder = 0
-    ExplicitWidth = 283
     DesignSize = (
       341
       25)
@@ -133,8 +132,6 @@ object RoomsForm: TRoomsForm
     ParentFont = False
     TabOrder = 1
     OnClick = Button5Click
-    ExplicitTop = 210
-    ExplicitWidth = 283
   end
   object Button2: TButton
     Left = 0
@@ -151,8 +148,6 @@ object RoomsForm: TRoomsForm
     ParentFont = False
     TabOrder = 2
     OnClick = Button2Click
-    ExplicitTop = 174
-    ExplicitWidth = 283
   end
   object ScrollBox1: TScrollBox
     Left = 0
@@ -164,8 +159,6 @@ object RoomsForm: TRoomsForm
     BevelOuter = bvNone
     BorderStyle = bsNone
     TabOrder = 3
-    ExplicitWidth = 283
-    ExplicitHeight = 149
   end
   object ImageList1: TImageList
     ColorDepth = cd32Bit
@@ -176,7 +169,7 @@ object RoomsForm: TRoomsForm
     Left = 223
     Top = 184
     Bitmap = {
-      494C010102001400500019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102001400540019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

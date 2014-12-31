@@ -1,0 +1,24 @@
+//---------------------------------------------------------------------------
+
+#ifndef CourseModalH
+#define CourseModalH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include "ModalEntityForm.h"
+//---------------------------------------------------------------------------
+class TCourseModal : public TModalEntityForm
+{
+__published:	// IDE-managed Components
+private:	// User declarations
+public:		// User declarations
+	__fastcall TCourseModal(TComponent* Owner);
+	virtual void writeToEntity(KAEntity *ent);
+	virtual void writeToForm(KAEntity *ent);
+};
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+#endif
