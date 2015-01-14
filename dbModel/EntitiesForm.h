@@ -38,7 +38,7 @@ public:
 	void clear();
 	virtual EntityRow* addRow(KAEntity *entity=0)=0;
 	int rowHeight;
-	public:
+public:
 	void applyChanges();
 	__fastcall RowsPanel(TComponent *Owner);
 	__fastcall virtual ~RowsPanel();

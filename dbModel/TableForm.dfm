@@ -11,6 +11,7 @@ object TableForm: TTableForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  WindowState = wsMaximized
   OnResize = FormResize
   OnShow = FormShow
   PixelsPerInch = 96
@@ -19,7 +20,7 @@ object TableForm: TTableForm
     Left = 0
     Top = 115
     Width = 875
-    Height = 296
+    Height = 277
     Align = alClient
     DefaultRowHeight = 20
     DefaultDrawing = False
@@ -38,8 +39,6 @@ object TableForm: TTableForm
     OnMouseUp = StringGrid1MouseUp
     OnSelectCell = StringGrid1SelectCell
     OnStartDrag = StringGrid1StartDrag
-    ExplicitTop = 123
-    ExplicitHeight = 288
     ColWidths = (
       64
       64
@@ -134,7 +133,7 @@ object TableForm: TTableForm
         ImageIndex = 3
         Images = ImageList1
         TabOrder = 1
-        OnClick = Button3Click
+        OnClick = Button4Click
       end
       object RichEdit1: TRichEdit
         Left = 40
@@ -149,7 +148,6 @@ object TableForm: TTableForm
         Font.Style = []
         ParentFont = False
         TabOrder = 2
-        ExplicitWidth = 445
       end
     end
     object GroupBox4: TGroupBox
@@ -180,7 +178,7 @@ object TableForm: TTableForm
         ImageIndex = 4
         Images = ImageList1
         TabOrder = 1
-        OnClick = Button3Click
+        OnClick = Button6Click
       end
     end
   end
@@ -203,7 +201,6 @@ object TableForm: TTableForm
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 3
-    ExplicitTop = 89
     DesignSize = (
       875
       34)
@@ -246,6 +243,33 @@ object TableForm: TTableForm
       OnClick = Button3Click
     end
   end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 392
+    Width = 875
+    Height = 19
+    Panels = <
+      item
+        Width = 50
+      end>
+  end
+  object CheckBox4: TCheckBox
+    Left = 132
+    Top = 50
+    Width = 53
+    Height = 17
+    Caption = #1063#1072#1089#1099':'
+    TabOrder = 5
+    OnClick = CheckBox4Click
+  end
+  object Edit1: TEdit
+    Left = 180
+    Top = 48
+    Width = 37
+    Height = 21
+    NumbersOnly = True
+    TabOrder = 6
+  end
   object ImageList1: TImageList
     ColorDepth = cd32Bit
     Height = 25
@@ -253,7 +277,7 @@ object TableForm: TTableForm
     Left = 416
     Top = 360
     Bitmap = {
-      494C010105000800800019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010105000800980019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       000000000000360000002800000064000000320000000100200000000000204E
       0000000000000000000000000000000000000000000000000000110F117E524E
       51C7595258D15A525AD25D545CD261585FD3645A62D3675D64D3685F66D36B60

@@ -11,54 +11,21 @@ object SpecificsForm: TSpecificsForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object ScrollBox1: TScrollBox
     Left = 0
-    Top = 0
+    Top = 27
     Width = 509
-    Height = 258
+    Height = 231
     VertScrollBar.Tracking = True
     Align = alClient
+    BevelInner = bvNone
+    BevelOuter = bvNone
+    BorderStyle = bsNone
     TabOrder = 2
-    object GridPanel1: TGridPanel
-      Left = 0
-      Top = 0
-      Width = 505
-      Height = 113
-      Align = alTop
-      BevelOuter = bvNone
-      ColumnCollection = <
-        item
-          SizeStyle = ssAbsolute
-          Value = 35.000000000000000000
-        end
-        item
-          Value = 100.000000000000000000
-        end
-        item
-          SizeStyle = ssAbsolute
-          Value = 35.000000000000000000
-        end>
-      ControlCollection = <>
-      DoubleBuffered = True
-      Padding.Left = 2
-      Padding.Top = 2
-      Padding.Right = 2
-      Padding.Bottom = 2
-      ParentDoubleBuffered = False
-      RowCollection = <
-        item
-          SizeStyle = ssAbsolute
-          Value = 35.000000000000000000
-        end
-        item
-          SizeStyle = ssAbsolute
-          Value = 35.000000000000000000
-        end>
-      TabOrder = 0
-    end
+    ExplicitTop = 33
+    ExplicitHeight = 225
   end
   object Button5: TButton
     AlignWithMargins = True
@@ -78,7 +45,6 @@ object SpecificsForm: TSpecificsForm
     Font.Style = []
     ParentFont = False
     TabOrder = 1
-    OnClick = Button5Click
   end
   object Button1: TButton
     Left = 0
@@ -96,6 +62,62 @@ object SpecificsForm: TSpecificsForm
     TabOrder = 0
     OnClick = Button1Click
   end
+  object GridPanel1: TGridPanel
+    Left = 0
+    Top = 0
+    Width = 509
+    Height = 27
+    Align = alTop
+    BevelOuter = bvNone
+    ColumnCollection = <
+      item
+        SizeStyle = ssAbsolute
+        Value = 35.000000000000000000
+      end
+      item
+        Value = 100.000000000000000000
+      end
+      item
+        SizeStyle = ssAbsolute
+        Value = 35.000000000000000000
+      end>
+    ControlCollection = <
+      item
+        Column = 1
+        Control = Label2
+        Row = 0
+      end>
+    DoubleBuffered = True
+    Padding.Left = 2
+    Padding.Top = 2
+    Padding.Right = 2
+    Padding.Bottom = 2
+    ParentDoubleBuffered = False
+    RowCollection = <
+      item
+        SizeStyle = ssAbsolute
+        Value = 35.000000000000000000
+      end>
+    TabOrder = 3
+    DesignSize = (
+      509
+      27)
+    object Label2: TLabel
+      Left = 226
+      Top = 11
+      Width = 56
+      Height = 16
+      Anchors = []
+      Caption = #1053#1072#1079#1074#1072#1085#1080#1077
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ExplicitLeft = 253
+    end
+  end
   object ImageList1: TImageList
     ColorDepth = cd32Bit
     DrawingStyle = dsTransparent
@@ -105,7 +127,7 @@ object SpecificsForm: TSpecificsForm
     Left = 256
     Top = 152
     Bitmap = {
-      494C010102001400340019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101020014003C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

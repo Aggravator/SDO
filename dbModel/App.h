@@ -7,11 +7,15 @@
 #include "GroupModal.h"
 #include "RoomModal.h"
 #include "ProgramModal.h"
+#include "SpecificModal.h"
+#include "CourseModal.h"
 #include <typeinfo>
+class TCourseModal;
 class SDODBImage;
 class App{
 public:
-	static void init();
+	static int version;
+	static int init(wchar_t *cmd);
 	static void saveAuth();
 	static void destruct();
 	static void updateCookie();
@@ -19,7 +23,9 @@ public:
 	static bool isConnectionActive();
 	static String login;
 	static String password;
+	static String dataFolder;
 	static String progFolder;
+	static String serverIp;
 	static int uid;
 	static int cookie;
 	static SDODBImage *db;
@@ -28,6 +34,8 @@ public:
 		static TRoomModal* roomModal;
 		static TGroupModal* groupModal;
 		static TProgramModal* programModal;
+		static TSpecificModal* specificModal;
+		static TCourseModal* courseModal;
 		static void initForm(TModalEntityForm* *modalForm){
 			if(modalForm==&groupModal){
 				try {typeid(*groupModal);}
@@ -40,6 +48,10 @@ public:
 			if(modalForm==&programModal){
 				try {typeid(*programModal);}
 				catch (...){programModal=new TProgramModal(0);}
+			}
+			if(modalForm==&specificModal){
+				try {typeid(*specificModal);}
+				catch (...){specificModal=new TSpecificModal(0);}
 			}
 		}
 	};

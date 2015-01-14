@@ -15,7 +15,7 @@ __fastcall TForm2::TForm2(TComponent* Owner)
 {
 	specsForm=0;
 	tableForm=0;
-	TAuthForm *af=new TAuthForm(0);
+	TAuthForm *af=new TAuthForm(this);
 	af->ShowModal();
 	if(App::uid==0){
 		delete af;
@@ -23,6 +23,9 @@ __fastcall TForm2::TForm2(TComponent* Owner)
 		return;
 	}
 	delete af;
+	this->Caption="SDO ver. "+IntToStr(App::version);
+
+	//MessageBox(this->Handle,L"xmxmx",L"Îøèáêà",MB_OK);
 	/*db=new SDODBImage(App::connection,App::uid);
 	TDate month=EncodeDate(2012,11,01);
 	db->getRealTable()->addMonth(month);

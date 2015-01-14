@@ -79,6 +79,7 @@ void RowsPanel::deleteRow(EntityRow *entityRow) {
 void RowsPanel::debindRowControls(EntityRow *entityRow) {
 	std::vector<EntityRow*>::iterator it =
 		std::find(rows.begin(), rows.end(), entityRow);
+	//this->ControlCollection->
 	if (it != rows.end()) {
 		int i = this->ControlCollection->IndexOf((*it)->editButton);
 		if (i != -1) {

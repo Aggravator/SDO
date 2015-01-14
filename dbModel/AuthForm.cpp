@@ -43,7 +43,8 @@ void __fastcall TAuthForm::Button1Click(TObject *Sender)
 		}else MessageBox(this->Handle,L"Логин или пароль введены не корректно!",L"Ошибка",MB_OK);
 		query->Close();
 		delete query;
-    } else 	MessageBox(this->Handle,L"Логин и пароль должны содержать как миниму один символ!",L"Ошибка",MB_OK);
+	} else 	MessageBox(this->Handle,L"Логин и пароль должны содержать как миниму один символ!",L"Ошибка",MB_OK);
+
 }
 //---------------------------------------------------------------------------
 

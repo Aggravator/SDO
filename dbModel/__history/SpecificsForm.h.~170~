@@ -1,0 +1,154 @@
+//---------------------------------------------------------------------------
+
+#ifndef SpecificsFormH
+#define SpecificsFormH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include <Vcl.ExtCtrls.hpp>
+#include <Vcl.Dialogs.hpp>
+#include <Data.DB.hpp>
+#include <Data.Win.ADODB.hpp>
+#include <Vcl.DBGrids.hpp>
+#include <Vcl.Grids.hpp>
+#include <Vcl.ImgList.hpp>
+#include <Vcl.Buttons.hpp>
+#include <Vcl.Mask.hpp>
+#include <vector>
+#include "ComplexEntitiesFrom.h"
+#include "CoreData.h"
+#include "App.h"
+#include <algorithm>
+#include "SpecificDialog.h"
+#include "Unit2.h"
+//---------------------------------------------------------------------------
+
+class TSpecificsForm : public TForm
+{
+__published:	// IDE-managed Components
+	TScrollBox *ScrollBox1;
+	TGridPanel *GridPanel1;
+	TButton *Button5;
+	TImageList *ImageList1;
+	TButton *Button1;
+	void __fastcall FormShow(TObject *Sender);
+	void __fastcall Button1Click(TObject *Sender);
+	void __fastcall Button5Click(TObject *Sender);
+private:	// User declarations
+	struct entsPA{
+	public:
+		struct specE{
+		public:
+			void __fastcall onDelete(TObject *Sender){
+				parent->deleteEnt.push_back(this);
+				debind();
+				for(int i=0;i<parent->rows.size();++i){
+					if(parent->rows[i]==this){
+						parent->rows.erase(parent->rows.begin()+i);
+						break;
+					}
+				}
+			}
+			void __fastcall onEdit(TObject *Sender){
+				Specific *spec=new Specific(name->Text);
+				TSpecificDialog *specDialog=new TSpecificDialog(0,spec);
+				specDialog->ShowModal();
+				if(spec->validate()){
+					name->Text=spec->name;
+				}
+				delete specDialog;
+				delete spec;
+			}
+			specE(entsPA *parent,TGridPanel *gPanel,TImageList *imgList,Specific *old=0){
+				this->gPanel=gPanel;
+				this->imgList=imgList;
+				this->old=old;
+				this->parent=parent;
+				name=new TEdit((HWND)0);
+				name->Font->Size=12;
+				name->Align=alClient;
+				editButton=new TButton((HWND)0);
+				editButton->Align=alClient;
+				editButton->Images=imgList;
+				editButton->ImageIndex=0;
+				editButton->OnClick=onEdit;
+				deleteButton=new TButton((HWND)0);
+				deleteButton->Align=alClient;
+				deleteButton->Images=imgList;
+				deleteButton->ImageIndex=1;
+				deleteButton->OnClick=onDelete;
+				if(old!=0){
+					name->Text=old->name;
+				}
+				insert();
+			}
+			void debind(){
+				gPanel->ControlCollection->RemoveControl(name);
+				gPanel->ControlCollection->RemoveControl(deleteButton);
+				gPanel->ControlCollection->RemoveControl(editButton);
+				for(int i=0;i<parent->rows.size();++i){
+					if(parent->rows[i]==this){
+                    	gPanel->RowCollection->Delete(i);
+						break;
+					}
+				}
+				gPanel->Height-=35;
+			}
+			void insert(){
+				gPanel->ControlCollection->BeginUpdate();
+				gPanel->ControlCollection->AddControl(editButton);
+				editButton->Parent=gPanel;
+				gPanel->ControlCollection->AddControl(name);
+				name->Parent=gPanel;
+				gPanel->ControlCollection->AddControl(deleteButton);
+				deleteButton->Parent=gPanel;
+				gPanel->Height+=35;
+				gPanel->RowCollection->operator [](gPanel->RowCollection->Count-1)->SizeStyle=ssAbsolute;
+				gPanel->RowCollection->operator [](gPanel->RowCollection->Count-1)->Value=35;
+				gPanel->ControlCollection->EndUpdate();
+			}
+			~specE(){
+				delete name;
+				delete editButton;
+				delete deleteButton;
+			}
+			entsPA *parent;
+			Specific *old;
+			TEdit *name;
+			TButton *editButton;
+			TButton *deleteButton;
+			TGridPanel *gPanel;
+			TImageList *imgList;
+		};
+		TSpecificsForm *parent;
+		std::vector<specE*> deleteEnt;
+		std::vector<specE*> rows;
+		entsPA(TSpecificsForm *form){
+			parent=form;
+			form->GridPanel1->RowCollection->Clear();
+			form->GridPanel1->Height=0;
+			Specifics *spc=App::db->getSpecifics();
+			for(int i=0;i<spc->size();++i){
+				specE *sce=new specE(this,form->GridPanel1,form->ImageList1,dynamic_cast<Specific*>(spc->at(i)));
+				rows.push_back(sce);
+			}
+		}
+		void redraw(){
+			while(rows.size()>0)rows[0]->debind();
+			for(int i=0;i<rows.size();++i)rows[i]->insert();
+		}
+		~entsPA(){
+			for(int i=0;i<rows.size();++i)delete rows.at(i);
+			for(int i=0;i<deleteEnt.size();++i)delete deleteEnt.at(i);
+		}
+	};
+	entsPA *epa;
+
+public:		// User declarations
+	__fastcall TSpecificsForm(TComponent* Owner);
+};
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+#endif

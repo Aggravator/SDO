@@ -135,7 +135,9 @@ void TCourseCreate::showStudents(){
 	this->Width=Panel5->Width+widthPlus;
 	this->Height=Panel5->Height+heightPlus;
 	this->Edit1->Text="";
+	this->Label5->Caption="max="+IntToStr(this->room->capacity);
 	this->Panel5->Visible=true;
+	this->Edit1->SetFocus();
 }
 void __fastcall TCourseCreate::Button1Click(TObject *Sender)
 {
@@ -227,6 +229,18 @@ void __fastcall TCourseCreate::Button3Click(TObject *Sender)
 	Panel5->Visible=false;
 	this->studentsC=StrToInt(Edit1->Text);
 	ModalResult = mrOk;
+}
+//---------------------------------------------------------------------------
+
+
+
+void __fastcall TCourseCreate::Edit1KeyDown(TObject *Sender, WORD &Key, TShiftState Shift)
+
+{
+	if(Key==13){
+		Key=0;
+		this->Button3Click(Button3);
+	}
 }
 //---------------------------------------------------------------------------
 

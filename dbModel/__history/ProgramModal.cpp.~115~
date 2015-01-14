@@ -1,0 +1,224 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "ProgramModal.h"
+#include "App.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+//---------------------------------------------------------------------------
+
+
+
+void __fastcall TMColorButton::Paint(TCanvas *Canvas){
+	sButtonColor=(TButtonColor*)Control;
+	Canvas->Brush->Color=sButtonColor->SymbolColor;
+	Canvas->Rectangle(sButtonColor->ClientRect);
+	Canvas->FillRect(sButtonColor->ClientRect);
+}
+
+
+__fastcall TProgramModal::TProgramModal(TComponent* Owner)
+	: TModalEntityForm(Owner)
+{
+	//this->colorButton=new TMColorButton(0);
+	//colorButton->Parent=this;
+	emptyEntity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
+	entity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
+	tempEntity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
+	this->StringGrid1->Cells[0][0]="Год";
+	this->StringGrid1->Cells[1][0]="План";
+	this->StringGrid2->Cells[0][0]="Начало";
+	this->StringGrid2->Cells[1][0]="Конец";
+	this->Button1->OnClick=FormOk;
+	this->OnShow=FormShow;
+	ListBox1->Sorted=true;
+	ListBox2->Sorted=true;
+	ListBox3->Sorted=true;
+	ListBox4->Sorted=true;
+
+}
+//---------------------------------------------------------------------------
+
+bool specSort(KAEntity *a,KAEntity *b){
+	Specific *sp1=dynamic_cast<Specific*>(a);
+	Specific *sp2=dynamic_cast<Specific*>(b);
+	return sp1->name<sp2->name;
+}
+void TProgramModal::writeToEntity(KAEntity *ent){
+	Program *pr=dynamic_cast<Program*>(ent);
+	pr->name=Edit1->Text;
+	pr->key=Edit3->Text;
+	pr->days=StrToInt(Edit2->Text);
+	pr->hours=StrToInt(Edit4->Text);
+	pr->isactual=CheckBox1->Checked;
+	pr->istraining=CheckBox2->Checked;
+	pr->color=this->colorButton->SymbolColor;
+	pr->specifics.clear();
+	for(int i=0;i<ListBox2->Count;++i){
+		Specific *sp=reinterpret_cast<Specific*>(ListBox2->Items->Objects[i]);
+		pr->specifics.push_back(reinterpret_cast<Specific*>(ListBox2->Items->Objects[i]));
+	}
+	for(int i=0;i<pr->plan.size();++i)delete pr->plan[i];
+	for(int i=0;i<this->StringGrid1->RowCount-2;++i){
+		try{
+			std::pair<int,int> *yp=new std::pair<int,int>(StrToInt(StringGrid1->Cells[0][i+1]),StrToInt(StringGrid1->Cells[1][i+1]));
+			pr->plan.push_back(yp);
+		}
+		catch(...){
+        }
+	}
+	for(int i=0;i<pr->times.size();++i)delete pr->times[i];
+	pr->times.resize(this->StringGrid2->RowCount-2);
+	for(int i=0;i<this->StringGrid2->RowCount-2;++i){
+		try{
+		std::pair<TDateTime,TDateTime> *yp=new std::pair<TDateTime,TDateTime>(StrToTime(StringGrid2->Cells[0][i+1]),StrToTime(StringGrid2->Cells[1][i+1]));
+		pr->times.push_back(yp);
+		}
+		catch(...){}
+		pr->times[i]=yp;
+	}
+	pr->groups.clear();
+	for(int i=0;i<ListBox4->Count;++i){
+		Group *sp=reinterpret_cast<Group*>(ListBox4->Items->Objects[i]);
+		pr->groups.push_back(reinterpret_cast<Group*>(ListBox4->Items->Objects[i]));
+	}
+}
+
+void TProgramModal::writeToForm(KAEntity *ent){
+	Program *pr=dynamic_cast<Program*>(ent);
+	Edit1->Text=pr->name;
+	Edit3->Text=pr->key;
+	Edit2->Text=IntToStr(pr->days);
+	Edit4->Text=IntToStr(pr->hours);
+	CheckBox1->Checked=pr->isactual;
+	CheckBox2->Checked=pr->istraining;
+	{
+		Specifics *specifics=App::db->getSpecifics();
+		std::sort(specifics->begin(), specifics->end());
+		std::sort(pr->specifics.begin(), pr->specifics.end());
+		std::vector<KAEntity*> lC(specifics->size());
+		std::vector<KAEntity*>::iterator it= std::set_difference(specifics->begin(), specifics->end(),pr->specifics.begin(), pr->specifics.end(),lC.begin());
+		lC.resize(it-lC.begin());
+		ListBox1->Clear();
+		for(int i=0;i<lC.size();++i){
+			this->ListBox1->AddItem(dynamic_cast<Specific*>(lC[i])->name,reinterpret_cast<TObject*>(lC[i]));
+		}
+		ListBox2->Clear();
+		for(int i=0;i<pr->specifics.size();++i){
+			this->ListBox2->AddItem(pr->specifics[i]->name,reinterpret_cast<TObject*>(pr->specifics[i]));
+		}
+	}
+	this->colorButton->SymbolColor=pr->color;
+	this->StringGrid1->RowCount=pr->plan.size()+2;
+	this->StringGrid1->Cells[0][pr->plan.size()+1]="";
+	this->StringGrid1->Cells[1][pr->plan.size()+1]="";
+	for(int i=0;i<pr->plan.size();++i){
+		this->StringGrid1->Cells[0][i+1]=pr->plan[i]->first;
+		this->StringGrid1->Cells[1][i+1]=pr->plan[i]->second;
+	}
+	this->StringGrid2->RowCount=pr->times.size()+2;
+	this->StringGrid2->Cells[0][pr->times.size()+1]="";
+	this->StringGrid2->Cells[1][pr->times.size()+1]="";
+	for(int i=0;i<pr->times.size();++i){
+		this->StringGrid2->Cells[0][i+1]=pr->times[i]->first.FormatString("hh:nn");
+		this->StringGrid2->Cells[1][i+1]=pr->times[i]->second.FormatString("hh:nn");
+	}
+	{
+		Groups *groups=App::db->getGroups();
+		std::sort(groups->begin(), groups->end());
+		std::sort(pr->groups.begin(), pr->groups.end());
+		std::vector<KAEntity*> lC(groups->size());
+		std::vector<KAEntity*>::iterator it= std::set_difference(groups->begin(), groups->end(),pr->groups.begin(), pr->groups.end(),lC.begin());
+		lC.resize(it-lC.begin());
+		ListBox3->Clear();
+		for(int i=0;i<lC.size();++i){
+			this->ListBox3->AddItem(dynamic_cast<Group*>(lC[i])->name,reinterpret_cast<TObject*>(lC[i]));
+		}
+		ListBox4->Clear();
+		for(int i=0;i<pr->groups.size();++i){
+			this->ListBox4->AddItem(pr->groups[i]->name,reinterpret_cast<TObject*>(pr->groups[i]));
+		}
+	}
+}
+
+
+void __fastcall TProgramModal::Button2Click(TObject *Sender)
+{
+	for(int i=0;i<ListBox1->Count;++i){
+		if(ListBox1->Selected[i]){
+			ListBox2->AddItem(ListBox1->Items->operator [](i),ListBox1->Items->Objects[i]);
+			ListBox1->Items->Delete(i);
+			--i;
+		}
+	}
+	//ListBox2->Sorted=true;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TProgramModal::StringGrid1KeyUp(TObject *Sender, WORD &Key, TShiftState Shift)
+
+{
+	int row=this->StringGrid1->RowCount-1;
+	if(this->StringGrid1->Cells[0][row]!="" || this->StringGrid1->Cells[1][row]!="")
+		this->StringGrid1->RowCount+=1;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TProgramModal::Button3Click(TObject *Sender)
+{
+	for(int i=0;i<ListBox2->Count;++i){
+		if(ListBox2->Selected[i]){
+			ListBox1->AddItem(ListBox2->Items->operator [](i),ListBox2->Items->Objects[i]);
+			ListBox2->Items->Delete(i);
+			--i;
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TProgramModal::Button4Click(TObject *Sender)
+{
+	for(int i=0;i<ListBox3->Count;++i){
+		if(ListBox3->Selected[i]){
+			ListBox4->AddItem(ListBox3->Items->operator [](i),ListBox3->Items->Objects[i]);
+			ListBox3->Items->Delete(i);
+			--i;
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TProgramModal::Button5Click(TObject *Sender)
+{
+	for(int i=0;i<ListBox4->Count;++i){
+		if(ListBox4->Selected[i]){
+			ListBox3->AddItem(ListBox4->Items->operator [](i),ListBox4->Items->Objects[i]);
+			ListBox4->Items->Delete(i);
+			--i;
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TProgramModal::colorButtonClick(TObject *Sender)
+{
+	//this->ColorDialog1->Color=colorButton->SymbolColor;
+	//this->ColorDialog1->Execute(0);
+	 //colorButton->SymbolColor=this->ColorDialog1->Color;
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TProgramModal::StringGrid2KeyUp(TObject *Sender, WORD &Key, TShiftState Shift)
+
+{
+	int row=this->StringGrid2->RowCount-1;
+	if(this->StringGrid2->Cells[0][row]!="" || this->StringGrid1->Cells[2][row]!="")
+		this->StringGrid2->RowCount+=1;
+}
+//---------------------------------------------------------------------------
+
+

@@ -53,7 +53,6 @@ __published:	// IDE-managed Components
 	TListBox *ListBox4;
 	TLabel *Label7;
 	TLabel *Label8;
-	TColorDialog *ColorDialog1;
 	TStringGrid *StringGrid2;
 	TLabel *Label9;
 	TGridPanel *GridPanel3;

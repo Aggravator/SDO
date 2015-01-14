@@ -106,10 +106,11 @@
         <ILINK_TranslatedLibraryPath>$(BDSLIB)\$(PLATFORM)\debug\$(LANGDIR);$(ILINK_TranslatedLibraryPath)</ILINK_TranslatedLibraryPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <Icon_MainIcon>SDODBImage_Icon.ico</Icon_MainIcon>
         <LinkPackageStatics>rtl.lib;vcl.lib;adortl.lib;dbrtl.lib;vcldb.lib;Tee.lib;vclimg.lib</LinkPackageStatics>
         <ILINK_DisableIncrementalLinking>true</ILINK_DisableIncrementalLinking>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Locale>1049</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <Defines>NDEBUG;$(Defines)</Defines>
@@ -133,6 +134,11 @@
             <DependentOn>AuthForm.h</DependentOn>
             <BuildOrder>9</BuildOrder>
         </CppCompile>
+        <CppCompile Include="ComplexEntitiesFrom.cpp">
+            <VirtualFolder>{860E5B55-4E97-4C35-9AF9-29421A9773C0}</VirtualFolder>
+            <DependentOn>ComplexEntitiesFrom.h</DependentOn>
+            <BuildOrder>24</BuildOrder>
+        </CppCompile>
         <CppCompile Include="CoreData.cpp">
             <DependentOn>CoreData.h</DependentOn>
             <BuildOrder>3</BuildOrder>
@@ -144,28 +150,39 @@
             <BuildOrder>19</BuildOrder>
         </CppCompile>
         <CppCompile Include="CourseModal.cpp">
+            <VirtualFolder>{D7CB9D69-DE67-4F71-9431-B6B6B866511D}</VirtualFolder>
             <Form>Form12</Form>
             <FormType>dfm</FormType>
             <DependentOn>CourseModal.h</DependentOn>
             <BuildOrder>23</BuildOrder>
         </CppCompile>
+        <CppCompile Include="DefaultReport.cpp">
+            <Form>Form4</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>DefaultReport.h</DependentOn>
+            <BuildOrder>25</BuildOrder>
+        </CppCompile>
         <CppCompile Include="EntitiesForm.cpp">
+            <VirtualFolder>{860E5B55-4E97-4C35-9AF9-29421A9773C0}</VirtualFolder>
             <DependentOn>EntitiesForm.h</DependentOn>
             <BuildOrder>13</BuildOrder>
         </CppCompile>
         <CppCompile Include="GroupModal.cpp">
+            <VirtualFolder>{D7CB9D69-DE67-4F71-9431-B6B6B866511D}</VirtualFolder>
             <Form>Form6</Form>
             <FormType>dfm</FormType>
             <DependentOn>GroupModal.h</DependentOn>
             <BuildOrder>15</BuildOrder>
         </CppCompile>
         <CppCompile Include="GroupsForm.cpp">
+            <VirtualFolder>{860E5B55-4E97-4C35-9AF9-29421A9773C0}</VirtualFolder>
             <Form>Form5</Form>
             <FormType>dfm</FormType>
             <DependentOn>GroupsForm.h</DependentOn>
             <BuildOrder>14</BuildOrder>
         </CppCompile>
         <CppCompile Include="ModalEntityForm.cpp">
+            <VirtualFolder>{D7CB9D69-DE67-4F71-9431-B6B6B866511D}</VirtualFolder>
             <DependentOn>ModalEntityForm.h</DependentOn>
             <BuildOrder>12</BuildOrder>
         </CppCompile>
@@ -174,14 +191,22 @@
         <None Include="ModelSupport_SDODBImage\std\default.txaPackage"/>
         <None Include="ModelSupport_SDODBImage\std\default.txvpck"/>
         <CppCompile Include="ProgramModal.cpp">
+            <VirtualFolder>{D7CB9D69-DE67-4F71-9431-B6B6B866511D}</VirtualFolder>
             <Form>ProgramModal</Form>
             <DependentOn>ProgramModal.h</DependentOn>
             <BuildOrder>20</BuildOrder>
         </CppCompile>
         <CppCompile Include="ProgramsForm.cpp">
+            <VirtualFolder>{860E5B55-4E97-4C35-9AF9-29421A9773C0}</VirtualFolder>
             <Form>ProgramsForm</Form>
             <DependentOn>ProgramsForm.h</DependentOn>
             <BuildOrder>21</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ReportClass.cpp">
+            <Form>Form14</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>ReportClass.h</DependentOn>
+            <BuildOrder>26</BuildOrder>
         </CppCompile>
         <CppCompile Include="ReportFirst.cpp">
             <Form>Form11</Form>
@@ -190,12 +215,14 @@
             <BuildOrder>22</BuildOrder>
         </CppCompile>
         <CppCompile Include="RoomModal.cpp">
+            <VirtualFolder>{D7CB9D69-DE67-4F71-9431-B6B6B866511D}</VirtualFolder>
             <Form>Form8</Form>
             <FormType>dfm</FormType>
             <DependentOn>RoomModal.h</DependentOn>
             <BuildOrder>17</BuildOrder>
         </CppCompile>
         <CppCompile Include="RoomsForm.cpp">
+            <VirtualFolder>{860E5B55-4E97-4C35-9AF9-29421A9773C0}</VirtualFolder>
             <Form>Form7</Form>
             <FormType>dfm</FormType>
             <DependentOn>RoomsForm.h</DependentOn>
@@ -207,13 +234,15 @@
         <PCHCompile Include="SDODBImagePCH1.h">
             <BuildOrder>1</BuildOrder>
         </PCHCompile>
-        <CppCompile Include="SpecificDialog.cpp">
-            <Form>Form4</Form>
+        <CppCompile Include="SpecificModal.cpp">
+            <VirtualFolder>{D7CB9D69-DE67-4F71-9431-B6B6B866511D}</VirtualFolder>
+            <Form>Form13</Form>
             <FormType>dfm</FormType>
-            <DependentOn>SpecificDialog.h</DependentOn>
-            <BuildOrder>11</BuildOrder>
+            <DependentOn>SpecificModal.h</DependentOn>
+            <BuildOrder>25</BuildOrder>
         </CppCompile>
         <CppCompile Include="SpecificsForm.cpp">
+            <VirtualFolder>{860E5B55-4E97-4C35-9AF9-29421A9773C0}</VirtualFolder>
             <Form>Form3</Form>
             <FormType>dfm</FormType>
             <DependentOn>SpecificsForm.h</DependentOn>
@@ -231,20 +260,22 @@
             <DependentOn>Unit2.h</DependentOn>
             <BuildOrder>2</BuildOrder>
         </CppCompile>
-        <FormResources Include="RoomModal.dfm"/>
-        <FormResources Include="RoomsForm.dfm"/>
+        <FormResources Include="ReportClass.dfm"/>
         <FormResources Include="ReportFirst.dfm"/>
+        <FormResources Include="RoomModal.dfm"/>
         <FormResources Include="ProgramModal.dfm"/>
         <FormResources Include="ProgramsForm.dfm"/>
+        <FormResources Include="RoomsForm.dfm"/>
+        <FormResources Include="SpecificsForm.dfm"/>
         <FormResources Include="TableForm.dfm"/>
         <FormResources Include="Unit2.dfm"/>
-        <FormResources Include="SpecificsForm.dfm"/>
-        <FormResources Include="SpecificDialog.dfm"/>
+        <FormResources Include="SpecificModal.dfm"/>
         <FormResources Include="CourseCreateForm.dfm"/>
+        <FormResources Include="CourseModal.dfm"/>
         <FormResources Include="AuthForm.dfm"/>
+        <FormResources Include="DefaultReport.dfm"/>
         <FormResources Include="GroupModal.dfm"/>
         <FormResources Include="GroupsForm.dfm"/>
-        <FormResources Include="CourseModal.dfm"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -311,8 +342,253 @@
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k170.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp170.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
+                <VFOLDERS>
+                    <VFOLDER ID="{860E5B55-4E97-4C35-9AF9-29421A9773C0}" name="EntitiesForns"/>
+                    <VFOLDER ID="{D7CB9D69-DE67-4F71-9431-B6B6B866511D}" name="ModalForms"/>
+                </VFOLDERS>
             </CPlusPlusBuilder.Personality>
-            <Deployment/>
+            <Deployment>
+                <DeployFile Condition="'$(DynamicRTL)'=='true' And '$(Multithreaded)'!='true'" LocalName="$(BDS)\bin64\cc64120.dll" Class="DependencyModule">
+                    <Platform Name="Win64"/>
+                </DeployFile>
+                <DeployFile Condition="'$(DynamicRTL)'=='true' And '$(Multithreaded)'!='true'" LocalName="$(BDS)\bin\cc32120.dll" Class="DependencyModule">
+                    <Platform Name="Win32"/>
+                </DeployFile>
+                <DeployFile Condition="'$(UsingDelphiRTL)'=='true'" LocalName="$(BDS)\bin\borlndmm.dll" Class="DependencyModule">
+                    <Platform Name="Win32"/>
+                </DeployFile>
+                <DeployFile LocalName=".\Win32\Debug\SDODBImage.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32"/>
+                </DeployFile>
+                <DeployFile Condition="'$(DynamicRTL)'=='true' And '$(Multithreaded)'=='true'" LocalName="$(BDS)\bin\cc32120mt.dll" Class="DependencyModule">
+                    <Platform Name="Win32"/>
+                </DeployFile>
+                <DeployFile Condition="'$(DynamicRTL)'=='true'" LocalName="$(BDS)\Redist\osx32\libcgcrtl.dylib" Class="DependencyModule">
+                    <Platform Name="OSX32"/>
+                </DeployFile>
+                <DeployFile Condition="'$(DynamicRTL)'=='true' And '$(Multithreaded)'=='true'" LocalName="$(BDS)\bin64\cc64120mt.dll" Class="DependencyModule">
+                    <Platform Name="Win64"/>
+                </DeployFile>
+                <DeployFile Condition="'$(UsingDelphiRTL)'=='true'" LocalName="$(BDS)\bin64\borlndmm.dll" Class="DependencyModule">
+                    <Platform Name="Win64"/>
+                </DeployFile>
+                <DeployFile LocalName=".\Win32\Debug\SDODBImage.tds" Configuration="Debug" Class="DebugSymbols">
+                    <Platform Name="Win32">
+                        <RemoteName>SDODBImage.tds</RemoteName>
+                    </Platform>
+                </DeployFile>
+                <DeployFile Condition="'$(DynamicRTL)'=='true'" LocalName="$(BDS)\Redist\osx32\libcgstl.dylib" Class="DependencyModule">
+                    <Platform Name="OSX32"/>
+                </DeployFile>
+                <DeployClass Required="true" Name="DependencyPackage">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                        <Extensions>.bpl</Extensions>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="DependencyModule">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                        <Extensions>.dll;.bpl</Extensions>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="iPad_Launch2048">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="ProjectOSXInfoPList">
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="ProjectiOSDeviceInfoPList">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="iPad_Launch1024">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="ProjectiOSResource">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="ProjectiOSSimulatorInfoPList">
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="ProjectOSXEntitlements">
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="iPhone_Launch640">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="ProjectOSXResource">
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\Resources</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="iPhone_Launch320">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="iPad_Launch768">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Required="true" Name="ProjectOutput">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="ProjectiOSDeviceResourceRules">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="File">
+                    <Platform Name="iOSDevice">
+                        <Operation>0</Operation>
+                    </Platform>
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>0</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>0</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="DebugSymbols">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="DependencyFramework">
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                        <Extensions>.framework</Extensions>
+                    </Platform>
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="ProjectiOSEntitlements">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="iPad_Launch1536">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="AdditionalDebugSymbols">
+                    <Platform Name="iOSDevice">
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="Win32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>0</Operation>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <ProjectRoot Platform="iOSDevice" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
+            </Deployment>
             <Platforms>
                 <Platform value="Win32">True</Platform>
                 <Platform value="Win64">False</Platform>
@@ -323,4 +599,5 @@
     </ProjectExtensions>
     <Import Project="$(BDS)\Bin\CodeGear.Cpp.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Cpp.Targets')"/>
     <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
+    <Import Project="$(MSBuildProjectName).deployproj" Condition="Exists('$(MSBuildProjectName).deployproj')"/>
 </Project>

@@ -13,11 +13,29 @@ String months[]={"Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август"
 String dayOfWeek[]={"Вс","Пн","Вт","Ср","Чт","Пт","Сб"};
 
 unsigned getGradient(double p){
-	if(p>1.0)p=1.0;
+	//if(p>1.0)return RGB(255,0,0);
 	unsigned red,green,blue;
-	red=green=255;
-	blue=168;
-	if(p>0.5)red=red-87*((p-0.5)*2); else green=green-87*(0.5-p)*2;
+	if(p>=0 && p<=0.5){
+		red=102;
+		green=306*p+102;
+		blue=255;
+	}else if(p>=0.5 && p<=1.0){
+		red=102;
+		green=255;
+		blue=-306*(p-0.5)+255;
+	}else if(p>=1 && p<=1.5){
+		red=306*(p-1.0)+102;;
+		green=255;
+		blue=102;
+	}else if (p>=1.5 && p<=2.0){
+		red=255;
+		green=-306*(p-1.5)+255;
+		blue=102;
+	}else if(p>=2.0){
+		red=255;
+		green=102;
+		blue=102;
+	}
 	return RGB(red,green,blue);
 }
 
@@ -54,6 +72,7 @@ __fastcall TTableForm::TTableForm(TComponent* Owner)
 	executedCourseColor=RGB(230,230,230);
 	showReal=showPlan=true;
 	showAllPrograms=false;
+	this->filterHourse=false;
 	dragCell=NULL;
 	month=TDate::CurrentDate();
 	realTable=App::db->getRealTable();
@@ -127,6 +146,11 @@ bool isIntoMonth(Course *cr, TDate month){
 		if(dateIntoMonth(cr->dates[i]->date,month))return true;
 	}
 	return false;
+}
+int getYearOfDate(TDate date){
+	unsigned short year,month,day;
+	date.DecodeDate(&year,&month,&day);
+	return year;
 }
 
 int TTableForm::gatherStCountForMonth(Program *pr,TDate month){
@@ -399,12 +423,7 @@ void TTableForm::sstringRedraw(){
 	refreshStCSInf(progs);
 	refreshGrCS();
 	regenerateCells(progs);
-	if(progs.size()>0){
-		StringGrid1->RowCount=cells.size()+2;
-	}else{
-		StringGrid1->RowCount=3;
-		StringGrid1->Rows[2]->Clear();
-    }
+
 	stringResizing();
 }
 bool groupSort(KAEntity *a,KAEntity *b){
@@ -440,34 +459,46 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 		std::sort(grps->begin(),grps->end(),groupSort);
 		Group *gr;
 		for(int i=0;i<grps->size();++i)if(((Group*)grps->at(i))->isactual)++grCount; else break;
-		if(progs[0]->prog->istraining!=(*--progs.end())->prog->istraining)cells.resize(2+progs.size()+grCount+2);
-		else cells.resize(1+progs.size()+grCount+2);
 
-		for(int i=0;i<cells.size();++i){
-			cells[i]=new std::vector<Cell*>(dayCount+8+fixcols+2);
-			for(int j=0;j<cells[i]->size();++j){
-				cells[i]->at(j)=new Cell();
+		int hour=-1;
+		if(this->filterHourse){
+			try{
+                hour=StrToInt(Edit1->Text);
+			}
+			catch(...){
+				hour=-1;
 			}
 		}
-		int row=2;
-		int i=0;
+
+		int i,row=0;
+		bool lastTr;
+		std::vector<Cell*>* cRow;
 		Cell *cl;
-		for(i;i<progs.size() && progs[i]->prog->istraining;++i){
-			if(i==0){
-				cl=cells[row-2]->at(0);
-				cl->setSpan(cells[i]->size(),1,"Повышение квалификации",DT_CENTER|DT_SINGLELINE|DT_VCENTER);
-				for(int j=1;j<cells[i]->size();++j)cells[row-2]->at(j)->cellType=EEmpty;
-				++row;
+		for(i=0;i<progs.size();++i){
+			if(hour!=-1){
+				if(progs[i]->prog->hours!=hour)continue;
 			}
-			cells[row-2]->at(0)->setSpan(1,1,progs[i]->prog->key);
-			cells[row-2]->at(1)->setSpan(1,1,progs[i]->prog->name,DT_LEFT|DT_WORDBREAK);
-			cells[row-2]->at(2)->setSpan(1,1,IntToStr(progs[i]->prog->hours));
-			cells[row-2]->at(3)->setSpan(1,1,progs[i]->time.first.FormatString("hh:nn")+"-"+progs[i]->time.second.FormatString("hh:nn"));
-			prTableToVector(progs[i],cells[row-2]);
+			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			if(row==0 || lastTr!=progs[i]->prog->istraining){
+				lastTr=progs[i]->prog->istraining;
+				cl=cRow->at(0);
+				cl->setSpan(cRow->size(),1,progs[i]->prog->istraining ? "Повышение квалификации" :"Семинары",DT_CENTER|DT_SINGLELINE|DT_VCENTER);
+				for(int j=1;j<cRow->size();++j)cRow->at(j)->cellType=EEmpty;
+				cells.push_back(cRow);
+				cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+				for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			}
+			cRow->at(0)->setSpan(1,1,progs[i]->prog->key);
+			cRow->at(0)->courseR=reinterpret_cast<Course*>(progs[i]->prog);
+			cRow->at(1)->setSpan(1,1,progs[i]->prog->name,DT_LEFT|DT_WORDBREAK);
+			cRow->at(2)->setSpan(1,1,IntToStr(progs[i]->prog->hours));
+			cRow->at(3)->setSpan(1,1,progs[i]->time.first.FormatString("hh:nn")+"-"+progs[i]->time.second.FormatString("hh:nn"));
+			prTableToVector(progs[i],cRow);
 			if(i!=0 && progs[i]->prog==progs[i-1]->prog){
-				cells[row-2]->at(cells[row-2]->size()-2)->cellType=EStaticUS;
-				cells[row-2]->at(cells[row-2]->size()-1)->cellType=EStaticUS;
-				int Ssr=row-3;
+				cRow->at(cRow->size()-2)->cellType=EStaticUS;
+				cRow->at(cRow->size()-1)->cellType=EStaticUS;
+				int Ssr=cells.size()-1;
 				for(Ssr;cells[Ssr]->at(cells[Ssr]->size()-2)->cellType!=EStaticS;--Ssr);
 				cells[Ssr]->at(cells[Ssr]->size()-2)->vspan+=1;
 				cells[Ssr]->at(cells[Ssr]->size()-1)->vspan+=1;
@@ -475,68 +506,46 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 				int yPlan=getPlanOfPrOnYear(progs[i]->prog,year1);
 				int stForMonth= gatherStCountForMonth(progs[i]->prog,month);
 				int stForYear=progStCountS[progs[i]->prog]+progStCountC[progs[i]->prog];
-				cells[row-2]->at(cells[row-2]->size()-2)->setStaticS(1,1,IntToStr(stForMonth));
-				cells[row-2]->at(cells[row-2]->size()-1)->setStaticS(1,1,IntToStr(stForYear));
+				cRow->at(cRow->size()-2)->setStaticS(1,1,IntToStr(stForMonth));
+				cRow->at(cRow->size()-1)->setStaticS(1,1,IntToStr(stForYear));
 				if(yPlan!=-1){
 					double perMonth=yPlan/12.0;
-					cells[row-2]->at(cells[row-2]->size()-1)->color=getGradient(stForYear/(perMonth*month1));
+					double temp=perMonth*month1;
+					if(stForYear>temp)temp=1.0+(stForYear-temp)/(yPlan-temp);else temp=stForYear/(temp);
+					cRow->at(cRow->size()-1)->color=getGradient(temp);
 					perMonth=(yPlan-(stForYear-stForMonth))/(12.0-month1+1);
-					cells[row-2]->at(cells[row-2]->size()-2)->color=getGradient(stForMonth/perMonth);
+					temp=(perMonth<0.0001 && perMonth>-0.0001) ? 2.0 : stForMonth/perMonth;
+					if(perMonth==stForMonth)temp=1.0;
+					cRow->at(cRow->size()-2)->color=getGradient(temp>2 ? 3.0 : temp);
 				}
 			}
+			cells.push_back(cRow);
 			++row;
 		}
-		if(i!=progs.size()){
-			cells[row-2]->at(0)->setSpan(cells[i]->size(),1,"Семинары",DT_CENTER|DT_SINGLELINE|DT_VCENTER);
-			for(int j=1;j<cells[i]->size();++j)cells[row-2]->at(j)->cellType=EEmpty;
-			++row;
-		}
-		for(i;i<progs.size();++i){
-			cells[row-2]->at(0)->setSpan(1,1,progs[i]->prog->key);
-			cells[row-2]->at(1)->setSpan(1,1,progs[i]->prog->name,DT_LEFT|DT_WORDBREAK);
-			cells[row-2]->at(2)->setSpan(1,1,IntToStr(progs[i]->prog->hours));
-			cells[row-2]->at(3)->setSpan(1,1,progs[i]->time.first.FormatString("hh:nn")+"-"+progs[i]->time.second.FormatString("hh:nn"));
-			prTableToVector(progs[i],cells[row-2]);
-			if(i!=0 && progs[i]->prog==progs[i-1]->prog){
-				cells[row-2]->at(cells[row-2]->size()-2)->cellType=EStaticUS;
-				cells[row-2]->at(cells[row-2]->size()-1)->cellType=EStaticUS;
-				int Ssr=row-3;
-				for(Ssr;cells[Ssr]->at(cells[Ssr]->size()-2)->cellType!=EStaticS;--Ssr);
-				cells[Ssr]->at(cells[Ssr]->size()-2)->vspan+=1;
-				cells[Ssr]->at(cells[Ssr]->size()-1)->vspan+=1;
-			}else{
-				int yPlan=getPlanOfPrOnYear(progs[i]->prog,year1);
-				int stForMonth= gatherStCountForMonth(progs[i]->prog,month);
-				int stForYear=progStCountS[progs[i]->prog]+progStCountC[progs[i]->prog];
-				cells[row-2]->at(cells[row-2]->size()-2)->setStaticS(1,1,IntToStr(stForMonth));
-				cells[row-2]->at(cells[row-2]->size()-1)->setStaticS(1,1,IntToStr(stForYear));
-				if(yPlan!=-1){
-					double perMonth=yPlan/12.0;
-					cells[row-2]->at(cells[row-2]->size()-1)->color=getGradient(stForYear/(perMonth*month1));
-					perMonth=(yPlan-(stForYear-stForMonth))/(12.0-month1+1);
-					cells[row-2]->at(cells[row-2]->size()-2)->color=getGradient(stForMonth/perMonth);
-				}
-			}
-			++row;
-		}
-
 		for(i=0;i<grps->size();++i){
 			gr=dynamic_cast<Group*>(grps->at(i));
 			if(gr->isactual==false)break;
-			cells[row-2]->at(0)->setSpan(cells[i]->size()-2,1,gr->name,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
-			for(int j=1;j<cells[i]->size()-2;++j)cells[row-2]->at(j)->cellType=EEmpty;
+			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			cRow->at(0)->setSpan(cells[i]->size()-2,1,gr->name,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			cRow->at(0)->courseP=reinterpret_cast<Course*>(gr);
+			for(int j=1;j<cRow->size()-2;++j)cRow->at(j)->cellType=EEmpty;
 			int yPlan=getPlanOfGrOnYear(gr,year1);
 			int stForMonth= gatherStCFMG(gr,month);
 			int stForYear=groupCountS[gr]+groupCountC[gr];
-			cells[row-2]->at(cells[row-2]->size()-2)->setStaticS(1,1,IntToStr(stForMonth));
-			cells[row-2]->at(cells[row-2]->size()-1)->setStaticS(1,1,IntToStr(stForYear));
+			cRow->at(cRow->size()-2)->setStaticS(1,1,IntToStr(stForMonth));
+			cRow->at(cRow->size()-1)->setStaticS(1,1,IntToStr(stForYear));
 			if(yPlan!=-1){
 				double perMonth=yPlan/12.0;
-				cells[row-2]->at(cells[row-2]->size()-1)->color=getGradient(stForYear/(perMonth*month1));
+				double temp=perMonth*month1;
+				if(stForYear>temp)temp=1.0+(stForYear-temp)/(yPlan-temp);else temp=stForYear/(temp);
+				cRow->at(cRow->size()-1)->color=getGradient(temp);
 				perMonth=(yPlan-(stForYear-stForMonth))/(12.0-month1+1);
-				cells[row-2]->at(cells[row-2]->size()-2)->color=getGradient(stForMonth/perMonth);
+				temp=(perMonth<0.0001 && perMonth>-0.0001) ? 2.0 : stForMonth/perMonth;
+				if(perMonth==stForMonth)temp=1.0;
+				cRow->at(cRow->size()-2)->color=getGradient(temp>2 ? 3.0 : temp);
 			}
-			++row;
+			cells.push_back(cRow);
 		}
 		{
 			int progC=0,progCC=0,semC=0,semCC=0;
@@ -551,18 +560,30 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 					semCC+=progStCountS[pr]+progStCountC[pr];
                 }
 			}
-			cells[row-2]->at(0)->setSpan(cells[i]->size()-2,1,"Повышение квалафикации",DT_LEFT|DT_SINGLELINE|DT_VCENTER);
-			for(int j=1;j<cells[i]->size()-2;++j)cells[row-2]->at(j)->cellType=EEmpty;
-			cells[row-2]->at(cells[i]->size()-1)->setStaticS(1,1,IntToStr(progCC));
-			cells[row-2]->at(cells[i]->size()-2)->setStaticS(1,1,IntToStr(progC));
-			++row;
-			cells[row-2]->at(0)->setSpan(cells[i]->size()-2,1,"Семинары",DT_LEFT|DT_SINGLELINE|DT_VCENTER);
-			for(int j=1;j<cells[i]->size()-2;++j)cells[row-2]->at(j)->cellType=EEmpty;
-			cells[row-2]->at(cells[i]->size()-1)->setStaticS(1,1,IntToStr(semCC));
-			cells[row-2]->at(cells[i]->size()-2)->setStaticS(1,1,IntToStr(semC));
-			++row;
+			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			cRow->at(0)->setSpan(cRow->size()-2,1,"Повышение квалафикации",DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			for(int j=1;j<cRow->size()-2;++j)cRow->at(j)->cellType=EEmpty;
+			cRow->at(cRow->size()-1)->setStaticS(1,1,IntToStr(progCC));
+			cRow->at(cRow->size()-2)->setStaticS(1,1,IntToStr(progC));
+			cells.push_back(cRow);
+
+			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			cRow->at(0)->setSpan(cRow->size()-2,1,"Семинары",DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			for(int j=1;j<cRow->size()-2;++j)cRow->at(j)->cellType=EEmpty;
+			cRow->at(cRow->size()-1)->setStaticS(1,1,IntToStr(semCC));
+			cRow->at(cRow->size()-2)->setStaticS(1,1,IntToStr(semC));
+			cells.push_back(cRow);
 		}
 	}
+	if(progs.size()>0){
+		StringGrid1->RowCount=cells.size()+2;
+	}else{
+		StringGrid1->RowCount=3;
+		StringGrid1->Rows[2]->Clear();
+	}
+	this->StringGrid1->Repaint();
 }
 void TTableForm::stringResizing(){
 	int fixcols=4;
@@ -795,9 +816,30 @@ void __fastcall TTableForm::StringGrid1Click(TObject *Sender)
 	StringGrid1->MouseToCell(p.X,p.Y,col,row);
 	if(row==-1 || col==-1)return;
 	if(col>=fixcols && (row<3 || (StringGrid1->RowCount==3 && row==3))){
-		//Вызываем диалоговое окно создания программ
+		StatusBar1->Panels->operator [](0)->Text="";
 	}else{
 		Cell *cl=cells[row-2]->at(col);
+		Program *prog=reinterpret_cast<Program*>(cells[row-2]->at(0)->courseR);
+		Group *gr=reinterpret_cast<Group*>(cells[row-2]->at(0)->courseP);
+		if(prog==NULL && gr==NULL)StatusBar1->Panels->operator [](0)->Text="";
+		else{
+			if(prog!=NULL){
+				String plan="";
+				int year=getYearOfDate(month);
+				for(int i=0;i<prog->plan.size();++i){
+					if(prog->plan[i]->first==year)plan="План: "+IntToStr(prog->plan[i]->second);
+				}
+				StatusBar1->Panels->operator [](0)->Text=plan+" Название: "+prog->name;
+			}
+			if(gr!=NULL){
+				String plan="";
+				int year=getYearOfDate(month);
+				for(int i=0;i<gr->plan.size();++i){
+					if(gr->plan[i]->first==year)plan="План: "+IntToStr(gr->plan[i]->second);
+				}
+				StatusBar1->Panels->operator [](0)->Text=plan+" Название: "+gr->name;
+			}
+		}
 		Course *prevCourse=selectedCourse;
 		if(cl->courseR!=NULL && showReal!=false ){
 			if(!(cl->courseP!=NULL && cl->courseP==selectedCourse && showPlan)){
@@ -1013,9 +1055,41 @@ void __fastcall TTableForm::Button1Click(TObject *Sender)
 
 void __fastcall TTableForm::Button5Click(TObject *Sender)
 {
-	TReportFirst *rpf=new TReportFirst(0);
-	rpf->ShowModal();
-	delete rpf;
+	//TReportFirst *rpf=new TReportFirst(0);
+	//rpf->ShowModal();
+	//delete rpf;
+	TDefaultReport *df=new TDefaultReport(0);
+	df->ShowModal();
+	delete df;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::Button4Click(TObject *Sender)
+{
+	tempSelectedC.desc=RichEdit1->Text;
+	if(App::ModalForms::courseModal==NULL)App::ModalForms::courseModal=new TCourseModal(0);
+	App::ModalForms::courseModal->applyEntity(&tempSelectedC);
+	if (App::ModalForms::courseModal->ShowModal() == mrOk) {
+		tempSelectedC = *(App::ModalForms::courseModal->getEntity());
+		RichEdit1->Text=tempSelectedC.desc;
+		this->selectedCourse->updateEntity(&tempSelectedC);
+		this->sstringRedraw();
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::Button6Click(TObject *Sender)
+{
+	TReportClass *df=new TReportClass(0);
+	df->ShowModal();
+	delete df;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::CheckBox4Click(TObject *Sender)
+{
+	this->filterHourse=this->CheckBox4->Checked;
+	this->regenerateCells(this->progs);
 }
 //---------------------------------------------------------------------------
 

@@ -11,7 +11,6 @@ object GroupsForm: TGroupsForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object Button5: TButton
@@ -32,7 +31,6 @@ object GroupsForm: TGroupsForm
     Font.Style = []
     ParentFont = False
     TabOrder = 0
-    OnClick = Button5Click
   end
   object Button1: TButton
     Left = 0
@@ -100,7 +98,6 @@ object GroupsForm: TGroupsForm
         Value = 100.000000000000000000
       end>
     TabOrder = 3
-    ExplicitWidth = 523
     DesignSize = (
       527
       25)
@@ -147,7 +144,7 @@ object GroupsForm: TGroupsForm
     Left = 312
     Top = 136
     Bitmap = {
-      494C010102001400480019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102001400500019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

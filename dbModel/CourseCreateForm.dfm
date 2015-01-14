@@ -133,8 +133,8 @@ object CourseCreate: TCourseCreate
   end
   object Panel4: TPanel
     Left = 504
-    Top = 9
-    Width = 249
+    Top = 8
+    Width = 255
     Height = 209
     BevelOuter = bvNone
     TabOrder = 3
@@ -169,15 +169,15 @@ object CourseCreate: TCourseCreate
     end
   end
   object Panel5: TPanel
-    Left = 392
+    Left = 352
     Top = 299
-    Width = 345
+    Width = 417
     Height = 57
     BevelOuter = bvNone
     TabOrder = 4
     Visible = False
     object Label4: TLabel
-      Left = 16
+      Left = 4
       Top = 16
       Width = 177
       Height = 25
@@ -189,8 +189,21 @@ object CourseCreate: TCourseCreate
       Font.Style = []
       ParentFont = False
     end
+    object Label5: TLabel
+      Left = 264
+      Top = 16
+      Width = 76
+      Height = 25
+      Caption = 'max=45'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -21
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+    end
     object Edit1: TEdit
-      Left = 200
+      Left = 188
       Top = 13
       Width = 62
       Height = 33
@@ -202,9 +215,10 @@ object CourseCreate: TCourseCreate
       NumbersOnly = True
       ParentFont = False
       TabOrder = 0
+      OnKeyDown = Edit1KeyDown
     end
     object Button3: TButton
-      Left = 280
+      Left = 356
       Top = 13
       Width = 51
       Height = 33

@@ -1,0 +1,183 @@
+// ---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "CourseModal.h"
+// ---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+
+// ---------------------------------------------------------------------------
+
+bool isEqTime(std::pair<TDateTime,TDateTime>* plan1,std::pair<TDateTime,TDateTime>* plan2){
+	unsigned short hour1,hour2,min1,min2,sec,msec;
+	plan1->first.DecodeTime(&hour1,&min1,&sec,&msec);
+	plan2->first.DecodeTime(&hour2,&min2,&sec,&msec);
+	if(hour1==hour2){
+		if(min1==min2){
+			plan1->second.DecodeTime(&hour1,&min1,&sec,&msec);
+			plan2->second.DecodeTime(&hour2,&min2,&sec,&msec);
+			if(hour1==hour2){
+				return min1<min2;
+			}else return hour1<hour2;
+        }else return min1<min2;
+	}else return hour1<hour2;
+}
+
+__fastcall TCourseModal::TCourseModal(TComponent* Owner)
+	: TModalEntityForm(Owner) {
+	rowHeight=35;
+	emptyEntity=new Course(0,TDateTime::CurrentDate(),TDateTime::CurrentDate(),0,0,"");
+	entity=new Course(0,TDateTime::CurrentDate(),TDateTime::CurrentDate(),0,0,"");
+	tempEntity=new Course(0,TDateTime::CurrentDate(),TDateTime::CurrentDate(),0,0,"");
+	this->OnShow=FormShow;
+	Button1->OnClick=FormOk;
+	dayPanel->Padding->Left=2;
+	dayPanel->Padding->Right=2;
+	dayPanel->Padding->Top=2;
+	dayPanel->Padding->Bottom=2;
+}
+// ---------------------------------------------------------------------------
+
+void TCourseModal::writeToEntity(KAEntity *ent) {
+	Course *cr=dynamic_cast<Course*>(ent);
+	cr->program=((Course*)this->entity)->program;
+	cr->students=StrToInt(Edit1->Text);
+	std::pair<TDateTime,TDateTime>* dt=reinterpret_cast<std::pair<TDateTime,TDateTime> *>(ComboBox2->Items->Objects[ComboBox2->ItemIndex]);
+	cr->start=dt->first;
+	cr->end=dt->second;
+	for(int i=0;i<cr->dates.size();++i) delete cr->dates[i];
+	cr->dates.clear();
+	std::vector<DateLessonRow*>::iterator it;
+	for(int i=0;i<dls.size();++i){
+		it=std::find(deletedls.begin(),deletedls.end(),dls[i]);
+		if(it==deletedls.end()){
+			DateLesson *dlll=new DateLesson();
+			dlll->date=dls[i]->date->Date;
+			dlll->room=reinterpret_cast<ClassRoom *>(dls[i]->room->Items->Objects[dls[i]->room->ItemIndex]);
+			cr->dates.push_back(dlll);
+        }
+	}
+	cr->desc=RichEdit1->Text;
+}
+
+void TCourseModal::writeToForm(KAEntity *ent) {
+	Course *cr=dynamic_cast<Course*>(ent);
+	Edit2->Text=cr->program->name;
+	Edit1->Text=IntToStr(cr->students);
+	std::vector<std::pair<TDateTime,TDateTime>*> smens;
+	for(int i=0;i<cr->program->times.size();++i){
+		smens.push_back(new std::pair<TDateTime,TDateTime>(*cr->program->times[i]));
+	}
+	smens.push_back(new std::pair<TDateTime,TDateTime>(cr->start,cr->end));
+	for(int i=0;i<smens.size();++i){
+		for(int j=i+1;j<smens.size();++j){
+			if(!isEqTime(smens[i],smens[j]) && !isEqTime(smens[j],smens[i])){
+				delete smens[j];
+				smens.erase(smens.begin()+j);
+				--j;
+			}
+		}
+	}
+	std::sort(smens.begin(),smens.end(),isEqTime);
+	clearSmena();
+	int selInd=0;
+	std::pair<TDateTime,TDateTime> *ccr=new std::pair<TDateTime,TDateTime>(cr->start,cr->end);
+	for(int i=0;i<smens.size();++i){
+		ComboBox2->AddItem(smens[i]->first.FormatString("hh:nn")+" - "+smens[i]->second.FormatString("hh:nn"),(TObject*)smens[i]);
+		if(!isEqTime(smens[i],ccr) && !isEqTime(ccr,smens[i]))selInd=i;
+	}
+	delete ccr;
+	ComboBox2->ItemIndex=selInd;
+	this->initWithDL(cr->dates,cr);
+	this->RichEdit1->Text=cr->desc;
+}
+
+void TCourseModal::clearSmena() {
+	for(int i=0;i<ComboBox2->Items->Count;++i){
+		delete reinterpret_cast<std::pair<TDateTime,TDateTime> *>(ComboBox2->Items->Objects[i]);
+	}
+	ComboBox2->Clear();
+}
+
+bool checkRoom(Program *prog,KAEntity* r){
+	ClassRoom *room=(ClassRoom*)r;
+	if(prog==NULL)return true;
+	else{
+		if(prog->specifics.size()>room->specifics.size())return false;
+		else{
+			for(int i=0;i<prog->specifics.size();++i){
+				if(std::find(room->specifics.begin(),room->specifics.end(),prog->specifics[i])==room->specifics.end())
+					return false;
+			}
+        }
+	}
+	return true;
+}
+void TCourseModal::initWithDL(std::vector<DateLesson*> &dates,Course *cr){
+	clearDLPanel();
+	rooms.clear();
+	Rooms * rms=App::db->getRooms();
+	for(int i=0;i<rms->size();++i){
+		if(checkRoom(cr->program,rms->at(i)))rooms.push_back((ClassRoom*)rms->at(i));
+	}
+	cr->sortDates();
+	this->dayPanel->ControlCollection->BeginUpdate();
+	for(int i=0;i<cr->dates.size();++i){
+		TRowItem* ri=this->dayPanel->RowCollection->Add();
+		ri->SizeStyle=ssAbsolute;
+		ri->Value=this->rowHeight;
+		DateLessonRow * dlr=new DateLessonRow(this);
+		this->dayPanel->ControlCollection->AddControl(dlr->date);
+		dlr->date->Parent=this->dayPanel;
+		this->dayPanel->ControlCollection->AddControl(dlr->room);
+		dlr->room->Parent=this->dayPanel;
+		this->dayPanel->ControlCollection->AddControl(dlr->deleteButton);
+		dlr->deleteButton->Parent=this->dayPanel;
+		for(int j=0;j<rooms.size();++j){
+			dlr->room->AddItem(rooms[j]->name,(TObject*)rooms[j]);
+			if(rooms[j]==cr->dates[i]->room)dlr->room->ItemIndex=j;
+		}
+		dlr->date->Date=cr->dates[i]->date;
+		dlr->date->Font->Size=14;
+		dls.push_back(dlr);
+		this->dayPanel->Height+=this->rowHeight;
+	}
+	this->dayPanel->ControlCollection->EndUpdate();
+
+}
+
+void __fastcall TCourseModal::deleteButtonClick(TObject *Sender){
+	int row;
+	try{
+		row=dayPanel->ControlCollection->operator[](dayPanel->ControlCollection->IndexOf((TButton*)Sender))->Row;
+	}catch(...){
+		return;
+	}
+	dayPanel->RowCollection->BeginUpdate();
+	dayPanel->RowCollection->operator [](row)->Value=0;
+	dayPanel->RowCollection->EndUpdate();
+	dayPanel->Height-=this->rowHeight;
+	deletedls.push_back(dls[row]);
+}
+
+void TCourseModal::clearDLPanel(){
+	dayPanel->ControlCollection->Clear();
+	dayPanel->RowCollection->Clear();
+	dayPanel->Height=0;
+	for(int i=0;i<dls.size();++i){
+		delete dls[i];
+	}
+	dls.clear();
+	deletedls.clear();
+}
+void __fastcall TCourseModal::Button2Click(TObject *Sender)
+{
+	Course* cr=dynamic_cast<Course*>(entity);
+	cr->sortDates();
+	DateLesson *dl=new DateLesson();
+	dl->date=cr->dates[cr->dates.size()-1];
+}
+//---------------------------------------------------------------------------
+

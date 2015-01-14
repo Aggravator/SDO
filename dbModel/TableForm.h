@@ -15,9 +15,11 @@
 #include <vector>
 #include "CoreData.h"
 #include "CourseCreateForm.h"
+#include "DefaultReport.h"
 #include <set>
 #include <map>
 #include "ReportFirst.h"
+#include "ReportClass.h"
 //using namespace std;
 //---------------------------------------------------------------------------
 class TCourseCreate;
@@ -65,6 +67,9 @@ __published:	// IDE-managed Components
 	TGroupBox *GroupBox4;
 	TButton *Button5;
 	TButton *Button6;
+	TStatusBar *StatusBar1;
+	TCheckBox *CheckBox4;
+	TEdit *Edit1;
 	void __fastcall FormResize(TObject *Sender);
 	void __fastcall StringGrid1DrawCell(TObject *Sender, int ACol, int ARow, TRect &Rect,
           TGridDrawState State);
@@ -87,6 +92,9 @@ __published:	// IDE-managed Components
 	void __fastcall FormShow(TObject *Sender);
 	void __fastcall Button1Click(TObject *Sender);
 	void __fastcall Button5Click(TObject *Sender);
+	void __fastcall Button4Click(TObject *Sender);
+	void __fastcall Button6Click(TObject *Sender);
+	void __fastcall CheckBox4Click(TObject *Sender);
 
 
 
@@ -100,7 +108,7 @@ public:		// User declarations
 	std::vector<ProgTables*> progs;
 	std::vector<std::vector<Cell*>*> cells;
 	Cell *dragCell;
-    std::vector<Cell*>* dragRow;
+	std::vector<Cell*>* dragRow;
 	void regenerateCells(std::vector<ProgTables*> &prgs);
 	void clearCells();
 	void clearProgs();
@@ -156,7 +164,7 @@ public:		// User declarations
 	void refreshGrCS();
 	Course *selectedCourse,tempSelectedC;
 	bool showReal,showPlan;
-	bool showAllPrograms;
+	bool showAllPrograms,filterHourse;
 	bool hasCtrlPressedMC;
 	int gatherStCountForMonth(Program *pr,TDate month);
 	int gatherStCFMG(Group* gr,TDate month);

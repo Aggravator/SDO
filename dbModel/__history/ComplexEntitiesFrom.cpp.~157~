@@ -1,0 +1,171 @@
+//---------------------------------------------------------------------------
+
+#pragma hdrstop
+
+#include "ComplexEntitiesFrom.h"
+//---------------------------------------------------------------------------
+__fastcall TComplexEntitiesForm::TComplexEntitiesForm(TComponent* Owner):TForm(Owner){
+	modalForm=0;
+}
+void __fastcall TComplexEntitiesForm::onOkButton(TObject *Sender){
+	this->Visible=false;
+	panel->applyChanges();
+	this->panel->clear();
+	this->Close();
+}
+void __fastcall TComplexEntitiesForm::onShow(TObject *Sender){
+	panel->clear();
+	std::sort(panel->entTable->begin(),panel->entTable->end(),panel->entTable->sortFuncU);
+	for(int i=0;i<panel->entTable->size();++i){
+		panel->addRow(panel->entTable->at(i));
+	}
+}
+
+AEntityRow::AEntityRow(ARowsPanel* parent, int size){
+
+	this->parent=parent;
+	TImageList *imgList = dynamic_cast<TComplexEntitiesForm*>(parent->Owner)->images;
+	editButton=new TButton((HWND)0);
+	editButton->Align = alClient;
+	editButton->Images = imgList;
+	editButton->ImageIndex = 0;
+	editButton->OnClick=editButtonClick;
+	deleteButton=new TButton((HWND)0);
+	deleteButton->Align = alClient;
+	deleteButton->Images = imgList;
+	deleteButton->ImageIndex = 1;
+	deleteButton->OnClick=deleteButtonClick;
+
+	controls.resize(size);
+	controls[0]=editButton;
+	controls[size-1]=deleteButton;
+}
+AEntityRow::~AEntityRow(){
+	this->removeFromPanel();
+	delete editButton;
+	delete deleteButton;
+}
+void AEntityRow::addToPanel(){
+	parent->ControlCollection->BeginUpdate();
+	for(int i=0;i<controls.size();++i){
+		parent->ControlCollection->AddControl(controls[i]);
+        controls[i]->Parent=parent;
+	}
+	TCellItem *ci=parent->RowCollection->operator [](parent->RowCollection->Count-1);
+	ci->SizeStyle=ssAbsolute;
+	ci->Value=parent->rowHeight;
+	parent->Height+=parent->rowHeight;
+	parent->ControlCollection->EndUpdate();
+}
+void AEntityRow::removeFromPanel(){
+	int row;
+	try{
+		row=parent->ControlCollection->operator[](parent->ControlCollection->IndexOf(editButton))->Row;
+	}catch(...){
+		return;
+	}
+	parent->ControlCollection->BeginUpdate();
+	for(int i=0;i<controls.size();++i){
+		parent->ControlCollection->RemoveControl(controls[i]);
+	}
+	parent->RowCollection->Delete(row);
+	parent->ControlCollection->EndUpdate();
+	parent->Height-=parent->rowHeight;
+}
+void AEntityRow::hideInPanel(){
+	int row;
+	try{
+		row=parent->ControlCollection->operator[](parent->ControlCollection->IndexOf(editButton))->Row;
+	}catch(...){
+		return;
+	}
+	parent->RowCollection->BeginUpdate();
+	parent->RowCollection->operator [](row)->Value=0;
+	parent->RowCollection->EndUpdate();
+}
+void AEntityRow::initWithEntity(KAEntity* entity){
+	initEntity=entity;
+	*tempEntity=*initEntity;
+	writeToRow(tempEntity);
+}
+void __fastcall AEntityRow::editButtonClick(TObject *Sender){
+    this->writeToEntity(tempEntity);
+	TComplexEntitiesForm* ef = dynamic_cast<TComplexEntitiesForm*>(parent->Owner);
+	App::ModalForms::initForm(ef->modalForm);
+	ef->modalForm[0]->applyEntity(tempEntity);
+	if (ef->modalForm[0]->ShowModal() == mrOk) {
+		*tempEntity = *(ef->modalForm[0]->getEntity());
+		writeToRow(tempEntity);
+	}
+}
+void __fastcall AEntityRow::deleteButtonClick(TObject *Sender){
+	//removeFromPanel();
+	//parent->deleteRow(this);
+	parent->hideRow(this);
+}
+
+
+__fastcall ARowsPanel::ARowsPanel(TComponent *Owner):TGridPanel(Owner){
+	rowHeight=35;
+}
+void ARowsPanel::deleteRow(AEntityRow* row){
+	std::vector<AEntityRow*>::iterator it=std::find(rows.begin(),rows.end(),row);
+	if(it!=rows.end()){
+		if(row->initEntity->hasParent())deleteEntities.push_back(row->initEntity);
+		row->removeFromPanel();
+		deletedRows.push_back(row);
+		rows.erase(it);
+	}
+}
+void ARowsPanel::hideRow(AEntityRow* row){
+	std::vector<AEntityRow*>::iterator it=std::find(rows.begin(),rows.end(),row);
+	if(it!=rows.end()){
+		if(row->initEntity->hasParent())deleteEntities.push_back(row->initEntity);
+		row->hideInPanel();
+		deletedRows.push_back(row);
+		rows.erase(it);
+	}
+}
+void ARowsPanel::applyChanges(){
+	for(int i=rows.size()-1;i>=0;--i){
+		AEntityRow *er=rows[i];
+		if(er->initEntity->hasParent()){
+			if(er->initEntity->isDifferent(er->tempEntity) && er->tempEntity->validate()){
+				er->initEntity->updateEntity(er->tempEntity);
+			}
+		}else{
+			if(er->tempEntity->validate()){
+				*er->initEntity=*er->tempEntity;
+				entTable->createEntity(er->initEntity);
+			}else delete er->initEntity;
+		}
+	}
+	for(int i=0;i<rows.size();++i) delete rows[i];
+	rows.clear();
+	for(int i=0;i<deleteEntities.size();++i){
+		if(deleteEntities[i]->hasParent()) deleteEntities[i]->deleteEntity();
+		delete deleteEntities[i];
+	}
+	deleteEntities.clear();
+}
+void ARowsPanel::clear(){
+	for(int i=rows.size()-1;i>=0;--i){
+		delete rows[i];
+	}
+	rows.clear();
+	for (int i = 0; i < deleteEntities.size(); ++i) {
+		if (!deleteEntities[i]->hasParent())
+			delete deleteEntities[i];
+	}
+	deleteEntities.clear();
+	for(int i=0;i<deletedRows.size();++i)
+		delete deletedRows[i];
+	deletedRows.clear();
+	this->RowCollection->Clear();
+}
+__fastcall ARowsPanel::~ARowsPanel(){
+	clear();
+}
+
+
+#pragma package(smart_init)

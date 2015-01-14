@@ -8,64 +8,74 @@
 //#pragma package(smart_init)
 #pragma resource "*.dfm"
 //---------------------------------------------------------------------------
-__fastcall TSpecificsForm::TSpecificsForm(TComponent* Owner)
-	: TForm(Owner)
+__fastcall TSpecificsForm::TSpecificsForm(TComponent* Owner):TComplexEntitiesForm(Owner)
 {
-	this->epa=0;
-    //ColorBox1->Color
+	this->modalForm=reinterpret_cast<TModalEntityForm **>(&App::ModalForms::specificModal);
+	this->images=this->ImageList1;
+	this->OnShow=this->onShow;
+	this->Button5->OnClick=this->onOkButton;
+	panel=new SpecificRows(this);
+	panel->Align=alTop;
+	panel->Parent=this->ScrollBox1;
+	panel->Height=0;
+	panel->BevelOuter=bvNone;
+	panel->Padding->Left=2;
+	panel->Padding->Right=2;
+	panel->Padding->Top=2;
+	panel->Padding->Bottom=2;
 }
-//-------------------------------------------------------------------------
-bool specSort(KAEntity *a,KAEntity *b){
-	Specific *sp1=dynamic_cast<Specific*>(a);
-	Specific *sp2=dynamic_cast<Specific*>(b);
-	return sp1->name<sp2->name;
+SpecificRow::SpecificRow(ARowsPanel *parent, int size):AEntityRow(parent,size){
+	name=new TEdit((HWND)0);
+	name->Font->Size=12;
+	name->Align=alClient;
+	tempEntity=new Specific("");
+	controls[1]=name;
+}
+void SpecificRow::writeToRow(KAEntity* entity){
+	Specific *sp=dynamic_cast<Specific*>(entity);
+	name->Text=sp->name;
+}
+void SpecificRow::writeToEntity(KAEntity* entity){
+	Specific *sp=dynamic_cast<Specific*>(entity);
+	sp->name=name->Text;
+}
+SpecificRow::~SpecificRow(){
+	delete name;
+	delete tempEntity;
 }
 
-void __fastcall TSpecificsForm::FormShow(TObject *Sender)
-{
-	std::sort(App::db->getSpecifics()->begin(),App::db->getSpecifics()->end(),specSort);
-	if(epa!=0) delete epa;
-	epa=new entsPA(this);
+__fastcall SpecificRows::SpecificRows(TComponent *Owner):RRowsPanel<SpecificRow,3>(Owner){
+	entTable=App::db->getSpecifics();
+	this->ColumnCollection->Clear();
+	this->RowCollection->Clear();
+	this->ColumnCollection->BeginUpdate();
+	TColumnItem *ci=this->ColumnCollection->Add();
+	ci->SizeStyle=ssAbsolute;
+	ci->Value=35;
+	ci=this->ColumnCollection->Add();
+	ci->SizeStyle=ssPercent;
+	ci->Value=100;
+	ci=this->ColumnCollection->Add();
+	ci->SizeStyle=ssAbsolute;
+	ci->Value=35;
+	this->ColumnCollection->EndUpdate();
 }
+__fastcall SpecificRows::~SpecificRows(){
+}
+
+
 //---------------------------------------------------------------------------
-
 
 void __fastcall TSpecificsForm::Button1Click(TObject *Sender)
 {
-	Specific *spec=new Specific("");
-	TSpecificDialog *specDialog=dynamic_cast<TForm2*>(this->Owner)->specDialog;
-	if(specDialog==0)specDialog=new TSpecificDialog(0,spec);
-	else specDialog->specific=spec;
-	specDialog->ShowModal();
-	if(spec->validate()){
-		//App::db->getSpecifics()->createEntity(spec);
-		entsPA::specE *sp=new entsPA::specE(epa,this->GridPanel1,this->ImageList1,spec);
-		//this->GridPanel1->Height+=35;
-		epa->rows.push_back(sp);
-	}else delete spec;
+	Specific *sp=new Specific("");
+	App::ModalForms::initForm(modalForm);
+	int hy=modalForm[0]->ShowModal();
+	if(hy==mrOk){
+		*sp=*modalForm[0]->getEntity();
+		panel->addRow(sp);
+	}
 }
 //---------------------------------------------------------------------------
 
-
-void __fastcall TSpecificsForm::Button5Click(TObject *Sender)
-{
-	this->Visible=false;
-	while(epa->deleteEnt.size()>0){
-		if(App::db->getSpecifics()->isHas(epa->deleteEnt[0]->old))epa->deleteEnt[0]->old->deleteEntity();
-		delete epa->deleteEnt[0]->old;
-		delete epa->deleteEnt[0];
-		epa->deleteEnt.erase(epa->deleteEnt.begin());
-	}
-	for(int i=0;i<epa->rows.size();++i){
-		if(App::db->getSpecifics()->isHas(epa->rows[i]->old)){
-			Specific *sp=new Specific(epa->rows[i]->name->Text);
-			epa->rows[i]->old->updateEntity(sp);
-			delete sp;
-		}else App::db->getSpecifics()->createEntity(epa->rows[i]->old);
-		delete epa->rows[i];
-	}
-	epa->rows.clear();
-	this->Close();
-}
-//---------------------------------------------------------------------------
 

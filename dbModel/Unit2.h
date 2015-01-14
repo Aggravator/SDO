@@ -17,6 +17,7 @@
 #include "RoomsForm.h"
 #include "ProgramsForm.h"
 #include "TableForm.h"
+#include <Vcl.ComCtrls.hpp>
 class TSpecificsForm;
 //---------------------------------------------------------------------------
 class TForm2 : public TForm

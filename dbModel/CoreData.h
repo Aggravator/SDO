@@ -26,6 +26,7 @@ public:
 	KAEntityTable *getParent();
 	void addOwner(KAEntity* entity);
 	void removeOwner(KAEntity* entity);
+	virtual void bind()=0;
 	virtual void debind();
     virtual void debind(KAEntity *entity);
 	virtual void removeSlave(KAEntity* entity)=0;
@@ -52,6 +53,7 @@ public:
 	bool isHas(KAEntity* entity);
 	SDODBImage * parent;
 	virtual void debind();
+	bool (*sortFuncU) (KAEntity*,KAEntity*);
 protected:
 	virtual bool deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities)=0;
 	virtual bool createQueryBuilder(String &query,std::vector<KAEntity*> &entities)=0;
@@ -63,6 +65,7 @@ public:
 	Specific(String name);
 	Specific(const Specific &specific);
 	Specific& operator =(const KAEntity& entity);
+	void bind();
 	bool validate()const;
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
@@ -86,6 +89,7 @@ public:
 	ClassRoom(String name,int capacity,bool isrent,int isactual,std::vector<Specific*> *specifics=0);
 	ClassRoom(const ClassRoom &classRoom);
 	ClassRoom& operator =(const KAEntity& entity);
+	void bind();
 	bool validate()const;
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
@@ -119,6 +123,7 @@ public:
 	Group(String name,bool isactual,std::vector<std::pair<int,int>*> *plan=0);
 	Group(const Group &group);
 	Group& operator =(const KAEntity& entity);
+	void bind();
 	bool validate()const;
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
@@ -152,10 +157,10 @@ public:
 	Program(String name,String key,int capacity,bool istraining,bool isactual,int days,int hours,unsigned color=16777215,std::vector<Specific*> *specifics=0,std::vector<std::pair<int,int>*> *plan=0,std::vector<Group*> *groups=0,std::vector<std::pair<TDateTime,TDateTime>*> *times=0);
 	Program(const Program &program);
 	Program& operator =(const KAEntity& entity);
+	void bind();
 	bool validate()const;
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
-
 	~Program();
 	String name,key;
 	int capacity,hours,days;
@@ -193,6 +198,7 @@ public:
 	Course(Program* program,TDateTime start,TDateTime end,int students,std::vector<DateLesson*> *dates,String desc);
 	Course(const Course &course);
 	Course& operator =(const KAEntity& entity);
+	void bind();
 	bool validate()const;
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
@@ -239,6 +245,15 @@ public:
 	RealTable(SDODBImage *parent);
 };
 
+class DBEvent{
+public:
+//    std::vector<
+};
+
+class SDOHandler{
+
+};
+
 class SDODBImage{
 public:
 	SDODBImage(TADOConnection *connection,int uid);
@@ -256,10 +271,17 @@ public:
 	void refreshPlantable();
 	void refreshRealtable();
 	~SDODBImage();
+	struct TableEvent{
+		enum EventType{Create=1,Update=2,Delete=4};
+		String table;
+		EventType eType;
+	};
 protected:
 	void refreshTable(String tableName);
 	void __fastcall checkUpdates(TObject *Sender);
+	std::map<SDOHandler*,std::vector<TableEvent>*> handlerEvents;
 	int uid;
+	TDate lastSync;
 	Programs *programs;
 	Groups *groups;
 	Rooms *rooms;

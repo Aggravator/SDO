@@ -27,10 +27,14 @@ void TGroupModal::writeToEntity(KAEntity *ent){
 	gr->name=this->Edit1->Text;
 	gr->isactual=this->CheckBox1->Checked;
 	for(int i=0;i<gr->plan.size();++i)delete gr->plan[i];
-	gr->plan.resize(this->StringGrid1->RowCount-2);
+	//gr->plan.resize(this->StringGrid1->RowCount-2);
 	for(int i=0;i<this->StringGrid1->RowCount-2;++i){
-		std::pair<int,int> *yp=new std::pair<int,int>(StrToInt(StringGrid1->Cells[0][i+1]),StrToInt(StringGrid1->Cells[1][i+1]));
-		gr->plan[i]=yp;
+		try{
+			std::pair<int,int> *yp=new std::pair<int,int>(StrToInt(StringGrid1->Cells[0][i+1]),StrToInt(StringGrid1->Cells[1][i+1]));
+			gr->plan.push_back(yp);
+		}
+		catch(...){
+        }
 	}
 }
 void TGroupModal::writeToForm(KAEntity *ent){

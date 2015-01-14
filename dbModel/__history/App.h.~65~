@@ -1,0 +1,62 @@
+//---------------------------------------------------------------------------
+
+#ifndef AppH
+#define AppH
+#include <Data.Win.ADODB.hpp>
+#include "CoreData.h"
+#include "GroupModal.h"
+#include "RoomModal.h"
+#include "ProgramModal.h"
+#include "SpecificModal.h"
+#include "CourseModal.h"
+#include <typeinfo>
+class TCourseModal;
+class SDODBImage;
+class App{
+public:
+	static int init();
+	static void saveAuth();
+	static void destruct();
+	static void updateCookie();
+	static void initDbModel();
+	static bool isConnectionActive();
+	static String login;
+	static String password;
+	static String progFolder;
+	static String serverIp;
+	static int uid;
+	static int cookie;
+	static SDODBImage *db;
+	static TADOConnection *connection;
+	struct ModalForms{
+		static TRoomModal* roomModal;
+		static TGroupModal* groupModal;
+		static TProgramModal* programModal;
+		static TSpecificModal* specificModal;
+		static TCourseModal* courseModal;
+		static void initForm(TModalEntityForm* *modalForm){
+			if(modalForm==&groupModal){
+				try {typeid(*groupModal);}
+				catch (...){groupModal=new TGroupModal(0);}
+			}
+			if(modalForm==&roomModal){
+				try {typeid(*roomModal);}
+				catch (...){roomModal=new TRoomModal(0);}
+			}
+			if(modalForm==&programModal){
+				try {typeid(*programModal);}
+				catch (...){programModal=new TProgramModal(0);}
+			}
+			if(modalForm==&specificModal){
+				try {typeid(*specificModal);}
+				catch (...){specificModal=new TSpecificModal(0);}
+			}
+		}
+	};
+protected:
+	static wchar_t buffer[MAX_PATH];
+
+};
+
+//---------------------------------------------------------------------------
+#endif

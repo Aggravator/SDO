@@ -1,0 +1,65 @@
+object SpecificModal: TSpecificModal
+  Left = 0
+  Top = 0
+  Caption = #1057#1087#1077#1094#1080#1092#1080#1082#1072
+  ClientHeight = 62
+  ClientWidth = 414
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Label1: TLabel
+    Left = 8
+    Top = 6
+    Width = 65
+    Height = 18
+    Align = alCustom
+    Alignment = taCenter
+    Caption = #1053#1072#1079#1074#1072#1085#1080#1077
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = 18
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    Layout = tlCenter
+  end
+  object Edit1: TEdit
+    Left = 82
+    Top = 2
+    Width = 328
+    Height = 27
+    Align = alCustom
+    Anchors = [akLeft, akTop, akRight]
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -16
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 0
+  end
+  object Button1: TButton
+    AlignWithMargins = True
+    Left = 3
+    Top = 32
+    Width = 408
+    Height = 30
+    Margins.Bottom = 0
+    Align = alBottom
+    Caption = 'OK'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = 16
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 1
+    ExplicitWidth = 392
+  end
+end

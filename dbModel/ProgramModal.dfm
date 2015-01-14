@@ -1,5 +1,5 @@
 object ProgramModal: TProgramModal
-  Left = 0
+  Left = 571
   Top = 0
   Caption = #1055#1088#1086#1075#1088#1072#1084#1084#1072
   ClientHeight = 485
@@ -11,6 +11,7 @@ object ProgramModal: TProgramModal
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  Position = poDesigned
   DesignSize = (
     505
     485)
@@ -142,7 +143,6 @@ object ProgramModal: TProgramModal
     Font.Style = []
     ParentFont = False
     TabOrder = 0
-    ExplicitWidth = 382
   end
   object CheckBox1: TCheckBox
     Left = 100
@@ -167,7 +167,6 @@ object ProgramModal: TProgramModal
     ModalResult = 1
     ParentFont = False
     TabOrder = 6
-    ExplicitWidth = 468
   end
   object Edit3: TEdit
     Left = 49
@@ -238,7 +237,6 @@ object ProgramModal: TProgramModal
         Value = 50.000000000000000000
       end>
     TabOrder = 7
-    ExplicitWidth = 456
     object Panel3: TPanel
       Left = 4
       Top = 4
@@ -247,7 +245,6 @@ object ProgramModal: TProgramModal
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 0
-      ExplicitWidth = 258
       object Label5: TLabel
         Left = 0
         Top = 0
@@ -306,7 +303,6 @@ object ProgramModal: TProgramModal
             SizeStyle = ssAuto
           end>
         TabOrder = 0
-        ExplicitWidth = 258
         DesignSize = (
           289
           126)
@@ -325,7 +321,6 @@ object ProgramModal: TProgramModal
           MultiSelect = True
           ParentFont = False
           TabOrder = 0
-          ExplicitWidth = 109
         end
         object Panel1: TPanel
           Left = 125
@@ -335,7 +330,6 @@ object ProgramModal: TProgramModal
           Anchors = []
           BevelOuter = bvNone
           TabOrder = 1
-          ExplicitLeft = 110
           object Button2: TButton
             Left = 3
             Top = 2
@@ -372,8 +366,6 @@ object ProgramModal: TProgramModal
           MultiSelect = True
           ParentFont = False
           TabOrder = 2
-          ExplicitLeft = 149
-          ExplicitWidth = 109
         end
       end
     end
@@ -385,11 +377,10 @@ object ProgramModal: TProgramModal
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
-      ExplicitLeft = 266
       object Label6: TLabel
         Left = 0
         Top = 0
-        Width = 186
+        Width = 39
         Height = 18
         Align = alTop
         Caption = #1055#1083#1072#1085':'
@@ -400,7 +391,6 @@ object ProgramModal: TProgramModal
         Font.Style = []
         ParentFont = False
         Layout = tlCenter
-        ExplicitWidth = 39
       end
       object StringGrid1: TStringGrid
         Left = 0
@@ -427,7 +417,6 @@ object ProgramModal: TProgramModal
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 2
-      ExplicitWidth = 258
       object Label7: TLabel
         Left = 0
         Top = 0
@@ -486,7 +475,6 @@ object ProgramModal: TProgramModal
             SizeStyle = ssAuto
           end>
         TabOrder = 0
-        ExplicitWidth = 258
         DesignSize = (
           289
           126)
@@ -505,7 +493,6 @@ object ProgramModal: TProgramModal
           MultiSelect = True
           ParentFont = False
           TabOrder = 0
-          ExplicitWidth = 109
         end
         object Panel2: TPanel
           Left = 125
@@ -515,7 +502,6 @@ object ProgramModal: TProgramModal
           Anchors = []
           BevelOuter = bvNone
           TabOrder = 1
-          ExplicitLeft = 110
           object Button4: TButton
             Left = 3
             Top = 2
@@ -552,8 +538,6 @@ object ProgramModal: TProgramModal
           MultiSelect = True
           ParentFont = False
           TabOrder = 2
-          ExplicitLeft = 149
-          ExplicitWidth = 109
         end
       end
     end
@@ -565,11 +549,10 @@ object ProgramModal: TProgramModal
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 3
-      ExplicitLeft = 266
       object Label9: TLabel
         Left = 0
         Top = 0
-        Width = 186
+        Width = 50
         Height = 18
         Align = alTop
         Caption = #1057#1084#1077#1085#1099':'
@@ -580,7 +563,6 @@ object ProgramModal: TProgramModal
         Font.Style = []
         ParentFont = False
         Layout = tlCenter
-        ExplicitWidth = 50
       end
       object StringGrid2: TStringGrid
         Left = 0
@@ -605,6 +587,8 @@ object ProgramModal: TProgramModal
     Top = 90
     Caption = 'colorButton'
     TabOrder = 8
+    OnClick = colorButtonClick
+    FullOpen = True
   end
   object Edit2: TEdit
     Left = 233
@@ -641,9 +625,9 @@ object ProgramModal: TProgramModal
     Height = 25
     Width = 25
     Left = 440
-    Top = 120
+    Top = 112
     Bitmap = {
-      494C010102000800340019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101020008003C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -974,10 +958,5 @@ object ProgramModal: TProgramModal
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000}
-  end
-  object ColorDialog1: TColorDialog
-    Color = clWhite
-    Left = 408
-    Top = 344
   end
 end

@@ -7,21 +7,26 @@
 //---------------------------------------------------------------------------
 #include <Vcl.Styles.hpp>
 #include <Vcl.Themes.hpp>
-
+#include "DefaultReport.h"
 
 
 USEFORM("Unit2.cpp", Form2);
 //---------------------------------------------------------------------------
-int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
+int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR str, int)
 {
 	try
 	{
-		App::init();
+		if(App::init(str)>1) return 0;
+		//2 - path to program directory error
+		//3 - new update
+		//4 - it is temp file
 		Application->Initialize();
 		Application->MainFormOnTaskBar = true;
+		Application->Title = "sdo";
 		TStyleManager::TrySetStyle("Amethyst Kamri");
 		TStyleManager::Engine->RegisterStyleHook(__classid(TButtonColor), __classid(TMColorButton));
 		Application->CreateForm(__classid(TForm2), &Form2);
+		Application->MainForm->Show();
 		Application->Run();
 		App::destruct();
 	}

@@ -60,6 +60,8 @@ bool programSort(KAEntity *a,KAEntity *b){
 	Program *cr2=dynamic_cast<Program*>(b);
 	if(cr1->isactual!=cr2->isactual){
 		return cr1->isactual>cr2->isactual;
+	}else if(cr1->istraining!=cr2->istraining){
+		return cr1->istraining>cr2->istraining;
 	}else if(cr1->key!=cr2->key){
 		return cr1->key<cr2->key;
     }else return cr1->name<cr2->name;

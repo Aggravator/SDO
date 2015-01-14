@@ -62,16 +62,21 @@ void TProgramModal::writeToEntity(KAEntity *ent){
 		pr->specifics.push_back(reinterpret_cast<Specific*>(ListBox2->Items->Objects[i]));
 	}
 	for(int i=0;i<pr->plan.size();++i)delete pr->plan[i];
-	pr->plan.resize(this->StringGrid1->RowCount-2);
 	for(int i=0;i<this->StringGrid1->RowCount-2;++i){
-		std::pair<int,int> *yp=new std::pair<int,int>(StrToInt(StringGrid1->Cells[0][i+1]),StrToInt(StringGrid1->Cells[1][i+1]));
-		pr->plan[i]=yp;
+		try{
+			std::pair<int,int> *yp=new std::pair<int,int>(StrToInt(StringGrid1->Cells[0][i+1]),StrToInt(StringGrid1->Cells[1][i+1]));
+			pr->plan.push_back(yp);
+		}
+		catch(...){
+        }
 	}
 	for(int i=0;i<pr->times.size();++i)delete pr->times[i];
-	pr->times.resize(this->StringGrid2->RowCount-2);
 	for(int i=0;i<this->StringGrid2->RowCount-2;++i){
-		std::pair<TDateTime,TDateTime> *yp=new std::pair<TDateTime,TDateTime>(StrToTime(StringGrid2->Cells[0][i+1]),StrToTime(StringGrid2->Cells[1][i+1]));
-		pr->times[i]=yp;
+		try{
+			std::pair<TDateTime,TDateTime> *yp=new std::pair<TDateTime,TDateTime>(StrToTime(StringGrid2->Cells[0][i+1]),StrToTime(StringGrid2->Cells[1][i+1]));
+			pr->times.push_back(yp);
+		}
+		catch(...){}
 	}
 	pr->groups.clear();
 	for(int i=0;i<ListBox4->Count;++i){
