@@ -57,7 +57,6 @@ object ReportClass: TReportClass
     ParentFont = False
     TabOrder = 3
     OnClick = Button1Click
-    ExplicitWidth = 266
   end
   object ComboBox1: TComboBox
     Left = 131

@@ -259,12 +259,12 @@ void __fastcall TReportClass::Button1Click(TObject *Sender)
 				}
 				if(newCr==NULL) continue;
 				if(newCr==oldCr){
-						exr->at(oldC)->hspan+=1;
+					exr->at(oldC)->hspan+=1;
 				}else{
 					oldCr=newCr;
 					bool isReal=dynamic_cast<PlanTable*>(newCr->getParent())==0;
 					if(!isReal)usedPP[i]->insert(newCr->program);
-					exr->at(j+1)->setSpan(IntToStr(newCr->students),1,1,ExcelHAlign::Center,ExcelVAlign::Middle,isReal ? 14277081 : newCr->program->color);
+					exr->at(j+1)->setSpan(IntToStr(newCr->students)+"/"+newCr->program->name,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,isReal ? 14277081 : newCr->program->color);
 					oldC=j+1;
 				}
 			}

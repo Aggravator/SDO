@@ -1,0 +1,1095 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "TableForm.h"
+#include "App.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+//---------------------------------------------------------------------------
+String months[]={"Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"};
+String dayOfWeek[]={"Вс","Пн","Вт","Ср","Чт","Пт","Сб"};
+
+unsigned getGradient(double p){
+	//if(p>1.0)return RGB(255,0,0);
+	unsigned red,green,blue;
+	if(p>=0 && p<=0.5){
+		red=102;
+		green=306*p+102;
+		blue=255;
+	}else if(p>=0.5 && p<=1.0){
+		red=102;
+		green=255;
+		blue=-306*(p-0.5)+255;
+	}else if(p>=1 && p<=1.5){
+		red=306*(p-1.0)+102;;
+		green=255;
+		blue=102;
+	}else if (p>=1.5 && p<=2.0){
+		red=255;
+		green=-306*(p-1.5)+255;
+		blue=102;
+	}else if(p>=2.0){
+		red=255;
+		green=102;
+		blue=102;
+	}
+	return RGB(red,green,blue);
+}
+
+Cell::Cell(){
+	hspan=vspan=1;
+	cellType=EUsual;
+	courseR=courseP=0;
+	lessonR=lessonP=0;
+	color=16777215;
+}
+void Cell::setSpan(int hs,int vs,String text,unsigned int flags){
+	hspan=hs;
+	vspan=vs;
+	this->text=text;
+	this->cellType=ESpan;
+	this->flags=flags;
+}
+void Cell::setCourseSpan(int hs){
+	hspan=hs;
+	this->flags= DT_WORDBREAK|DT_CENTER;
+	this->cellType=ECourseS;
+}
+void Cell::setStaticS(int hs,int vs,String text,unsigned int flags){
+	hspan=hs;
+	vspan=vs;
+	this->text=text;
+	this->cellType=EStaticS;
+	this->flags=flags;
+}
+
+__fastcall TTableForm::TTableForm(TComponent* Owner)
+	: TForm(Owner),tempSelectedC(0,TDateTime::CurrentDate(),TDateTime::CurrentDate(),0,0,"")
+{
+	executedCourseColor=RGB(230,230,230);
+	showReal=showPlan=true;
+	showAllPrograms=false;
+	this->filterHourse=false;
+	dragCell=NULL;
+	month=TDate::CurrentDate();
+	realTable=App::db->getRealTable();
+	planTable=App::db->getPlanTable();
+	unsigned short year1,month1,day1;
+	month.DecodeDate(&year1,&month1,&day1);
+	month=EncodeDate(year1,month1,1);
+	realTable->loadMonth(month);
+	realTable->loadMonth(IncMonth( month, 1 ));
+	realTable->loadMonth(IncMonth( month, -1 ));
+	planTable->loadMonth(month);
+	planTable->loadMonth(IncMonth( month, -1 ));
+	planTable->loadMonth(IncMonth( month, 1 ));
+	//this->sstringRedraw();
+	ccf=new TCourseCreate(this,this);
+}
+__fastcall TTableForm::~TTableForm(){
+	clearCells();
+	clearProgs();
+	delete ccf;
+}
+bool TTableForm::isIntoPeriod(KAEntity* ent){
+	Course *cr=dynamic_cast<Course*>(ent);
+	TDate start=month-4;
+	TDate end=IncMonth( month, 1 )+3;
+	for(int i=0;i<cr->dates.size();++i){
+		TDate dd=cr->dates[i]->date;
+		if(cr->dates[i]->date>=start && cr->dates[i]->date<=end)return true;
+	}
+	return false;
+}
+bool sortPT (ProgTables* i,ProgTables* j) {
+	if(i->prog->istraining!=j->prog->istraining){
+		return i->prog->istraining>j->prog->istraining;
+	}else if(i->prog->key!=j->prog->key){
+		return i->prog->key<j->prog->key;
+	}else if(i->prog->name!=j->prog->name){
+		return i->prog->name<j->prog->name;
+	}else return i->time.first<j->time.first;
+}
+void TTableForm::clearCells(){
+	for(int i=0;i<cells.size();++i){
+		for(int j=0;j<cells[i]->size();++j){
+			delete cells[i]->at(j);
+		}
+		delete cells[i];
+	}
+	cells.clear();
+}
+void  TTableForm::clearProgs(){
+	for(int i=0;i<progs.size();++i){
+		delete progs[i];
+	}
+	progs.clear();
+}
+TDateTime getMaxDateFromCourse(Course* cr){
+	TDate maxDate=0;
+	for(int i=0;i<cr->dates.size();++i)
+		if(cr->dates[i]->date>maxDate)maxDate=cr->dates[i]->date;
+	return maxDate;
+}
+bool dateIntoMonth(TDate date,TDate month){
+	unsigned short year1,year2,month1,month2,day;
+	month.DecodeDate(&year1,&month1,&day);
+	date.DecodeDate(&year2,&month2,&day);
+	if(year2==year1 && month1==month2) return true;
+	return false;
+}
+bool isIntoMonth(Course *cr, TDate month){
+	for(int i=0;i<cr->dates.size();++i){
+		if(dateIntoMonth(cr->dates[i]->date,month))return true;
+	}
+	return false;
+}
+int getYearOfDate(TDate date){
+	unsigned short year,month,day;
+	date.DecodeDate(&year,&month,&day);
+	return year;
+}
+
+int TTableForm::gatherStCountForMonth(Program *pr,TDate month){
+	int res=0;
+	TDate maxDate;
+	for(int i=0;i<this->realTable->size();++i){
+		Course *cr=dynamic_cast<Course*>(this->realTable->at(i));
+		maxDate=getMaxDateFromCourse(cr);
+		if(cr->program==pr && dateIntoMonth(maxDate,month)){
+			res+=cr->students;
+		}
+	}
+	TDate currentD=TDate::CurrentDate();
+    for(int i=0;i<this->planTable->size();++i){
+		Course *cr=dynamic_cast<Course*>(this->planTable->at(i));
+		maxDate=getMaxDateFromCourse(cr);
+		if(cr->program==pr && dateIntoMonth(maxDate,month) && maxDate>currentD){
+			res+=cr->students;
+		}
+	}
+	return res;
+}
+
+int TTableForm::gatherStCFMG(Group* gr,TDate month){
+	int res=0;
+	Programs *prgs=App::db->getPrograms();
+	Program *pr;
+	std::vector<Group*>::iterator git;
+	for(int i=0;i<prgs->size();++i){
+		pr=dynamic_cast<Program*>(prgs->at(i));
+		if(std::find(pr->groups.begin(),pr->groups.end(),gr)!=pr->groups.end()){
+			res+=this->gatherStCountForMonth(pr,month);
+		}
+	}
+	return res;
+}
+
+void TTableForm::prTableToVector(ProgTables* pt,std::vector<Cell*>* row){
+	int fixcols=4;
+	unsigned short year1,month1,day1;
+	month.DecodeDate(&year1,&month1,&day1);
+	int dayCount=MonthDays[IsLeapYear(year1)][month1-1];
+	double diff;
+	int cellPos;
+	for(int i=0;i<pt->real.size();++i){
+		pt->real[i]->sortDates();
+		for(int j=0;j<pt->real[i]->dates.size();++j){
+			diff=(int)((double)(pt->real[i]->dates[j]->date-month));
+			if(diff>=-4 && diff<=dayCount+3){
+				cellPos=fixcols+4+diff;
+				row->at(cellPos)->courseR=pt->real[i];
+				row->at(cellPos)->lessonR=pt->real[i]->dates[j];
+			}
+		}
+	}
+	for(int i=0;i<pt->plan.size();++i){
+		pt->plan[i]->sortDates();
+		for(int j=0;j<pt->plan[i]->dates.size();++j){
+			diff=(int)((double)(pt->plan[i]->dates[j]->date-month));
+			if(diff>=-4 && diff<=dayCount+4){
+				cellPos=fixcols+4+diff;
+				row->at(cellPos)->courseP=pt->plan[i];
+				row->at(cellPos)->lessonP=pt->plan[i]->dates[j];
+			}
+		}
+	}
+	Course *spanCourse=NULL;
+	Course *active=NULL;
+	int spanPos=-1;
+	for(int i=fixcols;i<row->size();++i){
+		if(showReal && row->at(i)->courseR!=NULL && ((row->at(i)->courseP!=selectedCourse || selectedCourse==NULL) || !showPlan))
+			active=row->at(i)->courseR;
+		else if(showPlan && row->at(i)->courseP!=NULL)
+			active=row->at(i)->courseP;
+		else
+			active=NULL;
+		if(active==spanCourse && active!=NULL){
+			row->at(i)->cellType=ECourseUS;
+			row->at(spanPos)->hspan+=1;
+		}else if(spanCourse!=active){
+			spanCourse=active;
+			if(active!=NULL){
+				spanPos=i;
+				row->at(i)->setCourseSpan(1);
+			}
+		}
+	}
+}
+void TTableForm::refreshStCSInf(std::vector<ProgTables*> &prgs){
+	progStCountS.clear();
+	for(int i=0;i<prgs.size();++i){
+		progStCountS[prgs[i]->prog]=0;
+	}
+	Programs * prms=App::db->getPrograms();
+	for(int i=0;i<prms->size();++i)progStCountS[(Program*)prms->at(i)]=0;
+	unsigned short year,month1,day;
+	this->month.DecodeDate(&year,&month1,&day);
+	TDate firstM=EncodeDate(year,1,1);
+	for(int i=1;i<month1;++i){
+		if(planTable->hasMonth(firstM))break;
+		firstM=IncMonth(firstM,1);
+	}
+	TDate lDate=firstM;
+	std::map<Program*,int>::iterator it;
+	firstM=EncodeDate(year,1,1);
+	lDate-=1;
+	if(lDate>firstM){
+		String queryTemplate=String().sprintf(L"select program_id, sum(plantable_students) as stC from plantable inner join (select subsubPQ.plantable_id, max(datesplantable_date) as mdate from datesplantable inner join (select plantable_id from plantable where program_id in (%%s)) as subsubPQ on (datesplantable.plantable_id=subsubPQ.plantable_id) group by subsubPQ.plantable_id having mdate<='%s' and mdate>Date(Now())) as subPQ on (plantable.plantable_id=subPQ.plantable_id) group by program_id",lDate.FormatString("yyyy-mm-dd"));
+		queryTemplate+="\nunion\n";
+		queryTemplate+=String().sprintf(L"select program_id, sum(realtable_students) as stC from realtable inner join (select subsubRQ.realtable_id, max(datesrealtable_date) as mdate from datesrealtable inner join (select realtable_id from realtable where program_id in (%%s)) as subsubRQ on (datesrealtable.realtable_id=subsubRQ.realtable_id) group by subsubRQ.realtable_id having mdate<='%s') as subRQ on (realtable.realtable_id=subRQ.realtable_id) group by program_id;",lDate.FormatString("yyyy-mm-dd"));
+		String progs="";
+		for(it=progStCountS.begin();it!=progStCountS.end();++it){
+			progs+=IntToStr((*it).first->getID())+",";
+		}
+		if(progs.Length()>0){
+			progs=progs.SubString(0,progs.Length()-1);
+			queryTemplate=String().sprintf(queryTemplate.w_str(),progs,progs);
+			TADOQuery &query=*(new TADOQuery(0));
+			query.SQL->Add(queryTemplate);
+			query.Connection=App::connection;
+			query.Active=true;
+			for(int i=0;i<query.RecordCount;++i){
+				progStCountS[(Program*)prms->getById(query["program_id"])]+=query["stC"].operator int();
+				query.Next();
+			}
+			query.Close();
+			delete &query;
+		}
+	}
+}
+void TTableForm::refreshStCCInf(std::vector<ProgTables*> &prgs){
+	progStCountC.clear();
+	for(int i=0;i<prgs.size();++i){
+		progStCountC[prgs[i]->prog]=0;
+	}
+	Programs * prms=App::db->getPrograms();
+	for(int i=0;i<prms->size();++i)progStCountC[(Program*)prms->at(i)]=0;
+	unsigned short year,month1,day;
+	this->month.DecodeDate(&year,&month1,&day);
+	TDate firstM=EncodeDate(year,1,1);
+	for(int i=1;i<month1;++i){
+		if(planTable->hasMonth(firstM))break;
+		firstM=IncMonth(firstM,1);
+	}
+	TDate lDate=firstM;
+	std::map<Program*,int>::iterator it;
+	while(!dateIntoMonth(firstM,IncMonth(month,1))){
+		for(it=progStCountC.begin();it!=progStCountC.end();++it){
+			(*it).second+=gatherStCountForMonth((*it).first,firstM);
+		}
+		firstM=IncMonth(firstM,1);
+	}
+}
+void  TTableForm::refreshGrCC(){
+	groupCountC.clear();
+	Groups *grps=App::db->getGroups();
+	Programs * prms=App::db->getPrograms();
+	for(int i=0;i<grps->size();++i){
+		if(((Group*)grps->at(i))->isactual)	groupCountC[(Group*)grps->at(i)]=0;
+	}
+	std::map<Group*,int>::iterator it;
+	std::vector<Group*>::iterator git;
+	std::map<Program*,int>::iterator pit;
+	Program *pr;
+	for(it=groupCountC.begin();it!=groupCountC.end();++it){
+		for(pit=progStCountC.begin();pit!=progStCountC.end();++pit){
+			pr=(*pit).first;
+			if(std::find(pr->groups.begin(),pr->groups.end(),(*it).first)!=pr->groups.end())(*it).second+=(*pit).second;
+        }
+    }
+}
+void  TTableForm::refreshGrCS(){
+	groupCountS.clear();
+	Groups * grps=App::db->getGroups();
+	Programs * prms=App::db->getPrograms();
+	for(int i=0;i<grps->size();++i){
+		if(((Group*)grps->at(i))->isactual)	groupCountS[(Group*)grps->at(i)]=0;
+	}
+	std::map<Group*,int>::iterator it;
+	std::vector<Group*>::iterator git;
+	std::map<Program*,int>::iterator pit;
+	Program *pr;
+	for(it=groupCountS.begin();it!=groupCountS.end();++it){
+		for(pit=progStCountS.begin();pit!=progStCountS.end();++pit){
+			pr=(*pit).first;
+			if(std::find(pr->groups.begin(),pr->groups.end(),(*it).first)!=pr->groups.end())(*it).second+=(*pit).second;
+        }
+	}
+}
+void TTableForm::sstringRedraw(){
+	this->clearProgs();
+	static TDate lastMonthRedraw=TDate::CurrentDate()-10000;
+	int fixcols=4;
+	unsigned short year1,month1,day,year2,month2;
+	month.DecodeDate(&year1,&month1,&day);
+	lastMonthRedraw.DecodeDate(&year2,&month2,&day);
+	if(year1!=year2 || month1!=month2){
+		monthLabel->Caption=months[month1-1]+", "+IntToStr(year1);
+		int dayCount=MonthDays[IsLeapYear(year1)][month1-1];
+		StringGrid1->ColCount=dayCount+8+fixcols+2;
+		TDate firstDate=EncodeDate(year1,month1,1);
+		for(int i=0;i<dayCount+8;++i){
+			TDate dd=firstDate-4+i;
+			dd.DecodeDate(&year1,&month1,&day);
+			StringGrid1->Cells[fixcols+i][0]=dayOfWeek[DayOfWeek(dd)-1];
+			StringGrid1->Cells[fixcols+i][1]=IntToStr(day);
+		}
+		StringGrid1->Cells[StringGrid1->ColCount-2][1]="Месяц";
+		StringGrid1->Cells[StringGrid1->ColCount-1][1]="Год";
+		StringGrid1->Cells[StringGrid1->ColCount-2][0]="";
+		StringGrid1->Cells[StringGrid1->ColCount-1][0]="";
+		lastMonthRedraw=month;
+    }
+	std::vector<Course*> plan,real;
+	for(int i=0;i<planTable->size();++i){
+		if(isIntoPeriod(planTable->at(i)))
+			plan.push_back(dynamic_cast<Course*>(planTable->at(i)));
+	}
+	for(int i=0;i<realTable->size();++i){
+		if(isIntoPeriod(realTable->at(i)))real.push_back(dynamic_cast<Course*>(realTable->at(i)));
+	}
+	FindPlanTByCourse finder;
+	std::vector<ProgTables*>::iterator it;
+	for(int i=0;i<plan.size();++i){
+		finder.course=plan[i];
+		it=std::find_if(progs.begin(),progs.end(),finder);
+		if(it!=progs.end()){
+			(*it)->plan.push_back(finder.course);
+		}else{
+			ProgTables *pt= new ProgTables();
+			pt->prog=finder.course->program;
+			pt->time=std::pair<TDateTime,TDateTime>(finder.course->start,finder.course->end);
+			pt->plan.push_back(finder.course);
+			progs.push_back(pt);
+		}
+	}
+	for(int i=0;i<real.size();++i){
+		finder.course=real[i];
+		it=std::find_if(progs.begin(),progs.end(),finder);
+		if(it!=progs.end()){
+			(*it)->real.push_back(finder.course);
+		}else{
+			ProgTables *pt= new ProgTables();
+			pt->prog=finder.course->program;
+			pt->time=std::pair<TDateTime,TDateTime>(finder.course->start,finder.course->end);
+			pt->real.push_back(finder.course);
+			progs.push_back(pt);
+		}
+	}
+	if(showAllPrograms){
+		FindPlanTByProgTime finder2;
+		Programs *pps=App::db->getPrograms();
+		for(int i=0;i<pps->size();++i){
+			if(((Program*)pps->at(i))->isactual==false)continue;
+			finder2.prog=dynamic_cast<Program*>(pps->at(i));
+			for(int j=0;j<finder2.prog->times.size();++j){
+				finder2.time=finder2.prog->times[j];
+				it=std::find_if(progs.begin(),progs.end(),finder2);
+				if(it==progs.end()){
+					ProgTables *pt= new ProgTables();
+					pt->prog=finder2.prog;
+					pt->time=*finder2.time;
+					progs.push_back(pt);
+				}
+            }
+		}
+	}
+
+	std::sort(progs.begin(),progs.end(),sortPT);
+	refreshStCSInf(progs);
+	refreshGrCS();
+	regenerateCells(progs);
+
+	stringResizing();
+}
+bool groupSort(KAEntity *a,KAEntity *b){
+	Group *gp1=dynamic_cast<Group*>(a);
+	Group *gp2=dynamic_cast<Group*>(b);
+	if(gp1->isactual!=gp2->isactual){
+		return gp1->isactual>gp2->isactual;
+	}else return gp1->name<gp2->name;
+}
+int getPlanOfPrOnYear(Program* pr,int year){
+	for(int i=0;i<pr->plan.size();++i){
+		if(pr->plan[i]->first==year)return pr->plan[i]->second;
+	}
+	return -1;
+}
+int getPlanOfGrOnYear(Group* gr,int year){
+	for(int i=0;i<gr->plan.size();++i){
+		if(gr->plan[i]->first==year)return gr->plan[i]->second;
+	}
+	return -1;
+}
+void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
+	refreshStCCInf(progs);
+	refreshGrCC();
+	this->clearCells();
+	if(progs.size()>0){
+		unsigned short year1,month1,day1;
+		month.DecodeDate(&year1,&month1,&day1);
+		monthLabel->Caption=months[month1-1]+", "+IntToStr(year1);
+		int dayCount=MonthDays[IsLeapYear(year1)][month1-1];
+		int fixcols=4,grCount=0;
+		Groups *grps=App::db->getGroups();
+		std::sort(grps->begin(),grps->end(),groupSort);
+		Group *gr;
+		for(int i=0;i<grps->size();++i)if(((Group*)grps->at(i))->isactual)++grCount; else break;
+
+		int hour=-1;
+		if(this->filterHourse){
+			try{
+                hour=StrToInt(Edit1->Text);
+			}
+			catch(...){
+				hour=-1;
+			}
+		}
+
+		int i,row=0;
+		bool lastTr;
+		std::vector<Cell*>* cRow;
+		Cell *cl;
+		for(i=0;i<progs.size();++i){
+			if(hour!=-1){
+				if(progs[i]->prog->hours!=hour)continue;
+			}
+			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			if(row==0 || lastTr!=progs[i]->prog->istraining){
+				lastTr=progs[i]->prog->istraining;
+				cl=cRow->at(0);
+				cl->setSpan(cRow->size(),1,progs[i]->prog->istraining ? "Повышение квалификации" :"Семинары",DT_CENTER|DT_SINGLELINE|DT_VCENTER);
+				for(int j=1;j<cRow->size();++j)cRow->at(j)->cellType=EEmpty;
+				cells.push_back(cRow);
+				cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+				for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			}
+			cRow->at(0)->setSpan(1,1,progs[i]->prog->key);
+			cRow->at(0)->courseR=reinterpret_cast<Course*>(progs[i]->prog);
+			cRow->at(1)->setSpan(1,1,progs[i]->prog->name,DT_LEFT|DT_WORDBREAK);
+			cRow->at(2)->setSpan(1,1,IntToStr(progs[i]->prog->hours));
+			cRow->at(3)->setSpan(1,1,progs[i]->time.first.FormatString("hh:nn")+"-"+progs[i]->time.second.FormatString("hh:nn"));
+			prTableToVector(progs[i],cRow);
+			if(i!=0 && progs[i]->prog==progs[i-1]->prog){
+				cRow->at(cRow->size()-2)->cellType=EStaticUS;
+				cRow->at(cRow->size()-1)->cellType=EStaticUS;
+				int Ssr=cells.size()-1;
+				for(Ssr;cells[Ssr]->at(cells[Ssr]->size()-2)->cellType!=EStaticS;--Ssr);
+				cells[Ssr]->at(cells[Ssr]->size()-2)->vspan+=1;
+				cells[Ssr]->at(cells[Ssr]->size()-1)->vspan+=1;
+			}else{
+				int yPlan=getPlanOfPrOnYear(progs[i]->prog,year1);
+				int stForMonth= gatherStCountForMonth(progs[i]->prog,month);
+				int stForYear=progStCountS[progs[i]->prog]+progStCountC[progs[i]->prog];
+				cRow->at(cRow->size()-2)->setStaticS(1,1,IntToStr(stForMonth));
+				cRow->at(cRow->size()-1)->setStaticS(1,1,IntToStr(stForYear));
+				if(yPlan!=-1){
+					double perMonth=yPlan/12.0;
+					double temp=perMonth*month1;
+					if(stForYear>temp)temp=1.0+(stForYear-temp)/(yPlan-temp);else temp=stForYear/(temp);
+					cRow->at(cRow->size()-1)->color=getGradient(temp);
+					perMonth=(yPlan-(stForYear-stForMonth))/(12.0-month1+1);
+					temp=(perMonth<0.0001 && perMonth>-0.0001) ? 2.0 : stForMonth/perMonth;
+					if(perMonth==stForMonth)temp=1.0;
+					cRow->at(cRow->size()-2)->color=getGradient(temp>2 ? 3.0 : temp);
+				}
+			}
+			cells.push_back(cRow);
+			++row;
+		}
+		for(i=0;i<grps->size();++i){
+			gr=dynamic_cast<Group*>(grps->at(i));
+			if(gr->isactual==false)break;
+			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			cRow->at(0)->setSpan(cells[i]->size()-2,1,gr->name,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			cRow->at(0)->courseP=reinterpret_cast<Course*>(gr);
+			for(int j=1;j<cRow->size()-2;++j)cRow->at(j)->cellType=EEmpty;
+			int yPlan=getPlanOfGrOnYear(gr,year1);
+			int stForMonth= gatherStCFMG(gr,month);
+			int stForYear=groupCountS[gr]+groupCountC[gr];
+			cRow->at(cRow->size()-2)->setStaticS(1,1,IntToStr(stForMonth));
+			cRow->at(cRow->size()-1)->setStaticS(1,1,IntToStr(stForYear));
+			if(yPlan!=-1){
+				double perMonth=yPlan/12.0;
+				double temp=perMonth*month1;
+				if(stForYear>temp)temp=1.0+(stForYear-temp)/(yPlan-temp);else temp=stForYear/(temp);
+				cRow->at(cRow->size()-1)->color=getGradient(temp);
+				perMonth=(yPlan-(stForYear-stForMonth))/(12.0-month1+1);
+				temp=(perMonth<0.0001 && perMonth>-0.0001) ? 2.0 : stForMonth/perMonth;
+				if(perMonth==stForMonth)temp=1.0;
+				cRow->at(cRow->size()-2)->color=getGradient(temp>2 ? 3.0 : temp);
+			}
+			cells.push_back(cRow);
+		}
+		{
+			int progC=0,progCC=0,semC=0,semCC=0;
+			Programs *prgs=App::db->getPrograms();
+			for(int i=0;i<prgs->size();++i){
+				Program *pr=dynamic_cast<Program*>(prgs->at(i));
+				if(pr->istraining){
+					progC+=gatherStCountForMonth(pr,month);
+					progCC+=progStCountS[pr]+progStCountC[pr];
+				}else{
+					semC+=gatherStCountForMonth(pr,month);
+					semCC+=progStCountS[pr]+progStCountC[pr];
+                }
+			}
+			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			cRow->at(0)->setSpan(cRow->size()-2,1,"Повышение квалафикации",DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			for(int j=1;j<cRow->size()-2;++j)cRow->at(j)->cellType=EEmpty;
+			cRow->at(cRow->size()-1)->setStaticS(1,1,IntToStr(progCC));
+			cRow->at(cRow->size()-2)->setStaticS(1,1,IntToStr(progC));
+			cells.push_back(cRow);
+
+			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
+			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
+			cRow->at(0)->setSpan(cRow->size()-2,1,"Семинары",DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			for(int j=1;j<cRow->size()-2;++j)cRow->at(j)->cellType=EEmpty;
+			cRow->at(cRow->size()-1)->setStaticS(1,1,IntToStr(semCC));
+			cRow->at(cRow->size()-2)->setStaticS(1,1,IntToStr(semC));
+			cells.push_back(cRow);
+		}
+	}
+	if(progs.size()>0){
+		StringGrid1->RowCount=cells.size()+2;
+	}else{
+		StringGrid1->RowCount=3;
+		StringGrid1->Rows[2]->Clear();
+	}
+	this->StringGrid1->Repaint();
+}
+void TTableForm::stringResizing(){
+	int fixcols=4;
+	//StringGrid1->Cells[StringGrid1->ColCount-2][1]="12345";
+	StringGrid1->DefaultColWidth=(StringGrid1->Width-(50+160+30+70+35+35)-StringGrid1->ColCount-fixcols)/(StringGrid1->ColCount-fixcols-2);
+	StringGrid1->ColWidths[0]=50;
+	StringGrid1->ColWidths[1]=160;
+	StringGrid1->ColWidths[2]=30;
+	StringGrid1->ColWidths[3]=70;
+	StringGrid1->ColWidths[StringGrid1->ColCount-1]=35;
+	StringGrid1->ColWidths[StringGrid1->ColCount-2]=35;
+}
+//---------------------------------------------------------------------------
+void __fastcall TTableForm::FormResize(TObject *Sender)
+{
+	this->stringResizing();
+}
+//---------------------------------------------------------------------------
+void drawBorder(TCanvas *canvas,TRect &rect){
+	canvas->MoveTo(rect.left,rect.top);
+	canvas->LineTo(rect.Left,rect.Bottom);
+	canvas->LineTo(rect.Right,rect.Bottom);
+	canvas->LineTo(rect.Right,rect.Top);
+	canvas->LineTo(rect.Left,rect.Top);
+}
+void __fastcall TTableForm::StringGrid1DrawCell(TObject *Sender, int ACol, int ARow,
+          TRect &Rect, TGridDrawState State)
+{
+	int fixcols=4;
+	StringGrid1->Canvas->Brush->Color=clWhite;
+	if(ACol<fixcols || ARow<2)StringGrid1->Canvas->Pen->Color=clBlack;
+	else{
+		StringGrid1->Canvas->Pen->Color=clGray;
+		Rect.Top-=1;
+		Rect.left-=1;
+	}
+	StringGrid1->Canvas->Pen->Width=1;
+	if(ACol<fixcols || ARow<2)StringGrid1->Canvas->Brush->Color=RGB(240,240,240);
+	else if(ACol<fixcols+4 || ACol>=StringGrid1->ColCount-4 || DayOfWeek(month-4-fixcols+ACol)==1 || DayOfWeek(month-4-fixcols+ACol)==7)StringGrid1->Canvas->Brush->Color=RGB(248,248,248);
+	if(ARow<2 || StringGrid1->RowCount==3){
+		if(ACol<4){
+			Rect.Top-=2;
+			Rect.left-=2;
+		}
+		if(ACol>=StringGrid1->ColCount-2){
+			Rect.Top-=2;
+		}
+		StringGrid1->Canvas->FillRect(Rect);
+		if(ACol>=4 && ACol<StringGrid1->ColCount-2)drawBorder(StringGrid1->Canvas,Rect);
+		tagRECT tr;
+		tr.left=Rect.Left+1;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
+		DrawText(StringGrid1->Canvas->Handle, StringGrid1->Cells[ACol][ARow].w_str(), StringGrid1->Cells[ACol][ARow].Length(), &tr,DT_CENTER);
+		return;
+    }
+	if(cells.size()==0)return;
+	Cell *cl=cells[ARow-2]->at(ACol);
+	TRect tempRect;
+	int width=0,height=0,i;
+	Course *active;
+	tagRECT tr;
+	switch(cl->cellType){
+		case EUsual:
+			StringGrid1->Canvas->FillRect(Rect);
+			drawBorder(StringGrid1->Canvas,Rect);
+			//StringGrid1->Canvas->TextOutW(Rect.Left+1,Rect.Top+1);
+		break;
+		case ESpan:
+			for(int i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i]+1;
+			for(int i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
+			Rect.Right=Rect.Left+width-1;
+			Rect.Bottom=Rect.Top+height-1;
+			StringGrid1->Canvas->FillRect(Rect);
+			drawBorder(StringGrid1->Canvas,Rect);
+			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
+			DrawText(StringGrid1->Canvas->Handle, cl->text.w_str(), cl->text.Length(), &tr,cl->flags);
+		break;
+		case EStaticS:
+			for(i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i]+1;
+			for(i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
+			Rect.Right=Rect.Left+width;
+			Rect.Bottom=Rect.Top+height;
+			StringGrid1->Canvas->Brush->Color=cl->color;
+			StringGrid1->Canvas->FillRect(Rect);
+			drawBorder(StringGrid1->Canvas,Rect);
+			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
+			DrawText(StringGrid1->Canvas->Handle, cl->text.w_str(), cl->text.Length(), &tr,cl->flags);
+		break;
+		case ECourseS:
+			Rect.Left+=1;
+			Rect.Top+=1;
+			for(int i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i]+1;
+			for(int i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
+			Rect.Right=Rect.Left+width-1;
+			Rect.Bottom=Rect.Top+height-1;
+			if(cl->courseR==0 || (cl->courseP==selectedCourse && selectedCourse!=NULL && showPlan) || !showReal)active=cl->courseP;else active=cl->courseR;
+			if(cl->courseR==active)StringGrid1->Canvas->Brush->Color=executedCourseColor;
+			else if(cl->courseP!=0)StringGrid1->Canvas->Brush->Color=cl->courseP->program->color;
+			if(active==selectedCourse) StringGrid1->Canvas->Pen->Color=clBlue;
+			StringGrid1->Canvas->FillRect(Rect);
+			if(active==selectedCourse){
+				Rect.Right-=1;
+				Rect.Bottom-=1;
+				drawBorder(StringGrid1->Canvas,Rect);
+            }
+			String text=IntToStr(active->students);
+			if(active->dates.size()>0){
+				text+=" ";
+				std::vector<ClassRoom*> rooms;
+				for(int i=0;i<active->dates.size();++i){
+					bool isNotHas=true;
+					for(int j=0;j<rooms.size() && isNotHas;++j)
+						if(rooms[j]==active->dates[i]->room)
+							isNotHas=false;
+					rooms.push_back(active->dates[i]->room);
+					if(isNotHas)text+=active->dates[i]->room->name+", ";
+				}
+				text=text.SubString(0,text.Length()-2);
+			}
+			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
+			DrawText(StringGrid1->Canvas->Handle, text.w_str(), text.Length(), &tr,cl->flags);
+		break;
+
+
+	}
+}
+//---------------------------------------------------------------------------
+
+ProgTables* TTableForm::getProgTableByRow(int row){
+	if(progs.size()>0){
+		int headerCount,tempRow=3,istraining=progs[0]->prog->istraining;
+		for(int i=0;i<progs.size();++i){
+			if(istraining!=progs[i]->prog->istraining){
+				istraining=progs[i]->prog->istraining;
+				++tempRow;
+			}
+			if(tempRow==row)return progs[i];
+			++tempRow;
+		}
+	}
+	return NULL;
+}
+void __fastcall TTableForm::StringGrid1DblClick(TObject *Sender)
+{
+	int fixcols=4;
+	TPoint p;
+	p=StringGrid1->ScreenToClient(Mouse->CursorPos);
+	int col,row;
+	StringGrid1->MouseToCell(p.X,p.Y,col,row);
+	StringGrid1->EndDrag(false);
+	if(showAllPrograms==false){
+		if(col>=fixcols && (row<3 || (StringGrid1->RowCount==3 && row==3))){
+			ccf->prog=NULL;
+			ccf->smena=NULL;
+			ccf->room=NULL;
+			ccf->studentsC=-1;
+			ccf->isPlan=ccf->isReal=false;
+			if(ccf->ShowModal()==mrOk){
+				TDate dd=month-8+col;
+				std::vector<DateLesson*> dl;
+				for(int i=0;i<ccf->prog->days;++i){
+					DateLesson* dll=new DateLesson();
+					dll->date=dd+i;dll->room=ccf->room;
+					dl.push_back(dll);
+                }
+				Course *c=new Course(ccf->prog,ccf->smena->first,ccf->smena->second,ccf->studentsC,&dl,"");
+				if(ccf->isPlan)App::db->getPlanTable()->createEntity(c);
+				else App::db->getRealTable()->createEntity(c);
+				for(int i=0;i<ccf->prog->days;++i) delete dl.at(i);
+
+				this->sstringRedraw();
+				return;
+            }
+		}else{
+
+		}
+	}
+	if(col>=fixcols && row>=3){
+		ProgTables *pts=this->getProgTableByRow(row);
+		if(pts!=NULL){
+			Cell *cell=cells[row-2]->at(col);
+			if(cell->courseP!=NULL && cell->courseR ==NULL && showPlan){
+				Course *newC=new Course(*cell->courseP);
+				App::db->getRealTable()->createEntity(newC);
+				pts->real.push_back(newC);
+				this->selectedCourse=newC;
+				this->regenerateCells(progs);
+				this->StringGrid1->Repaint();
+				return;
+			}
+			if(cell->courseP==NULL || cell->courseR ==NULL){
+				ccf->prog=pts->prog;
+				ccf->smena=new std::pair<TDateTime,TDateTime>(pts->time);
+				ccf->room=NULL;
+				ccf->studentsC=-1;
+				ccf->isPlan=ccf->isReal=false;
+				if(ccf->ShowModal()==mrOk){
+					TDate dd=month-8+col;
+					std::vector<DateLesson*> dl;
+					for(int i=0;i<ccf->prog->days;++i){
+						DateLesson* dll=new DateLesson();
+						dll->date=dd+i;dll->room=ccf->room;
+						dl.push_back(dll);
+					}
+					Course *c=new Course(ccf->prog,ccf->smena->first,ccf->smena->second,ccf->studentsC,&dl,"");
+					if(ccf->isPlan)App::db->getPlanTable()->createEntity(c);
+					else App::db->getRealTable()->createEntity(c);
+					for(int i=0;i<ccf->prog->days;++i) delete dl.at(i);
+					this->sstringRedraw();
+				}
+			}
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::StringGrid1SelectCell(TObject *Sender, int ACol, int ARow,
+          bool &CanSelect)
+{
+	CanSelect=false;
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TTableForm::StringGrid1Click(TObject *Sender)
+{
+	int fixcols=4;
+	TPoint p;
+	p=StringGrid1->ScreenToClient(Mouse->CursorPos);
+	int col,row;
+	StringGrid1->MouseToCell(p.X,p.Y,col,row);
+	if(row==-1 || col==-1)return;
+	if(col>=fixcols && (row<3 || (StringGrid1->RowCount==3 && row==3))){
+		StatusBar1->Panels->operator [](0)->Text="";
+	}else{
+		Cell *cl=cells[row-2]->at(col);
+		Program *prog=reinterpret_cast<Program*>(cells[row-2]->at(0)->courseR);
+		Group *gr=reinterpret_cast<Group*>(cells[row-2]->at(0)->courseP);
+		if(prog==NULL && gr==NULL)StatusBar1->Panels->operator [](0)->Text="";
+		else{
+			if(prog!=NULL){
+				String plan="";
+				int year=getYearOfDate(month);
+				for(int i=0;i<prog->plan.size();++i){
+					if(prog->plan[i]->first==year)plan="План: "+IntToStr(prog->plan[i]->second);
+				}
+				StatusBar1->Panels->operator [](0)->Text=plan+" Название: "+prog->name;
+			}
+			if(gr!=NULL){
+				String plan="";
+				int year=getYearOfDate(month);
+				for(int i=0;i<gr->plan.size();++i){
+					if(gr->plan[i]->first==year)plan="План: "+IntToStr(gr->plan[i]->second);
+				}
+				StatusBar1->Panels->operator [](0)->Text=plan+" Название: "+gr->name;
+			}
+		}
+		Course *prevCourse=selectedCourse;
+		if(cl->courseR!=NULL && showReal!=false ){
+			if(!(cl->courseP!=NULL && cl->courseP==selectedCourse && showPlan)){
+				this->selectedCourse=cl->courseR;
+			}
+		}else if(cl->courseP!=NULL && showPlan!=false){
+			this->selectedCourse=cl->courseP;
+		}else{
+			this->selectedCourse=NULL;
+		}
+		if(prevCourse!=selectedCourse){
+			if(selectedCourse!=NULL){
+				if(prevCourse!=NULL){
+					tempSelectedC.desc=RichEdit1->Text;
+					prevCourse->updateEntity(&tempSelectedC);
+				}
+				tempSelectedC=*selectedCourse;
+				RichEdit1->Text=tempSelectedC.desc;
+				GroupBox3->Visible=true;
+			}else{
+				tempSelectedC.desc=RichEdit1->Text;
+				prevCourse->updateEntity(&tempSelectedC);
+				GroupBox3->Visible=false;
+            }
+			this->regenerateCells(progs);
+			StringGrid1->Repaint();
+		}
+	}
+
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::CheckBox1Click(TObject *Sender)
+{
+	showPlan=dynamic_cast<TCheckBox*>(Sender)->Checked;
+	this->regenerateCells(progs);
+	this->StringGrid1->Repaint();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::CheckBox2Click(TObject *Sender)
+{
+	showReal=dynamic_cast<TCheckBox*>(Sender)->Checked;
+	this->regenerateCells(progs);
+	this->StringGrid1->Repaint();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::Button3Click(TObject *Sender)
+{
+	month=IncMonth(month,-1);
+	realTable->loadMonth(IncMonth( month, -1 ));
+	planTable->loadMonth(IncMonth( month, -1 ));
+	this->sstringRedraw();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::Button2Click(TObject *Sender)
+{
+	month=IncMonth(month,1);
+	realTable->loadMonth(IncMonth( month, 1 ));
+	planTable->loadMonth(IncMonth( month, 1 ));
+	this->sstringRedraw();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::CheckBox3Click(TObject *Sender)
+{
+	showAllPrograms=!dynamic_cast<TCheckBox*>(Sender)->Checked;
+	this->sstringRedraw();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::StringGrid1MouseDown(TObject *Sender, TMouseButton Button,
+		  TShiftState Shift, int X, int Y)
+{
+	int col,row;
+	StringGrid1->MouseToCell(X,Y,col,row);
+	itscc=col;
+	itscr=row;
+	dragCell=NULL;
+	hasCtrlPressedMC=false;
+	if(col>3 && row>2){
+		//this->Caption=IntToStr(row-2)+" "+IntToStr(col);
+		if(cells[itscr-2]->at(itscc)->courseP!=NULL || cells[itscr-2]->at(itscc)->courseR!=NULL && !Shift.Contains(ssDouble)){
+			hasCtrlPressedMC=Shift.Contains(ssCtrl);
+			dragCell=cells[itscr-2]->at(itscc);
+			StringGrid1->BeginDrag(	False, 5);
+		}
+		if(Shift.Contains(ssDouble)){
+			StringGrid1->EndDrag(false);
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::StringGrid1DragOver(TObject *Sender, TObject *Source,
+          int X, int Y, TDragState State, bool &Accept)
+{
+	int col,row;
+	StringGrid1->MouseToCell(X, Y, col, row);
+	Accept = col>3 && row>2 && col<StringGrid1->ColCount-2;
+}
+//---------------------------------------------------------------------------
+void TTableForm::moveCourseLFromTo(Course *course,std::vector<Cell*>* dragRow,Cell *from,Cell *to){
+	Course *newC;
+	TDateTime dt,dt2;
+	int src,dest;
+	for(int i=0;i<dragRow->size();++i){
+		if(dragRow->at(i)==from)src=i;
+		if(dragRow->at(i)==to)dest=i;
+	}
+	if(course==from->courseP){
+		dt=from->lessonP->date+dest-src;
+		dt2=from->lessonP->date;
+		from->courseP=NULL;
+		from->lessonP=NULL;
+	}
+	if(course==from->courseR){
+		dt=from->lessonR->date+dest-src;
+		dt2=from->lessonR->date;
+		from->courseR=NULL;
+		from->lessonR=NULL;
+	}
+	newC=new Course(*course);
+	for(int i=0;i<newC->dates.size();++i){
+		if(newC->dates[i]->date==dt2){
+			newC->dates[i]->date=dt;
+			break;
+		}
+	}
+	course->updateEntity(newC);
+}
+void TTableForm::moveCourseFromTo(Course *course,std::vector<Cell*>* dragRow,Cell *from,Cell *to){
+	Course *newC;
+	TDateTime dt,dt2;
+	int src,dest;
+	for(int i=0;i<dragRow->size();++i){
+		if(dragRow->at(i)==from)src=i;
+		if(dragRow->at(i)==to)dest=i;
+	}
+	newC=new Course(*course);
+	for(int i=0;i<newC->dates.size();++i){
+		newC->dates[i]->date+=dest-src;
+	}
+	course->updateEntity(newC);
+}
+void __fastcall TTableForm::StringGrid1DragDrop(TObject *Sender, TObject *Source,
+          int X, int Y)
+{
+	int col,row;
+	StringGrid1->MouseToCell(X, Y, col, row);
+	if(dragCell==dragRow->at(col))return;
+	if(hasCtrlPressedMC) moveCourseFromTo(selectedCourse,dragRow,dragCell,dragRow->at(col));
+	else moveCourseLFromTo(selectedCourse,dragRow,dragCell,dragRow->at(col));
+	dragCell=NULL;
+	if(hasCtrlPressedMC)this->sstringRedraw();
+	else{
+		this->regenerateCells(progs);
+		StringGrid1->Repaint();
+	}
+}
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::StringGrid1MouseUp(TObject *Sender, TMouseButton Button,
+          TShiftState Shift, int X, int Y)
+{
+	int yg=8;
+	//StringGrid1->dr
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TTableForm::StringGrid1StartDrag(TObject *Sender, TDragObject *&DragObject)
+
+{
+	dragCell=cells[itscr-2]->at(itscc);
+	dragRow=cells[itscr-2];
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::FormShow(TObject *Sender)
+{
+	this->sstringRedraw();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::Button1Click(TObject *Sender)
+{
+
+	FindPlanTByCourse finder;
+	finder.course=this->selectedCourse;
+	std::vector<ProgTables*>::iterator it=std::find_if(progs.begin(),progs.end(),finder);
+	if(it!=progs.end()){
+		std::vector<Course*> *cs;
+		if(dynamic_cast<RealTable*>(this->selectedCourse->getParent())!=0)	cs=&(*it)->real;
+		else cs=&(*it)->plan;
+		for(int i=0;i<cs->size();++i){
+			if(cs->at(i)==this->selectedCourse){
+				cs->erase(cs->begin()+i);
+				break;
+			}
+		}
+	}
+	this->selectedCourse->deleteEntity();
+	GroupBox3->Visible=false;
+	this->regenerateCells(progs);
+	this->StringGrid1->Repaint();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::Button5Click(TObject *Sender)
+{
+	//TReportFirst *rpf=new TReportFirst(0);
+	//rpf->ShowModal();
+	//delete rpf;
+	TDefaultReport *df=new TDefaultReport(0);
+	df->ShowModal();
+	delete df;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::Button4Click(TObject *Sender)
+{
+	tempSelectedC.desc=RichEdit1->Text;
+	if(App::ModalForms::courseModal==NULL)App::ModalForms::courseModal=new TCourseModal(0);
+	App::ModalForms::courseModal->applyEntity(&tempSelectedC);
+	if (App::ModalForms::courseModal->ShowModal() == mrOk) {
+		tempSelectedC = *(App::ModalForms::courseModal->getEntity());
+		RichEdit1->Text=tempSelectedC.desc;
+		this->selectedCourse->updateEntity(&tempSelectedC);
+		this->sstringRedraw();
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::Button6Click(TObject *Sender)
+{
+	TReportClass *df=new TReportClass(0);
+	df->ShowModal();
+	delete df;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::CheckBox4Click(TObject *Sender)
+{
+	this->filterHourse=this->CheckBox4->Checked;
+	this->regenerateCells(this->progs);
+}
+//---------------------------------------------------------------------------
+

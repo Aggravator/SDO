@@ -690,7 +690,7 @@ void __fastcall TTableForm::StringGrid1DrawCell(TObject *Sender, int ACol, int A
             }
 			String text=IntToStr(active->students);
 			if(active->dates.size()>0){
-				text+=" ";
+				text+=" /";
 				std::vector<ClassRoom*> rooms;
 				for(int i=0;i<active->dates.size();++i){
 					bool isNotHas=true;

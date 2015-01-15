@@ -336,7 +336,9 @@ void __fastcall TDefaultReport::Button1Click(TObject *Sender)
 								excelRow->at(3+getDayOfDate(cr->dates[ij]->date))->course=cr;
 							}else{
 								oldCell=3+getDayOfDate(cr->dates[ij]->date);
-								excelRow->at(oldCell)->setSpan(IntToStr(cr->students),1,1,ExcelHAlign::Center,ExcelVAlign::Middle,10921638);
+								String rooms=cr->dates[0]->room->name;
+								for(int rd=1;rd<cr->dates.size();++rd)rooms+=cr->dates[rd]->room->name;
+								excelRow->at(oldCell)->setSpan(IntToStr(cr->students) + "/"+rooms,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,10921638);
 								excelRow->at(oldCell)->course=cr;
 							}
 							oldDate=cr->dates[ij]->date;
@@ -357,7 +359,9 @@ void __fastcall TDefaultReport::Button1Click(TObject *Sender)
 								excelRow->at(newCell)->course=cr;
 							}else{
 								oldCell=newCell;
-								excelRow->at(oldCell)->setSpan(IntToStr(cr->students),1,1,ExcelHAlign::Center,ExcelVAlign::Middle,cr->program->color);
+								String rooms=cr->dates[0]->room->name;
+								for(int rd=1;rd<cr->dates.size();++rd)rooms+=cr->dates[rd]->room->name;
+								excelRow->at(oldCell)->setSpan(IntToStr(cr->students) + "/"+rooms,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,cr->program->color);
 								excelRow->at(oldCell)->course=cr;
 							}
 							oldDate=cr->dates[ij]->date;

@@ -1,0 +1,114 @@
+object ReportClass: TReportClass
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = #1054#1090#1095#1077#1090
+  ClientHeight = 145
+  ClientWidth = 260
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poScreenCenter
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Label1: TLabel
+    Left = 11
+    Top = 16
+    Width = 50
+    Height = 16
+    Caption = #1044#1080#1072#1087#1079#1086#1085
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+  end
+  object Label2: TLabel
+    Left = 188
+    Top = 18
+    Width = 5
+    Height = 16
+    Caption = '-'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+  end
+  object Button1: TButton
+    Left = 0
+    Top = 110
+    Width = 260
+    Height = 35
+    Align = alBottom
+    Caption = #1057#1075#1077#1085#1077#1088#1080#1088#1086#1074#1072#1090#1100
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -16
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 3
+    OnClick = Button1Click
+    ExplicitWidth = 266
+  end
+  object ComboBox1: TComboBox
+    Left = 131
+    Top = 15
+    Width = 41
+    Height = 22
+    Style = csOwnerDrawFixed
+    TabOrder = 1
+  end
+  object Edit1: TEdit
+    Left = 67
+    Top = 15
+    Width = 49
+    Height = 21
+    NumbersOnly = True
+    TabOrder = 0
+  end
+  object ComboBox2: TComboBox
+    Left = 209
+    Top = 15
+    Width = 41
+    Height = 22
+    Style = csOwnerDrawFixed
+    TabOrder = 2
+  end
+  object GroupBox1: TGroupBox
+    Left = 8
+    Top = 47
+    Width = 242
+    Height = 53
+    Caption = #1057#1083#1086#1080
+    TabOrder = 4
+    object CheckBox1: TCheckBox
+      Left = 12
+      Top = 20
+      Width = 97
+      Height = 17
+      Caption = #1055#1083#1072#1085#1080#1088#1086#1074#1072#1085#1080#1077
+      Checked = True
+      State = cbChecked
+      TabOrder = 0
+    end
+    object CheckBox2: TCheckBox
+      Left = 142
+      Top = 20
+      Width = 97
+      Height = 17
+      Caption = #1042#1099#1087#1086#1083#1085#1077#1085#1086
+      Checked = True
+      State = cbChecked
+      TabOrder = 1
+    end
+  end
+end
