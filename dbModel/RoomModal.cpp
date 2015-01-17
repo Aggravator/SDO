@@ -78,3 +78,15 @@ void __fastcall TRoomModal::Button2Click(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+void __fastcall TRoomModal::Button3Click(TObject *Sender)
+{
+	for(int i=0;i<ListBox2->Count;++i){
+		if(ListBox2->Selected[i]){
+			ListBox1->AddItem(ListBox2->Items->operator [](i),ListBox2->Items->Objects[i]);
+			ListBox2->Items->Delete(i);
+			--i;
+		}
+	}
+}
+//---------------------------------------------------------------------------
+

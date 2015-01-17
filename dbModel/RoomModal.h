@@ -33,6 +33,7 @@ __published:	// IDE-managed Components
 	TGridPanel *GridPanel1;
 	TPanel *Panel1;
 	void __fastcall Button2Click(TObject *Sender);
+	void __fastcall Button3Click(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TRoomModal(TComponent* Owner);

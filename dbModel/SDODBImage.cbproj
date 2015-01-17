@@ -50,7 +50,7 @@
         <ProjectType>CppVCLApplication</ProjectType>
         <_TCHARMapping>wchar_t</_TCHARMapping>
         <IncludePath>dbModel\;$(IncludePath)</IncludePath>
-        <AllPackageLibs>rtl.lib;vcl.lib;adortl.lib;dbrtl.lib;vcldb.lib</AllPackageLibs>
+        <AllPackageLibs>rtl.lib;vcl.lib;adortl.lib;dbrtl.lib;vcldb.lib;Tee.lib;vclimg.lib</AllPackageLibs>
         <Multithreaded>true</Multithreaded>
         <ILINK_LibraryPath>dbModel\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
@@ -103,7 +103,7 @@
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <LinkPackageImports>rtl.bpi;vcl.bpi;adortl.bpi;dbrtl.bpi;vcldb.bpi</LinkPackageImports>
+        <LinkPackageImports>rtl.bpi;vcl.bpi;adortl.bpi;dbrtl.bpi;vcldb.bpi;Tee.bpi;vclimg.bpi</LinkPackageImports>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <Defines>NDEBUG;$(Defines)</Defines>
@@ -157,6 +157,16 @@
         <None Include="ModelSupport_SDODBImage\default.txvpck"/>
         <None Include="ModelSupport_SDODBImage\std\default.txaPackage"/>
         <None Include="ModelSupport_SDODBImage\std\default.txvpck"/>
+        <CppCompile Include="ProgramModal.cpp">
+            <Form>ProgramModal</Form>
+            <DependentOn>ProgramModal.h</DependentOn>
+            <BuildOrder>20</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ProgramsForm.cpp">
+            <Form>ProgramsForm</Form>
+            <DependentOn>ProgramsForm.h</DependentOn>
+            <BuildOrder>21</BuildOrder>
+        </CppCompile>
         <CppCompile Include="RoomModal.cpp">
             <Form>Form8</Form>
             <FormType>dfm</FormType>
@@ -203,12 +213,14 @@
         <FormResources Include="RoomModal.dfm"/>
         <FormResources Include="TableForm.dfm"/>
         <FormResources Include="Unit2.dfm"/>
-        <FormResources Include="SpecificDialog.dfm"/>
         <FormResources Include="SpecificsForm.dfm"/>
+        <FormResources Include="SpecificDialog.dfm"/>
+        <FormResources Include="CourseCreateForm.dfm"/>
         <FormResources Include="AuthForm.dfm"/>
         <FormResources Include="GroupModal.dfm"/>
         <FormResources Include="GroupsForm.dfm"/>
-        <FormResources Include="CourseCreateForm.dfm"/>
+        <FormResources Include="ProgramModal.dfm"/>
+        <FormResources Include="ProgramsForm.dfm"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

@@ -55,6 +55,8 @@ __published:	// IDE-managed Components
 	TLabel *monthLabel;
 	TGroupBox *GroupBox2;
 	TCheckBox *CheckBox3;
+	TLabel *Label1;
+	TLabel *Label2;
 	void __fastcall FormResize(TObject *Sender);
 	void __fastcall StringGrid1DrawCell(TObject *Sender, int ACol, int ARow, TRect &Rect,
           TGridDrawState State);
@@ -71,6 +73,11 @@ __published:	// IDE-managed Components
 	void __fastcall StringGrid1DragOver(TObject *Sender, TObject *Source, int X, int Y,
           TDragState State, bool &Accept);
 	void __fastcall StringGrid1DragDrop(TObject *Sender, TObject *Source, int X, int Y);
+	void __fastcall StringGrid1MouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
+          int X, int Y);
+	void __fastcall StringGrid1StartDrag(TObject *Sender, TDragObject *&DragObject);
+
+
 
 
 

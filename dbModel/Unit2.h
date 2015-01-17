@@ -15,6 +15,7 @@
 #include "SpecificsForm.h"
 #include "GroupsForm.h"
 #include "RoomsForm.h"
+#include "ProgramsForm.h"
 #include "TableForm.h"
 class TSpecificsForm;
 //---------------------------------------------------------------------------
@@ -30,6 +31,7 @@ __published:	// IDE-managed Components
 	void __fastcall Button2Click(TObject *Sender);
 	void __fastcall Button3Click(TObject *Sender);
 	void __fastcall Button5Click(TObject *Sender);
+	void __fastcall Button4Click(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	SDODBImage *db;
@@ -37,6 +39,7 @@ public:		// User declarations
 	TSpecificsForm* specsForm;
 	TGroupsForm *groupsForm;
 	TRoomsForm *roomsForm;
+	TProgramsForm *programsForm;
 	__fastcall TForm2(TComponent* Owner);
 };
 //---------------------------------------------------------------------------

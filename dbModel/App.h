@@ -6,6 +6,7 @@
 #include "CoreData.h"
 #include "GroupModal.h"
 #include "RoomModal.h"
+#include "ProgramModal.h"
 #include <typeinfo>
 class SDODBImage;
 class App{
@@ -25,7 +26,7 @@ public:
 	struct ModalForms{
 		static TRoomModal* roomModal;
 		static TGroupModal* groupModal;
-
+		static TProgramModal* programModal;
 		static void initForm(TModalEntityForm* *modalForm){
 			if(modalForm==&groupModal){
 				try {typeid(*groupModal);}
@@ -34,6 +35,10 @@ public:
 			if(modalForm==&roomModal){
 				try {typeid(*roomModal);}
 				catch (...){roomModal=new TRoomModal(0);}
+			}
+			if(modalForm==&programModal){
+				try {typeid(*programModal);}
+				catch (...){programModal=new TProgramModal(0);}
 			}
 		}
 	};

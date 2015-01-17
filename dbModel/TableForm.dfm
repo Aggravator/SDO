@@ -34,7 +34,9 @@ object TableForm: TTableForm
     OnDragOver = StringGrid1DragOver
     OnDrawCell = StringGrid1DrawCell
     OnMouseDown = StringGrid1MouseDown
+    OnMouseUp = StringGrid1MouseUp
     OnSelectCell = StringGrid1SelectCell
+    OnStartDrag = StringGrid1StartDrag
     ColWidths = (
       64
       64
@@ -103,6 +105,34 @@ object TableForm: TTableForm
     Align = alTop
     BevelOuter = bvLowered
     TabOrder = 2
+    object Label1: TLabel
+      Left = 7
+      Top = 6
+      Width = 193
+      Height = 27
+      Caption = #1055#1088#1086#1075#1088#1072#1084#1084#1072':'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -17
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      WordWrap = True
+    end
+    object Label2: TLabel
+      Left = 7
+      Top = 32
+      Width = 55
+      Height = 21
+      Caption = #1057#1084#1077#1085#1072':'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -17
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      WordWrap = True
+    end
   end
   object CheckBox3: TCheckBox
     Left = 131
@@ -172,7 +202,7 @@ object TableForm: TTableForm
     Left = 408
     Top = 384
     Bitmap = {
-      494C010102000800480019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101020008004C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000

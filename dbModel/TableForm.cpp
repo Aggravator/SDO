@@ -553,10 +553,9 @@ void __fastcall TTableForm::StringGrid1MouseDown(TObject *Sender, TMouseButton B
 	itscr=row;
 	dragCell=NULL;
 	if(col>3 && row>2){
-		dragCell=cells[row-2]->at(col);
-		dragRow=cells[row-2];
-		this->Caption=IntToStr(row-2)+" "+IntToStr(col);
-		if(dragCell->courseP!=NULL || dragCell->courseR!=NULL)StringGrid1->BeginDrag(False, 4);
+
+		//this->Caption=IntToStr(row-2)+" "+IntToStr(col);
+		if(cells[itscr-2]->at(itscc)->courseP!=NULL || cells[itscr-2]->at(itscc)->courseR!=NULL)StringGrid1->BeginDrag(False, 4);
 	}
 }
 //---------------------------------------------------------------------------
@@ -643,5 +642,22 @@ exxit:
 }
 //---------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::StringGrid1MouseUp(TObject *Sender, TMouseButton Button,
+          TShiftState Shift, int X, int Y)
+{
+	int yg=8;
+	//StringGrid1->dr
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TTableForm::StringGrid1StartDrag(TObject *Sender, TDragObject *&DragObject)
+
+{
+	dragCell=cells[itscr-2]->at(itscc);
+	dragRow=cells[itscr-2];
+}
 //---------------------------------------------------------------------------
 

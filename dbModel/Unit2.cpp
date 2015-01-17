@@ -66,3 +66,13 @@ void __fastcall TForm2::Button5Click(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+
+void __fastcall TForm2::Button4Click(TObject *Sender)
+{
+	if(programsForm==0)programsForm=new TProgramsForm(this);
+	programsForm->ShowModal();
+	delete programsForm;
+	programsForm=0;
+}
+//---------------------------------------------------------------------------
+

@@ -788,10 +788,10 @@ bool Program::validate()const{
 		if(plan[i]->first>2000 && plan[i]->second>=0)result=false;
 	for(int i=0;i<times.size() && result;++i)
 		if(times[i]->first>times[i]->second)result=false;
-	KAEntityTable *specs=parent->parent->getSpecifics();
+	KAEntityTable *specs=App::db->getSpecifics();
 	for(int i=0;i<specifics.size() && result;++i)
 		if(!specs->isHas(specifics[i]))result=false;
-	KAEntityTable *grps=parent->parent->getGroups();
+	KAEntityTable *grps=App::db->getGroups();
 	for(int i=0;i<groups.size() && result;++i)
 		if(!grps->isHas(groups[i]))result=false;
 	return result;
