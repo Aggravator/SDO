@@ -71,8 +71,6 @@ __published:	// IDE-managed Components
 	void __fastcall StringGrid1DragOver(TObject *Sender, TObject *Source, int X, int Y,
           TDragState State, bool &Accept);
 	void __fastcall StringGrid1DragDrop(TObject *Sender, TObject *Source, int X, int Y);
-	void __fastcall StringGrid1MouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift,
-          int X, int Y);
 
 
 

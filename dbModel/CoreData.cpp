@@ -946,8 +946,8 @@ bool Programs::createSubQueryBuilder(String &query,std::vector<KAEntity*> &entit
 
 bool isEqLesson(DateLesson* l1,DateLesson* l2){
 	if(l1->date== l2->date){
-		return l1->room->getID()< l1->room->getID();
-	}else return l1->date<l1->date;
+		return l1->room->getID()< l2->room->getID();
+	}else return l1->date<l2->date;
 }
 //Course::Course(){
 //}
@@ -1006,7 +1006,7 @@ bool Course::updateQueryBuilder(String &query,KAEntity *entity){
 				dates.erase(it);
 			}
 			dl=dynamic_cast<DateLesson*>(remove[remove.size()-1]);
-			query+=String().sprintf(L"'%s')\n",dl->date.FormatString("yyyy-mm-dd"));
+			query+=String().sprintf(L"'%s');\n",dl->date.FormatString("yyyy-mm-dd"));
 			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"datesplantable",parent->parent->getUID(),this->id);
 			query+=addString;
 			it=std::find(dates.begin(),dates.end(),remove[remove.size()-1]);
@@ -1018,11 +1018,11 @@ bool Course::updateQueryBuilder(String &query,KAEntity *entity){
 			query+=String().sprintf(L"insert into dates%s (%s_id, dates%s_date, dates%s_class,creator) values ",tbn,tbn,tbn,tbn);
 			for(int i=0;i<add.size()-1;++i){
 				dl=dynamic_cast<DateLesson*>(add[i]);
-				query+=String().sprintf(L"(%d,%d,%d,%d),",this->id,dl->date.FormatString("yyyy-mm-dd"),dl->room->getID(),parent->parent->getUID());
+				query+=String().sprintf(L"(%d,'%s',%d,%d),",this->id,dl->date.FormatString("yyyy-mm-dd"),dl->room->getID(),parent->parent->getUID());
 				dates.push_back(new DateLesson(*add[i]));
 			}
 			dl=dynamic_cast<DateLesson*>(add[add.size()-1]);
-			query+=String().sprintf(L"(%d,%d,%d,%d);",this->id,dl->date.FormatString("yyyy-mm-dd"),dl->room->getID(),parent->parent->getUID());
+			query+=String().sprintf(L"(%d,'%s',%d,%d);",this->id,dl->date.FormatString("yyyy-mm-dd"),dl->room->getID(),parent->parent->getUID());
 			dates.push_back(new DateLesson(*add[add.size()-1]));
 		}
 	}
@@ -1223,6 +1223,7 @@ bool CourseTable::loadMonth(TDate date){
 			String desc;
 			if(query.FieldByName("descr")->IsNull)desc= ""; else desc=query["descr"];
 			course=new Course((Program*)parent->programs->getById(query["program_id"]),StrToDateTime(query["start"]),StrToDateTime(query["end"]),query["students"],ls[query["id"]],desc);
+			course->id=query["id"];
 			course->parent=this;
 			this->push_back(course);
 			query.Next();

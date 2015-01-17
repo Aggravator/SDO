@@ -479,7 +479,7 @@ void __fastcall TTableForm::StringGrid1SelectCell(TObject *Sender, int ACol, int
 
 void __fastcall TTableForm::StringGrid1Click(TObject *Sender)
 {
-	/*int fixcols=4;
+	int fixcols=4;
 	TPoint p;
 	p=StringGrid1->ScreenToClient(Mouse->CursorPos);
 	int col,row;
@@ -498,7 +498,7 @@ void __fastcall TTableForm::StringGrid1Click(TObject *Sender)
 		if(this->dragCell!=NULL)return;
 		this->regenerateCells(progs);
 		StringGrid1->Repaint();
-	}*/
+	}
 
 }
 //---------------------------------------------------------------------------
@@ -643,34 +643,5 @@ exxit:
 }
 //---------------------------------------------------------------------------
 
-
-
-void __fastcall TTableForm::StringGrid1MouseUp(TObject *Sender, TMouseButton Button,
-          TShiftState Shift, int X, int Y)
-{
-	int fixcols=4;
-	TPoint p;
-	p=StringGrid1->ScreenToClient(Mouse->CursorPos);
-	int col,row;
-	StringGrid1->MouseToCell(p.X,p.Y,col,row);
-	if(col==itscc && row==itscr){
-
-		if(col>=fixcols && (row<3 || (StringGrid1->RowCount==3 && row==3))){
-			//Вызываем диалоговое окно создания программ
-		}else{
-			Cell *cl=cells[row-2]->at(col);
-			if(cl->courseR!=NULL && showReal!=false){
-				this->selectedCourse=cl->courseR;
-			}else if(cl->courseP!=NULL && showPlan!=false){
-				this->selectedCourse=cl->courseP;
-			}else{
-				this->selectedCourse=NULL;
-			}
-			//if(this->dragCell!=NULL)return;
-			this->regenerateCells(progs);
-			StringGrid1->Repaint();
-		}
-	}
-}
 //---------------------------------------------------------------------------
 
