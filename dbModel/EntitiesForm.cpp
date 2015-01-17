@@ -4,7 +4,7 @@
 
 #include "EntitiesForm.h"
 
-__fastcall TEntitiesForm::TEntitiesForm(TComponent* Owner):TForm(Owner){
+__fastcall TEntitiesForm::TEntitiesForm(TComponent* Owner):TForm(Owner),modalForm(0){
 }
 
 EntityRow::EntityRow(RowsPanel* parent):editButton(0),deleteButton(0),initEntity(0),tempEntity(0){
@@ -22,7 +22,7 @@ EntityRow::EntityRow(RowsPanel* parent):editButton(0),deleteButton(0),initEntity
 EntityRow::~EntityRow(){
 	if(parent!=0)parent->debindRowControls(this);
 	if(!initEntity->hasParent())delete initEntity;
-	delete tempEntity;
+	if(!tempEntity->hasParent()) delete tempEntity;
 	delete editButton;
     delete deleteButton;
 }
@@ -36,9 +36,11 @@ void EntityRow::init(KAEntity *entity){
 }
 void EntityRow::onedit(){
 	this->writeToEntity(tempEntity);
-	dynamic_cast<TEntitiesForm*>(parent->Owner)->modalForm[0]->applyEntity(tempEntity);
-	if(dynamic_cast<TEntitiesForm*>(parent->Owner)->modalForm[0]->ShowModal()==mrOk){
-		*tempEntity=*(dynamic_cast<TEntitiesForm*>(parent->Owner)->modalForm[0]->getEntity());
+	TEntitiesForm* ef=dynamic_cast<TEntitiesForm*>(parent->Owner);
+	App::ModalForms::initForm(ef->modalForm);
+	ef->modalForm[0]->applyEntity(tempEntity);
+	if(ef->modalForm[0]->ShowModal()==mrOk){
+		*tempEntity=*(ef->modalForm[0]->getEntity());
 		writeToRow(tempEntity);
 	}
 }
@@ -75,16 +77,17 @@ void RowsPanel::debindRowControls(EntityRow *entityRow){
 }
 void RowsPanel::applyChanges(){
 	for(int i=0;i<rows.size();++i){
-		Group *rt=dynamic_cast<Group*>(rows[i]->tempEntity);
+		//Group *rt=dynamic_cast<Group*>(rows[i]->tempEntity);
 		rows[i]->writeToEntity(rows[i]->tempEntity);
-		if(rows[i]->initEntity->hasParent() && rows[i]->initEntity->isDifferent(rows[i]->tempEntity) && rows[i]->tempEntity->validate()){
+		if(rows[i]->initEntity->hasParent() && rows[i]->initEntity->isDifferent(rows[i]->tempEntity)>0 && rows[i]->tempEntity->validate()){
 			rows[i]->initEntity->updateEntity(rows[i]->tempEntity);
 		}
 		if(rows[i]->initEntity->hasParent()==false && rows[i]->tempEntity->validate()){
-			rows[i]->initEntity=rows[i]->tempEntity;
+			*rows[i]->initEntity=*rows[i]->tempEntity;
             entTable->createEntity(rows[i]->initEntity);
 		}
-		delete rows[i]->tempEntity;
+		if(!rows[i]->tempEntity->hasParent())
+			delete rows[i]->tempEntity;
 		this->debindRowControls(rows[i]);
 		delete rows[i];
 	}
@@ -111,4 +114,4 @@ __fastcall RowsPanel::~RowsPanel(){
 	clear();
 }
 //---------------------------------------------------------------------------
-#pragma package(smart_init)
+//#pragma package(smart_init)

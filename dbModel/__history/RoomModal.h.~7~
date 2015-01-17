@@ -1,0 +1,31 @@
+//---------------------------------------------------------------------------
+
+#ifndef RoomModalH
+#define RoomModalH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include "ModalEntityForm.h"
+//---------------------------------------------------------------------------
+class TRoomModal : public TModalEntityForm
+{
+__published:	// IDE-managed Components
+	TEdit *Edit1;
+	TLabel *Label1;
+	TLabel *Label3;
+	TCheckBox *CheckBox1;
+	TLabel *Label2;
+	TCheckBox *CheckBox2;
+	TEdit *Edit2;
+	TLabel *Label4;
+private:	// User declarations
+public:		// User declarations
+	__fastcall TRoomModal(TComponent* Owner);
+	void writeToEntity(KAEntity *ent);
+	void writeToForm(KAEntity *ent);
+};
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+#endif

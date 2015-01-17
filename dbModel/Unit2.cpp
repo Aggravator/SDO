@@ -32,7 +32,10 @@ __fastcall TForm2::TForm2(TComponent* Owner)
 //---------------------------------------------------------------------------
 void __fastcall TForm2::Button1Click(TObject *Sender)
 {
-	//ADOConnection1->Execute("Insert into chat(message) values ('dfd');");
+	if(roomsForm==0)roomsForm=new TRoomsForm(this);
+	roomsForm->ShowModal();
+	delete roomsForm;
+	roomsForm=0;
 }
 //---------------------------------------------------------------------------
 
@@ -53,6 +56,13 @@ void __fastcall TForm2::Button3Click(TObject *Sender)
 	groupsForm->ShowModal();
 	delete groupsForm;
 	groupsForm=0;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm2::Button5Click(TObject *Sender)
+{
+	TTableForm *tf=new TTableForm(0);
+	tf->Show();
 }
 //---------------------------------------------------------------------------
 

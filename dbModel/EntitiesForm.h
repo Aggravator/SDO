@@ -6,6 +6,7 @@
 #include <vector>
 #include "EntitiesForm.h"
 #include "ModalEntityForm.h"
+#include "App.h"
 class RowsPanel;
 class TEntitiesForm:public TForm{
 public:

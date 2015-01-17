@@ -1,7 +1,7 @@
 object GroupsForm: TGroupsForm
   Left = 0
   Top = 0
-  Caption = 'Form5'
+  Caption = #1043#1088#1091#1087#1087#1099
   ClientHeight = 243
   ClientWidth = 527
   Color = clBtnFace
@@ -52,86 +52,90 @@ object GroupsForm: TGroupsForm
   end
   object ScrollBox1: TScrollBox
     Left = 0
+    Top = 25
+    Width = 527
+    Height = 149
+    Align = alClient
+    BevelInner = bvNone
+    BevelOuter = bvNone
+    BorderStyle = bsNone
+    TabOrder = 2
+  end
+  object GridPanel1: TGridPanel
+    Left = 0
     Top = 0
     Width = 527
-    Height = 174
-    Align = alClient
-    TabOrder = 2
-    object GridPanel1: TGridPanel
-      Left = 0
+    Height = 25
+    Align = alTop
+    BevelOuter = bvNone
+    ColumnCollection = <
+      item
+        SizeStyle = ssAbsolute
+        Value = 35.000000000000000000
+      end
+      item
+        SizeStyle = ssAbsolute
+        Value = 50.000000000000000000
+      end
+      item
+        Value = 100.000000000000000000
+      end
+      item
+        SizeStyle = ssAbsolute
+        Value = 35.000000000000000000
+      end>
+    ControlCollection = <
+      item
+        Column = 1
+        Control = Label2
+        Row = 0
+      end
+      item
+        Column = 2
+        Control = Label1
+        Row = 0
+      end>
+    RowCollection = <
+      item
+        Value = 100.000000000000000000
+      end>
+    TabOrder = 3
+    ExplicitWidth = 523
+    DesignSize = (
+      527
+      25)
+    object Label2: TLabel
+      Left = 35
       Top = 0
-      Width = 523
+      Width = 50
       Height = 25
-      Align = alTop
-      BevelOuter = bvNone
-      ColumnCollection = <
-        item
-          SizeStyle = ssAbsolute
-          Value = 35.000000000000000000
-        end
-        item
-          SizeStyle = ssAbsolute
-          Value = 50.000000000000000000
-        end
-        item
-          Value = 100.000000000000000000
-        end
-        item
-          SizeStyle = ssAbsolute
-          Value = 35.000000000000000000
-        end>
-      ControlCollection = <
-        item
-          Column = 1
-          Control = Label2
-          Row = 0
-        end
-        item
-          Column = 2
-          Control = Label1
-          Row = 0
-        end>
-      RowCollection = <
-        item
-          Value = 100.000000000000000000
-        end>
-      TabOrder = 0
-      DesignSize = (
-        523
-        25)
-      object Label2: TLabel
-        Left = 35
-        Top = 0
-        Width = 50
-        Height = 25
-        Align = alClient
-        Alignment = taCenter
-        Caption = ' '#1040#1082#1090#1080#1074
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -13
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        ParentFont = False
-        ExplicitWidth = 38
-        ExplicitHeight = 16
-      end
-      object Label1: TLabel
-        Left = 258
-        Top = 4
-        Width = 56
-        Height = 16
-        Anchors = []
-        Caption = #1053#1072#1079#1074#1072#1085#1080#1077
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -13
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        ParentFont = False
-        ExplicitLeft = 212
-        ExplicitTop = 42
-      end
+      Align = alClient
+      Alignment = taCenter
+      Caption = ' '#1040#1082#1090#1080#1074
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ExplicitWidth = 38
+      ExplicitHeight = 16
+    end
+    object Label1: TLabel
+      Left = 260
+      Top = 4
+      Width = 56
+      Height = 16
+      Anchors = []
+      Caption = #1053#1072#1079#1074#1072#1085#1080#1077
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ExplicitLeft = 212
+      ExplicitTop = 42
     end
   end
   object ImageList1: TImageList
@@ -143,7 +147,7 @@ object GroupsForm: TGroupsForm
     Left = 312
     Top = 136
     Bitmap = {
-      494C010102001400400019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102001400480019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

@@ -11,6 +11,7 @@
 //---------------------------------------------------------------------------
 __fastcall TGroupsForm::TGroupsForm(TComponent* Owner):TEntitiesForm(Owner)
 {
+
 	this->modalForm=reinterpret_cast<TModalEntityForm **>(&App::ModalForms::groupModal);
 	this->images=this->ImageList1;
 	panel=new GroupRows(this);
@@ -33,12 +34,14 @@ GroupRow::GroupRow(GroupRows *parent):EntityRow(parent){
 	tempEntity=new Group("",true,0);
 	parent->ControlCollection->AddControl(editButton);
 	editButton->Parent=parent;
+	editButton->OnClick=editBClick;
 	parent->ControlCollection->AddControl(isActive);
 	isActive->Parent=parent;
 	parent->ControlCollection->AddControl(name);
 	name->Parent=parent;
 	parent->ControlCollection->AddControl(deleteButton);
 	deleteButton->Parent=parent;
+	deleteButton->OnClick=deleteBClick;
 }
 bool groupSort(KAEntity *a,KAEntity *b){
 	Group *gp1=dynamic_cast<Group*>(a);
@@ -57,8 +60,15 @@ void GroupRow::writeToEntity(KAEntity* entity){
 	gr->name=name->Text;
 	gr->isactual=isActive->Checked;
 }
+void __fastcall GroupRow::editBClick(TObject *Sender){
+	onedit();
+}
+void __fastcall GroupRow::deleteBClick(TObject *Sender){
+	ondelete();
+}
 GroupRow::~GroupRow(){
 	delete name;
+	delete isActive;
 }
 
 EntityRow* GroupRows::addRow(KAEntity *entity){
@@ -115,11 +125,13 @@ void __fastcall TGroupsForm::Button5Click(TObject *Sender)
 void __fastcall TGroupsForm::Button1Click(TObject *Sender)
 {
 	Group *gr=new Group("",true,0);
-	if(this->modalForm[0]==0)this->modalForm[0]=new TGroupModal(0);
-	modalForm[0]->applyEntity(gr);
-	if(modalForm[0]->ShowModal()==mrOk){
+	//if(this->modalForm[0]==0)this->modalForm[0]=new TGroupModal(0);
+	//modalForm[0]->applyEntity(gr);
+	App::ModalForms::initForm(modalForm);
+	int hy=modalForm[0]->ShowModal();
+	if(hy==mrOk){
 		*gr=*modalForm[0]->getEntity();
-        panel->addRow(gr);
+		panel->addRow(gr);
 	}
 }
 //---------------------------------------------------------------------------

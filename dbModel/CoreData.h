@@ -8,6 +8,8 @@
 #include <Vcl.ExtCtrls.hpp>
 #include <map>
 
+
+
 class KAEntityTable;
 class SDODBImage;
 class Specifics;
@@ -80,23 +82,24 @@ protected:
 
 class ClassRoom:public KAEntity{
 public:
-	ClassRoom(String name,int capacity,bool isrent,std::vector<Specific*> *specifics=0);
+	ClassRoom(String name,int capacity,bool isrent,int isactual,std::vector<Specific*> *specifics=0);
 	ClassRoom(const ClassRoom &classRoom);
 	ClassRoom& operator =(const KAEntity& entity);
 	bool validate()const;
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
 	String getName()const;
-protected:
-	bool updateQueryBuilder(String &query,KAEntity *entity);
 	String name;
 	int capacity;
 	bool isrent;
+	bool isactual;
 	std::vector<Specific*> specifics;
+protected:
+	bool updateQueryBuilder(String &query,KAEntity *entity);
 	friend class Rooms;
 	friend class SDODBImage;
 private:
-	void init(String name,int capacity,bool isrent,std::vector<Specific*> *specifics=0);
+	void init(String name,int capacity,bool isrent,int isactual,const std::vector<Specific*> *specifics=0);
 };
 
 class Rooms:public KAEntityTable{
@@ -145,25 +148,26 @@ protected:
 
 class Program:public KAEntity{
 public:
-	Program(String name,String key,int capacity,bool istraining,bool isactual,unsigned color=16777215,std::vector<Specific*> *specifics=0,std::vector<std::pair<int,int>*> *plan=0,std::vector<Group*> *groups=0,std::vector<std::pair<TDateTime,TDateTime>*> *times=0);
+	Program(String name,String key,int capacity,bool istraining,bool isactual,int days,int hours,unsigned color=16777215,std::vector<Specific*> *specifics=0,std::vector<std::pair<int,int>*> *plan=0,std::vector<Group*> *groups=0,std::vector<std::pair<TDateTime,TDateTime>*> *times=0);
 	Program(const Program &program);
 	Program& operator =(const KAEntity& entity);
 	bool validate()const;
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
+
 	~Program();
-private:
-	void init(String name,String key,int capacity,bool istraining,bool isactual,unsigned color=16777215,const std::vector<Specific*> *specifics=0,const std::vector<std::pair<int,int>*> *plan=0,const std::vector<Group*> *groups=0,const std::vector<std::pair<TDateTime,TDateTime>*> *times=0);
-protected:
-	bool updateQueryBuilder(String &query,KAEntity *entity);
 	String name,key;
-	int capacity;
+	int capacity,hours,days;
 	bool istraining,isactual;
 	unsigned color;
 	std::vector<Specific*> specifics;
 	std::vector<std::pair<int,int>*> plan;
 	std::vector<std::pair<TDateTime,TDateTime>*> times;
 	std::vector<Group*> groups;
+private:
+	void init(String name,String key,int capacity,bool istraining,bool isactual,int days,int hours,unsigned color=16777215,const std::vector<Specific*> *specifics=0,const std::vector<std::pair<int,int>*> *plan=0,const std::vector<Group*> *groups=0,const std::vector<std::pair<TDateTime,TDateTime>*> *times=0);
+protected:
+	bool updateQueryBuilder(String &query,KAEntity *entity);
 	friend class Programs;
 	friend class SDODBImage;
 };
@@ -185,22 +189,24 @@ struct DateLesson{
 };
 class Course:public KAEntity{
 public:
-	Course(Program* program,TDateTime start,TDateTime end,std::vector<DateLesson*> *dates,String desc);
+	Course(Program* program,TDateTime start,TDateTime end,int students,std::vector<DateLesson*> *dates,String desc);
 	Course(const Course &course);
 	Course& operator =(const KAEntity& entity);
 	bool validate()const;
 	int isDifferent(KAEntity *entity)const;
 	void removeSlave(KAEntity* entity);
-	~Course();
-private:
-	void init(Program* program,TDateTime start,TDateTime end,const std::vector<DateLesson*> *dates,String desc);
-protected:
-	bool updateQueryBuilder(String &query,KAEntity *entity);
+	void sortDates()const;
 	Program* program;
+	int students;
 	TDateTime start;
 	TDateTime end;
 	String desc;
-	std::vector<DateLesson*> dates;
+	mutable std::vector<DateLesson*> dates;
+	~Course();
+private:
+	void init(Program* program,TDateTime start,TDateTime end,int students,const std::vector<DateLesson*> *dates,String desc);
+protected:
+	bool updateQueryBuilder(String &query,KAEntity *entity);
 	friend class CourseTable;
 	friend class SDODBImage;
 };
@@ -209,6 +215,7 @@ class CourseTable:public KAEntityTable{
 public:
 	CourseTable(SDODBImage *parent);
 	bool createEntities(std::vector<KAEntity*> &entities);
+	bool loadMonth(TDate date);
 	void addMonth(TDate);
 protected:
 	String tableName;

@@ -1,0 +1,20 @@
+//---------------------------------------------------------------------------
+
+#ifndef RoomModalH
+#define RoomModalH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+//---------------------------------------------------------------------------
+class TRoomModal : public TModalEntityForm
+{
+__published:	// IDE-managed Components
+private:	// User declarations
+public:		// User declarations
+	__fastcall TRoomModal(TComponent* Owner);
+};
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+#endif

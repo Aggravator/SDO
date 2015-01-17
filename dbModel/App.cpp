@@ -13,6 +13,7 @@ wchar_t App::buffer[MAX_PATH];
 int App::cookie=0;
 SDODBImage *App::db=0;
 TGroupModal *App::ModalForms::groupModal=0;
+TRoomModal *App::ModalForms::roomModal=0;
 void App::init(){
 	bool result = SHGetSpecialFolderPath(0, buffer, CSIDL_LOCAL_APPDATA,false );
 	if(result){

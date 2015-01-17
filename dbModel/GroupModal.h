@@ -3,17 +3,29 @@
 #ifndef GroupModalH
 #define GroupModalH
 //---------------------------------------------------------------------------
+
+#include "ModalEntityForm.h"
+
 #include <System.Classes.hpp>
 #include <Vcl.Controls.hpp>
 #include <Vcl.StdCtrls.hpp>
 #include <Vcl.Forms.hpp>
-#include "ModalEntityForm.h"
+
 #include <Vcl.Grids.hpp>
 //---------------------------------------------------------------------------
+
+
 class TGroupModal : public TModalEntityForm
 {
 __published:	// IDE-managed Components
 	TStringGrid *StringGrid1;
+	TEdit *Edit1;
+	TLabel *Label1;
+	TLabel *Label2;
+	TButton *Button1;
+	TLabel *Label3;
+	TCheckBox *CheckBox1;
+	void __fastcall StringGrid1KeyUp(TObject *Sender, WORD &Key, TShiftState Shift);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TGroupModal(TComponent* Owner);

@@ -4,6 +4,7 @@
 #define ModalEntityFormH
 #include <Vcl.Forms.hpp>
 #include "CoreData.h"
+
 class TModalEntityForm:public TForm{
 protected:
 	KAEntity *entity,*emptyEntity,*tempEntity;

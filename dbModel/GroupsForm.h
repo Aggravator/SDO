@@ -39,6 +39,8 @@ public:
 	TEdit *name;
 	TCheckBox *isActive;
 	GroupRow(GroupRows *parent);
+	void __fastcall editBClick(TObject *Sender);
+	void __fastcall deleteBClick(TObject *Sender);
 	void writeToRow(KAEntity* entity);
 	void writeToEntity(KAEntity* entity);
 	~GroupRow();

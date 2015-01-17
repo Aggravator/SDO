@@ -1,0 +1,116 @@
+//---------------------------------------------------------------------------
+
+#pragma hdrstop
+
+#include "EntitiesForm.h"
+
+__fastcall TEntitiesForm::TEntitiesForm(TComponent* Owner):TForm(Owner),modalForm(0){
+}
+
+EntityRow::EntityRow(RowsPanel* parent):editButton(0),deleteButton(0),initEntity(0),tempEntity(0){
+	this->parent=parent;
+	TImageList *imgList=dynamic_cast<TEntitiesForm*>(parent->Owner)->images;
+	editButton=new TButton((HWND)0);
+	editButton->Align=alClient;
+	editButton->Images=imgList;
+	editButton->ImageIndex=0;
+	deleteButton=new TButton((HWND)0);
+	deleteButton->Align=alClient;
+	deleteButton->Images=imgList;
+	deleteButton->ImageIndex=1;
+}
+EntityRow::~EntityRow(){
+	if(parent!=0)parent->debindRowControls(this);
+	if(!initEntity->hasParent())delete initEntity;
+	if(!tempEntity->hasParent()) delete tempEntity;
+	delete editButton;
+    delete deleteButton;
+}
+void EntityRow::init(KAEntity *entity){
+	if(entity!=0){
+		delete initEntity;
+		initEntity=entity;
+		*tempEntity=*initEntity;
+	}
+	writeToRow(initEntity);
+}
+void EntityRow::onedit(){
+	this->writeToEntity(tempEntity);
+	TEntitiesForm* ef=dynamic_cast<TEntitiesForm*>(parent->Owner);
+	App::ModalForms::initForm(ef->modalForm);
+	ef->modalForm[0]->applyEntity(tempEntity);
+	if(ef->modalForm[0]->ShowModal()==mrOk){
+		*tempEntity=*(ef->modalForm[0]->getEntity());
+		writeToRow(tempEntity);
+	}
+}
+void EntityRow::ondelete(){
+	parent->deleteRow(this);
+}
+
+__fastcall RowsPanel::RowsPanel(TComponent *Owner):TGridPanel(Owner),rowHeight(35){
+}
+void RowsPanel::deleteRow(EntityRow *entityRow){
+	std::vector<EntityRow*>::iterator it=std::find(rows.begin(),rows.end(),entityRow);
+	if(it!=rows.end()){
+		if(entityRow->initEntity->hasParent()){
+			deleteEntities.push_back(entityRow->initEntity);
+		}
+		this->debindRowControls(entityRow);
+		delete *it;
+		this->RowCollection->Delete(it-rows.begin());
+		this->Height-=rowHeight;
+		rows.erase(it);
+    }
+}
+void RowsPanel::debindRowControls(EntityRow *entityRow){
+	std::vector<EntityRow*>::iterator it=std::find(rows.begin(),rows.end(),entityRow);
+	if(it!=rows.end()){
+		int i=this->ControlCollection->IndexOf((*it)->editButton);
+		if(i!=-1){
+			i=this->ControlCollection->operator [](i)->Row;
+			for(int j=0;j<this->ColumnCollection->Count;++j){
+				this->ControlCollection->RemoveControl(this->ControlCollection->Controls[j][i]);
+			}
+		}
+	}
+}
+void RowsPanel::applyChanges(){
+	for(int i=0;i<rows.size();++i){
+		Group *rt=dynamic_cast<Group*>(rows[i]->tempEntity);
+		rows[i]->writeToEntity(rows[i]->tempEntity);
+		if(rows[i]->initEntity->hasParent() && rows[i]->initEntity->isDifferent(rows[i]->tempEntity)>0 && rows[i]->tempEntity->validate()){
+			rows[i]->initEntity->updateEntity(rows[i]->tempEntity);
+		}
+		if(rows[i]->initEntity->hasParent()==false && rows[i]->tempEntity->validate()){
+			rows[i]->initEntity=rows[i]->tempEntity;
+            entTable->createEntity(rows[i]->initEntity);
+		}
+		delete rows[i]->tempEntity;
+		this->debindRowControls(rows[i]);
+		delete rows[i];
+	}
+	this->RowCollection->Clear();
+	rows.clear();
+	for(int i=0;i<deleteEntities.size();++i){
+		if(deleteEntities[i]->hasParent()) deleteEntities[i]->deleteEntity();
+		delete deleteEntities[i];
+	}
+	deleteEntities.clear();
+}
+void RowsPanel::clear(){
+	for(int i=0;i<rows.size();++i){
+		delete rows[i];
+	}
+	rows.clear();
+	for(int i=0;i<deleteEntities.size();++i){
+		if(!deleteEntities[i]->hasParent()) delete deleteEntities[i];
+	}
+	deleteEntities.clear();
+	this->RowCollection->Clear();
+}
+__fastcall RowsPanel::~RowsPanel(){
+	clear();
+}
+//---------------------------------------------------------------------------
+//#pragma package(smart_init)
