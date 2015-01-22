@@ -83,9 +83,10 @@ void RowsPanel::debindRowControls(EntityRow *entityRow) {
 		int i = this->ControlCollection->IndexOf((*it)->editButton);
 		if (i != -1) {
 			i = this->ControlCollection->operator[](i)->Row;
-			for (int j = 0; j < this->ColumnCollection->Count; ++j) {
-				this->ControlCollection->RemoveControl
-					(this->ControlCollection->Controls[j][i]);
+			for (int j = 0; j<this->ColumnCollection->Count ; ++j) {
+				TControl *c=this->ControlCollection->Controls[j][i];
+				this->ControlCollection->RemoveControl(c);
+				c->Parent=0;
 			}
 		}
 	}
@@ -95,12 +96,10 @@ void RowsPanel::applyChanges() {
 	for (int i = 0; i < rows.size(); ++i) {
 		// Group *rt=dynamic_cast<Group*>(rows[i]->tempEntity);
 		rows[i]->writeToEntity(rows[i]->tempEntity);
-		if (rows[i]->initEntity->hasParent() && rows[i]->initEntity->isDifferent
-			(rows[i]->tempEntity) > 0 && rows[i]->tempEntity->validate()) {
+		if (rows[i]->initEntity->hasParent() && rows[i]->initEntity->isDifferent(rows[i]->tempEntity) > 0 && rows[i]->tempEntity->validate()) {
 			rows[i]->initEntity->updateEntity(rows[i]->tempEntity);
 		}
-		if (rows[i]->initEntity->hasParent() == false && rows[i]
-			->tempEntity->validate()) {
+		if (rows[i]->initEntity->hasParent() == false && rows[i]->tempEntity->validate()) {
 			*rows[i]->initEntity = *rows[i]->tempEntity;
 			entTable->createEntity(rows[i]->initEntity);
 		}
@@ -110,6 +109,7 @@ void RowsPanel::applyChanges() {
 		delete rows[i];
 	}
 	this->RowCollection->Clear();
+	this->ControlCollection->Clear();
 	rows.clear();
 	for (int i = 0; i < deleteEntities.size(); ++i) {
 		if (deleteEntities[i]->hasParent())

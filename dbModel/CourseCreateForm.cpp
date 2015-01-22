@@ -61,6 +61,7 @@ bool TCourseCreate::checkRoom(KAEntity* r){
 }
 bool TCourseCreate::checkProgram(KAEntity *p){
 	Program *pr=(Program*)p;
+	if(pr->isactual==false)return false;
 	if(room==NULL)return true;
 	else{
 		if(pr->specifics.size()>room->specifics.size())return false;

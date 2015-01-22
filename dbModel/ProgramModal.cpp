@@ -9,18 +9,36 @@
 #pragma package(smart_init)
 #pragma resource "*.dfm"
 //---------------------------------------------------------------------------
+
+
+
+void __fastcall TMColorButton::Paint(TCanvas *Canvas){
+	sButtonColor=(TButtonColor*)Control;
+	Canvas->Brush->Color=sButtonColor->SymbolColor;
+	Canvas->Rectangle(sButtonColor->ClientRect);
+	Canvas->FillRect(sButtonColor->ClientRect);
+}
+
+
 __fastcall TProgramModal::TProgramModal(TComponent* Owner)
 	: TModalEntityForm(Owner)
 {
-	emptyEntity=new Program("","",0,true,true,0,0,16777215,0,0,0,0);
-	entity=new Program("","",0,true,true,0,0,16777215,0,0,0,0);
-	tempEntity=new Program("","",0,true,true,0,0,16777215,0,0,0,0);;
+	//this->colorButton=new TMColorButton(0);
+	//colorButton->Parent=this;
+	emptyEntity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
+	entity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
+	tempEntity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
+	this->StringGrid1->Cells[0][0]="Год";
+	this->StringGrid1->Cells[1][0]="План";
+	this->StringGrid2->Cells[0][0]="Начало";
+	this->StringGrid2->Cells[1][0]="Конец";
 	this->Button1->OnClick=FormOk;
 	this->OnShow=FormShow;
 	ListBox1->Sorted=true;
 	ListBox2->Sorted=true;
 	ListBox3->Sorted=true;
 	ListBox4->Sorted=true;
+
 }
 //---------------------------------------------------------------------------
 
@@ -33,6 +51,8 @@ void TProgramModal::writeToEntity(KAEntity *ent){
 	Program *pr=dynamic_cast<Program*>(ent);
 	pr->name=Edit1->Text;
 	pr->key=Edit3->Text;
+	pr->days=StrToInt(Edit2->Text);
+	pr->hours=StrToInt(Edit4->Text);
 	pr->isactual=CheckBox1->Checked;
 	pr->istraining=CheckBox2->Checked;
 	pr->color=this->colorButton->SymbolColor;
@@ -47,7 +67,13 @@ void TProgramModal::writeToEntity(KAEntity *ent){
 		std::pair<int,int> *yp=new std::pair<int,int>(StrToInt(StringGrid1->Cells[0][i+1]),StrToInt(StringGrid1->Cells[1][i+1]));
 		pr->plan[i]=yp;
 	}
-	pr->plan.clear();
+	for(int i=0;i<pr->times.size();++i)delete pr->times[i];
+	pr->times.resize(this->StringGrid2->RowCount-2);
+	for(int i=0;i<this->StringGrid2->RowCount-2;++i){
+		std::pair<TDateTime,TDateTime> *yp=new std::pair<TDateTime,TDateTime>(StrToTime(StringGrid2->Cells[0][i+1]),StrToTime(StringGrid2->Cells[1][i+1]));
+		pr->times[i]=yp;
+	}
+	pr->groups.clear();
 	for(int i=0;i<ListBox4->Count;++i){
 		Group *sp=reinterpret_cast<Group*>(ListBox4->Items->Objects[i]);
 		pr->groups.push_back(reinterpret_cast<Group*>(ListBox4->Items->Objects[i]));
@@ -58,6 +84,8 @@ void TProgramModal::writeToForm(KAEntity *ent){
 	Program *pr=dynamic_cast<Program*>(ent);
 	Edit1->Text=pr->name;
 	Edit3->Text=pr->key;
+	Edit2->Text=IntToStr(pr->days);
+	Edit4->Text=IntToStr(pr->hours);
 	CheckBox1->Checked=pr->isactual;
 	CheckBox2->Checked=pr->istraining;
 	{
@@ -83,6 +111,13 @@ void TProgramModal::writeToForm(KAEntity *ent){
 	for(int i=0;i<pr->plan.size();++i){
 		this->StringGrid1->Cells[0][i+1]=pr->plan[i]->first;
 		this->StringGrid1->Cells[1][i+1]=pr->plan[i]->second;
+	}
+	this->StringGrid2->RowCount=pr->times.size()+2;
+	this->StringGrid2->Cells[0][pr->times.size()+1]="";
+	this->StringGrid2->Cells[1][pr->times.size()+1]="";
+	for(int i=0;i<pr->times.size();++i){
+		this->StringGrid2->Cells[0][i+1]=pr->times[i]->first.FormatString("hh:nn");
+		this->StringGrid2->Cells[1][i+1]=pr->times[i]->second.FormatString("hh:nn");
 	}
 	{
 		Groups *groups=App::db->getGroups();
@@ -163,9 +198,19 @@ void __fastcall TProgramModal::Button5Click(TObject *Sender)
 
 void __fastcall TProgramModal::colorButtonClick(TObject *Sender)
 {
-	this->ColorDialog1->Color=colorButton->SymbolColor;
-	this->ColorDialog1->Execute(0);
-	 colorButton->SymbolColor=this->ColorDialog1->Color;
+	//this->ColorDialog1->Color=colorButton->SymbolColor;
+	//this->ColorDialog1->Execute(0);
+	 //colorButton->SymbolColor=this->ColorDialog1->Color;
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TProgramModal::StringGrid2KeyUp(TObject *Sender, WORD &Key, TShiftState Shift)
+
+{
+	int row=this->StringGrid2->RowCount-1;
+	if(this->StringGrid2->Cells[0][row]!="" || this->StringGrid1->Cells[2][row]!="")
+		this->StringGrid2->RowCount+=1;
 }
 //---------------------------------------------------------------------------
 

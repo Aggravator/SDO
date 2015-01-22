@@ -30,6 +30,13 @@ void Cell::setCourseSpan(int hs){
 	this->flags= DT_WORDBREAK|DT_CENTER;
 	this->cellType=ECourseS;
 }
+void Cell::setStaticS(int hs,int vs,String text,unsigned int flags){
+	hspan=hs;
+	vspan=vs;
+	this->text=text;
+	this->cellType=EStaticS;
+	this->flags=flags;
+}
 
 __fastcall TTableForm::TTableForm(TComponent* Owner)
 	: TForm(Owner)
@@ -92,6 +99,37 @@ void  TTableForm::clearProgs(){
 	}
 	progs.clear();
 }
+TDateTime getMaxDateFromCourse(Course* cr){
+	TDate maxDate=0;
+	for(int i=0;i<cr->dates.size();++i)
+		if(cr->dates[i]->date>maxDate)maxDate=cr->dates[i]->date;
+	return maxDate;
+}
+bool isIntoMonth(Course *cr, TDate month){
+	unsigned short year1,year2,month1,month2,day;
+	month.DecodeDate(&year1,&month1,&day);
+	for(int i=0;i<cr->dates.size();++i){
+		cr->dates[i]->date.DecodeDate(&year2,&month2,&day);
+        if(year2==year1 && month1==month2) return true;
+	}
+}
+int TTableForm::gatherStCountForMonth(Program *pr,TDate month){
+	int res=0;
+	for(int i=0;i<this->realTable->size();++i){
+		Course *cr=dynamic_cast<Course*>(this->realTable->at(i));
+		if(cr->program==pr && isIntoMonth(cr,month)){
+			res+=cr->students;
+		}
+	}
+	TDate currentD=TDate::CurrentDate();
+    for(int i=0;i<this->planTable->size();++i){
+		Course *cr=dynamic_cast<Course*>(this->planTable->at(i));
+		if(cr->program==pr && getMaxDateFromCourse(cr)>currentD){
+			res+=cr->students;
+		}
+	}
+	return res;
+}
 void TTableForm::prTableToVector(ProgTables* pt,std::vector<Cell*>* row){
 	int fixcols=4;
 	unsigned short year1,month1,day1;
@@ -103,7 +141,7 @@ void TTableForm::prTableToVector(ProgTables* pt,std::vector<Cell*>* row){
 		pt->real[i]->sortDates();
 		for(int j=0;j<pt->real[i]->dates.size();++j){
 			diff=(int)((double)(pt->real[i]->dates[j]->date-month));
-			if(diff>=-4 && diff<=dayCount+4){
+			if(diff>=-4 && diff<=dayCount+3){
 				cellPos=fixcols+4+diff;
 				row->at(cellPos)->courseR=pt->real[i];
 				row->at(cellPos)->lessonR=pt->real[i]->dates[j];
@@ -153,7 +191,7 @@ void TTableForm::sstringRedraw(){
 	if(year1!=year2 || month1!=month2){
 		monthLabel->Caption=months[month1-1]+", "+IntToStr(year1);
 		int dayCount=MonthDays[IsLeapYear(year1)][month1-1];
-		StringGrid1->ColCount=dayCount+8+fixcols;
+		StringGrid1->ColCount=dayCount+8+fixcols+2;
 		TDate firstDate=EncodeDate(year1,month1,1);
 		for(int i=0;i<dayCount+8;++i){
 			TDate dd=firstDate-4+i;
@@ -161,7 +199,11 @@ void TTableForm::sstringRedraw(){
 			StringGrid1->Cells[fixcols+i][0]=dayOfWeek[DayOfWeek(dd)-1];
 			StringGrid1->Cells[fixcols+i][1]=IntToStr(day);
 		}
-        lastMonthRedraw=month;
+		StringGrid1->Cells[StringGrid1->ColCount-2][1]="Месяц";
+		StringGrid1->Cells[StringGrid1->ColCount-1][1]="Год";
+		StringGrid1->Cells[StringGrid1->ColCount-2][0]="";
+		StringGrid1->Cells[StringGrid1->ColCount-1][0]="";
+		lastMonthRedraw=month;
     }
 	std::vector<Course*> plan,real;
 	for(int i=0;i<planTable->size();++i){
@@ -203,6 +245,7 @@ void TTableForm::sstringRedraw(){
 		FindPlanTByProgTime finder2;
 		Programs *pps=App::db->getPrograms();
 		for(int i=0;i<pps->size();++i){
+			if(((Program*)pps->at(i))->isactual==false)continue;
 			finder2.prog=dynamic_cast<Program*>(pps->at(i));
 			for(int j=0;j<finder2.prog->times.size();++j){
 				finder2.time=finder2.prog->times[j];
@@ -239,7 +282,7 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 		else cells.resize(1+progs.size());
 
 		for(int i=0;i<cells.size();++i){
-			cells[i]=new std::vector<Cell*>(dayCount+8+fixcols);
+			cells[i]=new std::vector<Cell*>(dayCount+8+fixcols+2);
 			for(int j=0;j<cells[i]->size();++j){
 				cells[i]->at(j)=new Cell();
 			}
@@ -259,6 +302,15 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 			cells[row-2]->at(2)->setSpan(1,1,IntToStr(progs[i]->prog->hours));
 			cells[row-2]->at(3)->setSpan(1,1,progs[i]->time.first.FormatString("hh:nn")+"-"+progs[i]->time.second.FormatString("hh:nn"));
 			prTableToVector(progs[i],cells[row-2]);
+			if(i!=0 && progs[i]->prog==progs[i-1]->prog){
+				cells[row-2]->at(cells[row-2]->size()-2)->cellType=EStaticUS;
+				int Ssr=row-3;
+				for(Ssr;cells[Ssr]->at(cells[Ssr]->size()-2)->cellType!=EStaticS;--Ssr);
+				cells[Ssr]->at(cells[Ssr]->size()-2)->vspan+=1;
+			}else{
+
+				cells[row-2]->at(cells[row-2]->size()-2)->setStaticS(1,1,IntToStr(gatherStCountForMonth(progs[i]->prog,month)));
+            }
 			++row;
 		}
 		if(i!=progs.size()){
@@ -278,11 +330,14 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 }
 void TTableForm::stringResizing(){
 	int fixcols=4;
-	StringGrid1->DefaultColWidth=(StringGrid1->Width-(50+160+30+70)-StringGrid1->ColCount-fixcols)/(StringGrid1->ColCount-fixcols);
+	//StringGrid1->Cells[StringGrid1->ColCount-2][1]="12345";
+	StringGrid1->DefaultColWidth=(StringGrid1->Width-(50+160+30+70+35+35)-StringGrid1->ColCount-fixcols)/(StringGrid1->ColCount-fixcols-2);
 	StringGrid1->ColWidths[0]=50;
 	StringGrid1->ColWidths[1]=160;
 	StringGrid1->ColWidths[2]=30;
 	StringGrid1->ColWidths[3]=70;
+	StringGrid1->ColWidths[StringGrid1->ColCount-1]=35;
+	StringGrid1->ColWidths[StringGrid1->ColCount-2]=35;
 }
 //---------------------------------------------------------------------------
 void __fastcall TTableForm::FormResize(TObject *Sender)
@@ -316,8 +371,11 @@ void __fastcall TTableForm::StringGrid1DrawCell(TObject *Sender, int ACol, int A
 			Rect.Top-=2;
 			Rect.left-=2;
 		}
+		if(ACol>=StringGrid1->ColCount-2){
+			Rect.Top-=2;
+		}
 		StringGrid1->Canvas->FillRect(Rect);
-		if(ACol>=4)drawBorder(StringGrid1->Canvas,Rect);
+		if(ACol>=4 && ACol<StringGrid1->ColCount-2)drawBorder(StringGrid1->Canvas,Rect);
 		tagRECT tr;
 		tr.left=Rect.Left+1;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
 		DrawText(StringGrid1->Canvas->Handle, StringGrid1->Cells[ACol][ARow].w_str(), StringGrid1->Cells[ACol][ARow].Length(), &tr,DT_CENTER);
@@ -326,7 +384,7 @@ void __fastcall TTableForm::StringGrid1DrawCell(TObject *Sender, int ACol, int A
 	if(cells.size()==0)return;
 	Cell *cl=cells[ARow-2]->at(ACol);
 	TRect tempRect;
-	int width=0,height=0;
+	int width=0,height=0,i;
 	Course *active;
 	tagRECT tr;
 	switch(cl->cellType){
@@ -340,6 +398,16 @@ void __fastcall TTableForm::StringGrid1DrawCell(TObject *Sender, int ACol, int A
 			for(int i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
 			Rect.Right=Rect.Left+width-1;
 			Rect.Bottom=Rect.Top+height-1;
+			StringGrid1->Canvas->FillRect(Rect);
+			drawBorder(StringGrid1->Canvas,Rect);
+			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
+			DrawText(StringGrid1->Canvas->Handle, cl->text.w_str(), cl->text.Length(), &tr,cl->flags);
+		break;
+		case EStaticS:
+			for(i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i]+1;
+			for(i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
+			Rect.Right=Rect.Left+width;
+			Rect.Bottom=Rect.Top+height;
 			StringGrid1->Canvas->FillRect(Rect);
 			drawBorder(StringGrid1->Canvas,Rect);
 			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
@@ -379,6 +447,7 @@ void __fastcall TTableForm::StringGrid1DrawCell(TObject *Sender, int ACol, int A
 			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
 			DrawText(StringGrid1->Canvas->Handle, text.w_str(), text.Length(), &tr,cl->flags);
 		break;
+
 
 	}
 }
@@ -489,16 +558,19 @@ void __fastcall TTableForm::StringGrid1Click(TObject *Sender)
 		//Вызываем диалоговое окно создания программ
 	}else{
 		Cell *cl=cells[row-2]->at(col);
-		if(cl->courseR!=NULL && showReal!=false){
-			this->selectedCourse=cl->courseR;
+		Course *prevCourse=selectedCourse;
+		if(cl->courseR!=NULL && showReal!=false ){
+			if(!(cl->courseP!=NULL && cl->courseP==selectedCourse && showPlan))
+				this->selectedCourse=cl->courseR;
 		}else if(cl->courseP!=NULL && showPlan!=false){
 			this->selectedCourse=cl->courseP;
 		}else{
 			this->selectedCourse=NULL;
 		}
-		if(this->dragCell!=NULL)return;
-		this->regenerateCells(progs);
-		StringGrid1->Repaint();
+		if(prevCourse!=selectedCourse){
+			this->regenerateCells(progs);
+			StringGrid1->Repaint();
+		}
 	}
 
 }
@@ -546,17 +618,21 @@ void __fastcall TTableForm::CheckBox3Click(TObject *Sender)
 //---------------------------------------------------------------------------
 
 void __fastcall TTableForm::StringGrid1MouseDown(TObject *Sender, TMouseButton Button,
-          TShiftState Shift, int X, int Y)
+		  TShiftState Shift, int X, int Y)
 {
 	int col,row;
 	StringGrid1->MouseToCell(X,Y,col,row);
 	itscc=col;
 	itscr=row;
 	dragCell=NULL;
+	hasCtrlPressedMC=false;
 	if(col>3 && row>2){
-
 		//this->Caption=IntToStr(row-2)+" "+IntToStr(col);
-		if(cells[itscr-2]->at(itscc)->courseP!=NULL || cells[itscr-2]->at(itscc)->courseR!=NULL)StringGrid1->BeginDrag(False, 4);
+		if(cells[itscr-2]->at(itscc)->courseP!=NULL || cells[itscr-2]->at(itscc)->courseR!=NULL){
+			hasCtrlPressedMC=Shift.Contains(ssCtrl);
+			dragCell=cells[itscr-2]->at(itscc);
+			StringGrid1->BeginDrag(False, 4);
+		}
 	}
 }
 //---------------------------------------------------------------------------
@@ -566,29 +642,24 @@ void __fastcall TTableForm::StringGrid1DragOver(TObject *Sender, TObject *Source
 {
 	int col,row;
 	StringGrid1->MouseToCell(X, Y, col, row);
-	Accept = col>3 && row>2;
+	Accept = col>3 && row>2 && col<StringGrid1->ColCount-2;
 }
 //---------------------------------------------------------------------------
-void TTableForm::moveCourseFromTo(Course *course,std::vector<Cell*>* dragRow,Cell *from,Cell *to){
+void TTableForm::moveCourseLFromTo(Course *course,std::vector<Cell*>* dragRow,Cell *from,Cell *to){
 	Course *newC;
 	TDateTime dt,dt2;
+	int src,dest;
+	for(int i=0;i<dragRow->size();++i){
+		if(dragRow->at(i)==from)src=i;
+		if(dragRow->at(i)==to)dest=i;
+	}
 	if(course==from->courseP){
-		int src,dest;
-		for(int i=0;i<dragRow->size();++i){
-			if(dragRow->at(i)==from)src=i;
-			if(dragRow->at(i)==to)dest=i;
-		}
 		dt=from->lessonP->date+dest-src;
 		dt2=from->lessonP->date;
 		from->courseP=NULL;
 		from->lessonP=NULL;
 	}
 	if(course==from->courseR){
-		int src,dest;
-		for(int i=0;i<dragRow->size();++i){
-			if(dragRow->at(i)==from)src=i;
-			if(dragRow->at(i)==to)dest=i;
-		}
 		dt=from->lessonR->date+dest-src;
 		dt2=from->lessonR->date;
 		from->courseR=NULL;
@@ -603,43 +674,33 @@ void TTableForm::moveCourseFromTo(Course *course,std::vector<Cell*>* dragRow,Cel
 	}
 	course->updateEntity(newC);
 }
+void TTableForm::moveCourseFromTo(Course *course,std::vector<Cell*>* dragRow,Cell *from,Cell *to){
+	Course *newC;
+	TDateTime dt,dt2;
+	int src,dest;
+	for(int i=0;i<dragRow->size();++i){
+		if(dragRow->at(i)==from)src=i;
+		if(dragRow->at(i)==to)dest=i;
+	}
+	newC=new Course(*course);
+	for(int i=0;i<newC->dates.size();++i){
+		newC->dates[i]->date+=dest-src;
+	}
+	course->updateEntity(newC);
+}
 void __fastcall TTableForm::StringGrid1DragDrop(TObject *Sender, TObject *Source,
           int X, int Y)
 {
 	int col,row;
 	StringGrid1->MouseToCell(X, Y, col, row);
-	if(dragCell->courseP==selectedCourse && selectedCourse!=NULL && showPlan){
-		moveCourseFromTo(dragCell->courseP,dragRow,dragCell,dragRow->at(col));
-		goto exxit;
-	}
-	if(dragCell->courseR==selectedCourse && selectedCourse!=NULL && showReal){
-		moveCourseFromTo(dragCell->courseR,dragRow,dragCell,dragRow->at(col));
-		goto exxit;
-	}
-	if(dragCell->courseP!=NULL && dragCell->courseR==NULL && showPlan){
-		moveCourseFromTo(dragCell->courseP,dragRow,dragCell,dragRow->at(col));
-		goto exxit;
-	}
-	if(dragCell->courseR!=NULL && dragCell->courseP==NULL && showReal){
-		moveCourseFromTo(dragCell->courseR,dragRow,dragCell,dragRow->at(col));
-		goto exxit;
-	}
-	if(dragCell->courseR!=NULL && dragCell->courseP!=NULL && showReal){
-		moveCourseFromTo(dragCell->courseR,dragRow,dragCell,dragRow->at(col));
-		goto exxit;
-	}
-	if(dragCell->courseP!=NULL && !showReal && showPlan){
-		moveCourseFromTo(dragCell->courseP,dragRow,dragCell,dragRow->at(col));
-		goto exxit;
-	}
-	if(dragCell->courseR==NULL && dragCell->courseP!=NULL && showPlan){
-		moveCourseFromTo(dragCell->courseP,dragRow,dragCell,dragRow->at(col));
-		goto exxit;
-	}
-exxit:
+	if(hasCtrlPressedMC) moveCourseFromTo(selectedCourse,dragRow,dragCell,dragRow->at(col));
+	else moveCourseLFromTo(selectedCourse,dragRow,dragCell,dragRow->at(col));
 	dragCell=NULL;
-	this->regenerateCells(progs);
-	StringGrid1->Repaint();
+	if(hasCtrlPressedMC)this->sstringRedraw();
+	else{
+		this->regenerateCells(progs);
+		StringGrid1->Repaint();
+	}
 }
 //---------------------------------------------------------------------------
 

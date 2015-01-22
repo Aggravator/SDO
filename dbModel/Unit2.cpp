@@ -14,6 +14,7 @@ __fastcall TForm2::TForm2(TComponent* Owner)
 	: TForm(Owner)
 {
 	specsForm=0;
+	tableForm=0;
 	TAuthForm *af=new TAuthForm(0);
 	af->ShowModal();
 	if(App::uid==0){
@@ -61,8 +62,8 @@ void __fastcall TForm2::Button3Click(TObject *Sender)
 
 void __fastcall TForm2::Button5Click(TObject *Sender)
 {
-	TTableForm *tf=new TTableForm(0);
-	tf->Show();
+	if(tableForm==0)tableForm=new TTableForm(0);
+	tableForm->Show();
 }
 //---------------------------------------------------------------------------
 

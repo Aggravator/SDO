@@ -27,6 +27,8 @@ __fastcall TProgramsForm::TProgramsForm(TComponent* Owner)
 //---------------------------------------------------------------------------
 
 ProgramRow::ProgramRow(ProgramRows *parent):EntityRow(parent){
+	initEntity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
+	tempEntity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
 	name=new TEdit((HWND)0);
 	name->Font->Size=12;
 	name->Align=alClient;
@@ -35,10 +37,9 @@ ProgramRow::ProgramRow(ProgramRows *parent):EntityRow(parent){
 	key->Align=alClient;
 	isActive=new TCheckBox((HWND)0);
 	isActive->Width=20;
-	isTraining=new TCheckBox((HWND)0);
-	isTraining->Width=20;
-	initEntity=new Program("","",0,true,true,0,0,16777215,0,0,0,0);
-	tempEntity=new Program("","",0,true,true,0,0,16777215,0,0,0,0);
+	isProgram=new TCheckBox((HWND)0);
+	isProgram->Width=20;
+
 	parent->ControlCollection->AddControl(editButton);
 	editButton->Parent=parent;
 	editButton->OnClick=editBClick;
@@ -48,8 +49,8 @@ ProgramRow::ProgramRow(ProgramRows *parent):EntityRow(parent){
 	name->Parent=parent;
 	parent->ControlCollection->AddControl(key);
 	key->Parent=parent;
-	parent->ControlCollection->AddControl(isTraining);
-	isTraining->Parent=parent;
+	parent->ControlCollection->AddControl(isProgram);
+	isProgram->Parent=parent;
 	parent->ControlCollection->AddControl(deleteButton);
 	deleteButton->Parent=parent;
 	deleteButton->OnClick=deleteBClick;
@@ -67,14 +68,14 @@ void ProgramRow::writeToRow(KAEntity* entity){
 	Program *pr=dynamic_cast<Program*>(entity);
 	name->Text=pr->name;
 	isActive->Checked=pr->isactual;
-	isTraining->Checked=pr->istraining;
+	isProgram->Checked=pr->istraining;
 	key->Text=pr->key;
 }
 void ProgramRow::writeToEntity(KAEntity* entity){
 	Program *pr=dynamic_cast<Program*>(entity);
 	pr->name=name->Text;
 	pr->isactual=isActive->Checked;
-	pr->istraining=isTraining->Checked;
+	pr->istraining=isProgram->Checked;
 	pr->key=key->Text;
 }
 void __fastcall ProgramRow::editBClick(TObject *Sender){
@@ -84,24 +85,24 @@ void __fastcall ProgramRow::deleteBClick(TObject *Sender){
 	ondelete();
 }
 ProgramRow::~ProgramRow(){
-	delete name;
-	delete key;
-	delete isActive;
-	delete isTraining;
+	//delete name;
+	//delete key;
+	//delete isActive;
+	//delete isProgram;
 }
 
 EntityRow* ProgramRows::addRow(KAEntity *entity){
-	this->RowCollection->BeginUpdate();
 	this->ControlCollection->BeginUpdate();
-	ProgramRow *cr=new ProgramRow(this);
-	cr->init(entity);
+	this->RowCollection->BeginUpdate();
+	ProgramRow *pr=new ProgramRow(this);
+	pr->init(entity);
 	TCellItem *ci=this->RowCollection->operator [](RowCollection->Count-1);
 	ci->SizeStyle=ssAbsolute;
 	ci->Value=rowHeight;
 	this->Height+=rowHeight;
-	rows.push_back(cr);
-	this->ControlCollection->EndUpdate();
+	rows.push_back(pr);
 	this->RowCollection->EndUpdate();
+	this->ControlCollection->EndUpdate();
 }
 
 __fastcall ProgramRows::ProgramRows(TComponent *Owner):RowsPanel(Owner){
@@ -152,7 +153,7 @@ void __fastcall TProgramsForm::Button5Click(TObject *Sender)
 
 void __fastcall TProgramsForm::Button2Click(TObject *Sender)
 {
-	Program *pr=new Program("","",0,true,true,0,0,16777215,0,0,0,0);
+	Program *pr=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
 	App::ModalForms::initForm(modalForm);
 	int hy=modalForm[0]->ShowModal();
 	if(hy==mrOk){

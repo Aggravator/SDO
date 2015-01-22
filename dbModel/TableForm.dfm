@@ -38,8 +38,6 @@ object TableForm: TTableForm
     OnMouseUp = StringGrid1MouseUp
     OnSelectCell = StringGrid1SelectCell
     OnStartDrag = StringGrid1StartDrag
-    ExplicitTop = 222
-    ExplicitHeight = 189
     ColWidths = (
       64
       64
@@ -156,7 +154,6 @@ object TableForm: TTableForm
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 4
-    ExplicitTop = 188
     DesignSize = (
       875
       34)
@@ -206,7 +203,7 @@ object TableForm: TTableForm
     Left = 408
     Top = 384
     Bitmap = {
-      494C010102000800500019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102000800580019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000

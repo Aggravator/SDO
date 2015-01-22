@@ -16,6 +16,13 @@
 #include <Vcl.Buttons.hpp>
 #include <VCLTee.TeCanvas.hpp>
 //---------------------------------------------------------------------------
+class TMColorButton:public TButtonStyleHook{
+protected:
+	virtual void __fastcall Paint(TCanvas *Canvas);
+	public:
+	TButtonColor *sButtonColor;
+	//__fastcall TMColorButton(TComponent* component);
+};
 class TProgramModal : public TModalEntityForm
 {
 __published:	// IDE-managed Components
@@ -47,21 +54,31 @@ __published:	// IDE-managed Components
 	TLabel *Label7;
 	TLabel *Label8;
 	TColorDialog *ColorDialog1;
-	TButtonColor *colorButton;
 	TStringGrid *StringGrid2;
 	TLabel *Label9;
+	TGridPanel *GridPanel3;
+	TPanel *Panel3;
+	TPanel *Panel4;
+	TPanel *Panel5;
+	TPanel *Panel6;
+	TButtonColor *colorButton;
+	TEdit *Edit2;
+	TLabel *Label10;
+	TLabel *Label11;
+	TEdit *Edit4;
 	void __fastcall Button2Click(TObject *Sender);
 	void __fastcall StringGrid1KeyUp(TObject *Sender, WORD &Key, TShiftState Shift);
 	void __fastcall Button3Click(TObject *Sender);
 	void __fastcall Button4Click(TObject *Sender);
 	void __fastcall Button5Click(TObject *Sender);
 	void __fastcall colorButtonClick(TObject *Sender);
-
+	void __fastcall StringGrid2KeyUp(TObject *Sender, WORD &Key, TShiftState Shift);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TProgramModal(TComponent* Owner);
 	void writeToEntity(KAEntity *ent);
 	void writeToForm(KAEntity *ent);
+	//TMColorButton *colorButton;
 };
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------

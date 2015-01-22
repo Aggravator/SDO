@@ -15,6 +15,8 @@
 #include <algorithm>
 //---------------------------------------------------------------------------
 class ProgramRows;
+class MyCB;
+
 class TProgramsForm : public TEntitiesForm
 {
 __published:	// IDE-managed Components
@@ -37,7 +39,7 @@ public:		// User declarations
 class ProgramRow:public EntityRow{
 public:
 	TEdit *name,*key;
-	TCheckBox *isActive,*isTraining;
+	TCheckBox *isActive,*isProgram;
 	ProgramRow(ProgramRows *parent);
 	void __fastcall editBClick(TObject *Sender);
 	void __fastcall deleteBClick(TObject *Sender);
@@ -45,6 +47,7 @@ public:
 	void writeToEntity(KAEntity* entity);
 	~ProgramRow();
 };
+
 class ProgramRows:public RowsPanel{
 public:
 	EntityRow* addRow(KAEntity *entity=0);

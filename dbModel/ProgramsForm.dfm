@@ -84,14 +84,13 @@ object ProgramsForm: TProgramsForm
       ExplicitTop = 14
     end
     object Label2: TLabel
-      Left = 209
+      Left = 201
       Top = 6
-      Width = 31
+      Width = 48
       Height = 13
       Anchors = []
-      Caption = #1053#1086#1084#1077#1088
-      ExplicitLeft = 226
-      ExplicitTop = 14
+      Caption = #1053#1072#1079#1074#1072#1085#1080#1077
+      ExplicitLeft = 204
     end
     object Label4: TLabel
       Left = 380
@@ -168,7 +167,7 @@ object ProgramsForm: TProgramsForm
     Left = 223
     Top = 184
     Bitmap = {
-      494C0101020014005C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102001400680019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

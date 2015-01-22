@@ -31,6 +31,7 @@ public:
 	Cell();
 	void setSpan(int hs,int vs,String text,unsigned int flags=DT_CENTER|DT_WORDBREAK);
 	void setCourseSpan(int hs);
+	void setStaticS(int hs,int vs,String text,unsigned int flags=DT_CENTER|DT_SINGLELINE|DT_VCENTER);
 	unsigned int flags;
 	int hspan,vspan;
 	String text;
@@ -94,6 +95,7 @@ public:		// User declarations
 	void regenerateCells(std::vector<ProgTables*> &prgs);
 	void clearCells();
 	void clearProgs();
+	void moveCourseLFromTo(Course *course,std::vector<Cell*>* dragRow,Cell *from,Cell *to);
 	void moveCourseFromTo(Course *course,std::vector<Cell*>* dragRow,Cell *from,Cell *to);
 	void prTableToVector(ProgTables* pt,std::vector<Cell*>* row);
 	struct FindPlanTByCourse{
@@ -138,6 +140,8 @@ public:		// User declarations
 	Course *selectedCourse;
 	bool showReal,showPlan;
 	bool showAllPrograms;
+	bool hasCtrlPressedMC;
+	int gatherStCountForMonth(Program *pr,TDate month);
 	void sstringRedraw();
 	ProgTables* getProgTableByRow(int row);
 	TCourseCreate *ccf;

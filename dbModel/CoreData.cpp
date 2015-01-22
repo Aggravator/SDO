@@ -561,9 +561,18 @@ bool Groups::createSubQueryBuilder(String &query,std::vector<KAEntity*> &entitie
 }
 
 bool isEqTime(std::pair<TDateTime,TDateTime>* plan1,std::pair<TDateTime,TDateTime>* plan2){
-	if(plan1->first==plan2->first){
-		return plan1->second<plan2->second;
-	}else return plan1->first<plan2->first;
+	unsigned short hour1,hour2,min1,min2,sec,msec;
+	plan1->first.DecodeTime(&hour1,&min1,&sec,&msec);
+	plan2->first.DecodeTime(&hour2,&min2,&sec,&msec);
+	if(hour1==hour2){
+		if(min1==min2){
+			plan1->second.DecodeTime(&hour1,&min1,&sec,&msec);
+			plan2->second.DecodeTime(&hour2,&min2,&sec,&msec);
+			if(hour1==hour2){
+				return min1<min2;
+			}else return hour1<hour2;
+        }else return min1<min2;
+	}else return hour1<hour2;
 }
 Program::Program(String name,String key,int capacity,bool istraining,bool isactual,int days,int hours,unsigned color,std::vector<Specific*> *specifics,std::vector<std::pair<int,int>*> *plan,std::vector<Group*> *groups,std::vector<std::pair<TDateTime,TDateTime>*> *times){
 	init(name,key,capacity,istraining,isactual,days,hours,color,specifics,plan,groups,times);
@@ -601,7 +610,12 @@ void Program::init(String name,String key,int capacity,bool istraining,bool isac
 		this->groups.assign(groups->begin(),groups->end());
 		for(int i=0;i<groups->size();++i)groups->at(i)->addOwner(this);
 	}
-	if(times!=0)this->times.assign(times->begin(),times->end());
+	for(int i=0;i<this->times.size();++i)delete this->times[i];
+	this->times.clear();
+	if(times!=0){
+		for(int i=0;i<times->size();++i)this->times.push_back(new std::pair<TDateTime,TDateTime>(*times->at(i)));
+		//this->times.assign(times->begin(),times->end());
+	}
 }
 bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 	Program *ent=dynamic_cast<Program*>(entity);
@@ -641,7 +655,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 		}
 		if(add.size()>0){
             if(diff&1 || remove.size()>0)query+="\n";
-			query+="insert into programplan (program_id, prograamplan_year, programplan_count,creator) values ";
+			query+="insert into programplan (program_id, programplan_year, programplan_count,creator) values ";
 			for(int i=0;i<add.size()-1;++i){
 				yplan=dynamic_cast<std::pair<int,int>*>(add[i]);
 				query+=String().sprintf(L"(%d,%d,%d,%d),",this->id,yplan->first,yplan->second,parent->parent->getUID());
@@ -766,7 +780,7 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 		}
 		if(add.size()>0){
             if(diff&1 || diff&2 || diff&4 || diff&8 || remove.size()>0)query+="\n";
-			query+="insert into programtime (program_id, prograamtime_start, programtime_end,creator) values ";
+			query+="insert into programtime (program_id, programtime_start, programtime_end,creator) values ";
 			for(int i=0;i<add.size()-1;++i){
 				time=dynamic_cast<std::pair<TDateTime,TDateTime>*>(add[i]);
 				query+=String().sprintf(L"(%d,'%s','%s',%d),",this->id,time->first.FormatString("hh:nn:00"),time->second.FormatString("hh:nn:00"),parent->parent->getUID());
@@ -926,6 +940,7 @@ bool Programs::createSubQueryBuilder(String &query,std::vector<KAEntity*> &entit
 	String queryPlan="insert into programplan(program_id,programplan_year, programplan_count,creator) values ";
 	String querySpecific="insert into specprogram(program_id,specificity_id,creator) values ";
 	String queryGroups="insert into programgroups(program_id,group_id,creator) values ";
+	String queryTime="insert into programtime(program_id,programtime_start,programtime_end,creator) values ";
 	Program *ent;
 	for(int i=0;i<entities.size();++i){
 		ent=dynamic_cast<Program*>(entities[i]);
@@ -938,11 +953,19 @@ bool Programs::createSubQueryBuilder(String &query,std::vector<KAEntity*> &entit
 		for(int j=0;j<ent->groups.size();++j){
 			queryGroups+=String().sprintf(L"(%d,%d,%d),",ent->getID(),ent->groups[j]->getID(),parent->getUID());
 		}
+		for(int j=0;j<ent->times.size();++j){
+			queryTime+=String().sprintf(L"(%d,'%s','%s',%d),",ent->getID(),ent->times[j]->first.FormatString("hh:nn:00"),ent->times[j]->second.FormatString("hh:nn:00"),parent->getUID());
+		}
 	}
-	if(*queryPlan.LastChar()==L',')query+=queryPlan.SubString(0,queryPlan.Length())+";\n";
-	if(*querySpecific.LastChar()==L',')query+=querySpecific.SubString(0,querySpecific.Length())+";\n";
-	if(*queryGroups.LastChar()==L',')query+=queryGroups.SubString(0,queryGroups.Length())+";\n";
-	if(query.Length()>0)return true; else return false;
+	if(*queryPlan.LastChar()==L',')query+=queryPlan.SubString(0,queryPlan.Length()-1)+";\n";
+	if(*querySpecific.LastChar()==L',')query+=querySpecific.SubString(0,querySpecific.Length()-1)+";\n";
+	if(*queryGroups.LastChar()==L',')query+=queryGroups.SubString(0,queryGroups.Length()-1)+";\n";
+	if(*queryTime.LastChar()==L',')query+=queryTime.SubString(0,queryTime.Length()-1)+";\n";
+	if(query.Length()>0){
+		query=query.SubString(0,query.Length()-1);
+		return true;
+	}
+	else return false;
 }
 
 bool isEqLesson(DateLesson* l1,DateLesson* l2){

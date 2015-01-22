@@ -40,6 +40,7 @@ public:		// User declarations
 	TGroupsForm *groupsForm;
 	TRoomsForm *roomsForm;
 	TProgramsForm *programsForm;
+	TTableForm *tableForm;
 	__fastcall TForm2(TComponent* Owner);
 };
 //---------------------------------------------------------------------------
