@@ -25,9 +25,10 @@ void __fastcall TCourseCreate::FormShow(TObject *Sender)
 	this->Panel5->Visible=false;
 	if(isPlan==isReal){
 		this->Panel1->SetBounds(0,0,Panel1->Width,Panel1->Height);
-		this->Panel1->Visible=true;
+		Panel1->Align=alClient;
 		this->Width=Panel1->Width+widthPlus;
 		this->Height=Panel1->Height+heightPlus;
+		this->Panel1->Visible=true;
 	}else if(prog==NULL){
 		showPrograms();
 	}else if(smena==NULL){
@@ -60,6 +61,12 @@ bool sortR (KAEntity* ii,KAEntity* jj) {
 	ClassRoom *j=dynamic_cast<ClassRoom *>(jj);
 	return i->name<j->name;
 }
+void TCourseCreate::initFromCourse(Course *course){
+	prog=course->program;
+	smena=new std::pair<TDateTime,TDateTime>(course->start,course->end);
+	room=course->dates[0]->room;
+	studentsC=-1;
+}
 bool TCourseCreate::checkRoom(KAEntity* r){
 	ClassRoom *room=(ClassRoom*)r;
 	if(prog==NULL)return true;
@@ -91,6 +98,7 @@ bool TCourseCreate::checkProgram(KAEntity *p){
 }
 void TCourseCreate::showPrograms(){
 	this->Panel2->SetBounds(0,0,Panel2->Width,Panel2->Height);
+	this->Panel2->Align=alClient;
 	this->Width=Panel2->Width+widthPlus;
 	this->Height=Panel2->Height+heightPlus;
 	ListBox1->Clear();
@@ -103,9 +111,13 @@ void TCourseCreate::showPrograms(){
 		}
 	}
 	this->Panel2->Visible=true;
+	this->ListBox1->Repaint();
+	this->resizeProg();
+	this->ListBox1->Repaint();
 }
 void TCourseCreate::showSmena(){
 	this->Panel4->SetBounds(0,0,Panel4->Width,Panel4->Height);
+	Panel4->Align=alClient;
 	this->Width=Panel4->Width+widthPlus;
 	this->Height=Panel4->Height+heightPlus;
 	ListBox3->Clear();
@@ -117,6 +129,7 @@ void TCourseCreate::showSmena(){
 }
 void TCourseCreate::showRooms(){
 	this->Panel3->SetBounds(0,0,Panel3->Width,Panel3->Height);
+	Panel3->Align=alClient;
 	this->Width=Panel3->Width+widthPlus;
 	this->Height=Panel3->Height+heightPlus;
 	ListBox2->Clear();
@@ -132,6 +145,7 @@ void TCourseCreate::showRooms(){
 }
 void TCourseCreate::showStudents(){
 	this->Panel5->SetBounds(0,0,Panel5->Width,Panel5->Height);
+	Panel5->Align=alClient;
 	this->Width=Panel5->Width+widthPlus;
 	this->Height=Panel5->Height+heightPlus;
 	this->Edit1->Text="";
@@ -149,6 +163,7 @@ void __fastcall TCourseCreate::Button1Click(TObject *Sender)
 		isReal=true;
 	}
 	this->Panel1->Visible=false;
+
 	if(prog==NULL){
 		showPrograms();
 	}else if(smena==NULL){
@@ -244,4 +259,50 @@ void __fastcall TCourseCreate::Edit1KeyDown(TObject *Sender, WORD &Key, TShiftSt
 }
 //---------------------------------------------------------------------------
 
+void TCourseCreate::resizeProg(){
+	int j=3;
+	for(int i=0;i<ListBox1->Items->Count;++i){
+		int h= 0;
+		ListBox1MeasureItem(ListBox1, i, h);
+		ListBox1->Perform(LB_SETITEMHEIGHT, i, h);
+	}
+}
+
+void __fastcall TCourseCreate::ListBox1DrawItem(TWinControl *Control, int Index, TRect &Rect,
+          TOwnerDrawState State)
+{
+	int y=3;
+	tagRECT tr;
+	tr.left=Rect.Left+1;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
+	Canvas->FillRect(Rect);
+	String tt=ListBox1->Items->operator [](Index);
+	DrawText(ListBox1->Canvas->Handle, tt.w_str(), tt.Length(), &tr,DT_LEFT|DT_WORDBREAK);
+
+	ListBox1->Canvas->Pen->Color=RGB(230,230,230);
+	ListBox1->Canvas->MoveTo(Rect.left,Rect.bottom);
+	ListBox1->Canvas->LineTo(Rect.right,Rect.bottom);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TCourseCreate::ListBox1MeasureItem(TWinControl *Control, int Index,
+		  int &Height)
+{
+	int g=4;
+	tagRECT tr;
+	tr.left=0;tr.right=ListBox1->Width;tr.top=0;tr.bottom=0;
+	DrawText(ListBox1->Canvas->Handle, ListBox1->Items->operator [](Index).w_str(), ListBox1->Items->operator [](Index).Length(), &tr,DT_CALCRECT|DT_WORDBREAK);
+	Height=tr.bottom+4;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TCourseCreate::FormResize(TObject *Sender)
+{
+	Panel1->Repaint();
+	this->resizeProg();
+	this->ListBox1->Repaint();
+	Panel3->Repaint();
+	Panel4->Repaint();
+	Panel5->Repaint();
+}
+//---------------------------------------------------------------------------
 

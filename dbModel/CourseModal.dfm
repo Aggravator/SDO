@@ -255,7 +255,6 @@ object CourseModal: TCourseModal
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
-          ExplicitLeft = 276
         end
       end
       object ScrollBox1: TScrollBox
@@ -309,7 +308,7 @@ object CourseModal: TCourseModal
       object Label7: TLabel
         Left = 0
         Top = 0
-        Width = 438
+        Width = 89
         Height = 18
         Align = alTop
         Caption = #1055#1088#1080#1084#1077#1095#1072#1085#1080#1077':'
@@ -320,7 +319,6 @@ object CourseModal: TCourseModal
         Font.Style = []
         ParentFont = False
         Layout = tlCenter
-        ExplicitWidth = 89
       end
       object RichEdit1: TRichEdit
         Left = 0
@@ -347,7 +345,7 @@ object CourseModal: TCourseModal
     Left = 384
     Top = 80
     Bitmap = {
-      494C010103001400780019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101030014007C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

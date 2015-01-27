@@ -24,9 +24,36 @@ __fastcall TRoomsForm::TRoomsForm(TComponent* Owner)
 	panel->Padding->Right=2;
 	panel->Padding->Top=2;
 	panel->Padding->Bottom=2;
+	std::vector<SDODBImage::EntityTypeEvent> events;
+	SDODBImage::EntityTypeEvent ete;ete.entType=SDODBImage::EntityType::ERoom;ete.eventType=SDODBImage::EventType::Delete;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::ERoom;ete.eventType=SDODBImage::EventType::Create;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::ERoom;ete.eventType=SDODBImage::EventType::Update;
+	events.push_back(ete);
+	App::db->attachHandler(this,events);
+}
+__fastcall TRoomsForm::~TRoomsForm(){
+	App::db->detachHandler(this);
 }
 //---------------------------------------------------------------------------
-
+void TRoomsForm::Handle(std::vector<EntEvent> &entities){
+	if(this->Visible==false)return;
+	for(int i=0;i<entities.size();++i){
+		if(entities[i].eventType==SDODBImage::EventType::Delete){
+			for(int j=0;j<panel->rows.size();++j){
+				if(panel->rows[j]->initEntity->getID()==entities[i].id){
+					panel->rows[j]->hideInPanel();
+					panel->deletedRows.push_back(panel->rows[j]);
+					panel->rows.erase(panel->rows.begin()+j);
+				}
+			}
+		}
+		if(entities[i].eventType==SDODBImage::EventType::Create){
+			panel->addRow(App::db->getRooms()->getById(entities[i].id));
+		}
+	}
+}
 RoomRow::RoomRow(ARowsPanel *parent, int size):AEntityRow(parent,size){
 	name=new TEdit((HWND)0);
 	name->Font->Size=12;

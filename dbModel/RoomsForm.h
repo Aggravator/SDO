@@ -10,13 +10,13 @@
 #include <Vcl.ExtCtrls.hpp>
 #include <Vcl.ImgList.hpp>
 //#include "EntitiesForm.h"
-#include "ComplexEntitiesFrom.h"
+#include "ComplexEntitiesForm.h"
 #include "App.h"
 #include "GroupModal.h"
 #include <algorithm>
 //---------------------------------------------------------------------------
 class RoomRows;
-class TRoomsForm : public TComplexEntitiesForm
+class TRoomsForm : public TComplexEntitiesForm,public SDOHandler
 {
 __published:	// IDE-managed Components
 	TGridPanel *GridPanel1;
@@ -30,8 +30,11 @@ __published:	// IDE-managed Components
 	TImageList *ImageList1;
 	void __fastcall Button2Click(TObject *Sender);
 private:	// User declarations
+protected:
+	void Handle(std::vector<EntEvent> &entities);
 public:		// User declarations
 	__fastcall TRoomsForm(TComponent* Owner);
+	__fastcall ~TRoomsForm();
 };
 class RoomRow:public AEntityRow{
 public:

@@ -134,9 +134,9 @@
             <DependentOn>AuthForm.h</DependentOn>
             <BuildOrder>9</BuildOrder>
         </CppCompile>
-        <CppCompile Include="ComplexEntitiesFrom.cpp">
+        <CppCompile Include="ComplexEntitiesForm.cpp">
             <VirtualFolder>{860E5B55-4E97-4C35-9AF9-29421A9773C0}</VirtualFolder>
-            <DependentOn>ComplexEntitiesFrom.h</DependentOn>
+            <DependentOn>ComplexEntitiesForm.h</DependentOn>
             <BuildOrder>24</BuildOrder>
         </CppCompile>
         <CppCompile Include="CoreData.cpp">
@@ -161,11 +161,6 @@
             <FormType>dfm</FormType>
             <DependentOn>DefaultReport.h</DependentOn>
             <BuildOrder>25</BuildOrder>
-        </CppCompile>
-        <CppCompile Include="EntitiesForm.cpp">
-            <VirtualFolder>{860E5B55-4E97-4C35-9AF9-29421A9773C0}</VirtualFolder>
-            <DependentOn>EntitiesForm.h</DependentOn>
-            <BuildOrder>13</BuildOrder>
         </CppCompile>
         <CppCompile Include="GroupModal.cpp">
             <VirtualFolder>{D7CB9D69-DE67-4F71-9431-B6B6B866511D}</VirtualFolder>
@@ -354,10 +349,10 @@
                 <DeployFile Condition="'$(DynamicRTL)'=='true' And '$(Multithreaded)'!='true'" LocalName="$(BDS)\bin\cc32120.dll" Class="DependencyModule">
                     <Platform Name="Win32"/>
                 </DeployFile>
-                <DeployFile Condition="'$(UsingDelphiRTL)'=='true'" LocalName="$(BDS)\bin\borlndmm.dll" Class="DependencyModule">
+                <DeployFile LocalName=".\Win32\Debug\SDODBImage.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32"/>
                 </DeployFile>
-                <DeployFile LocalName=".\Win32\Debug\SDODBImage.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile Condition="'$(UsingDelphiRTL)'=='true'" LocalName="$(BDS)\bin\borlndmm.dll" Class="DependencyModule">
                     <Platform Name="Win32"/>
                 </DeployFile>
                 <DeployFile Condition="'$(DynamicRTL)'=='true' And '$(Multithreaded)'=='true'" LocalName="$(BDS)\bin\cc32120mt.dll" Class="DependencyModule">

@@ -124,7 +124,10 @@ void TCourseModal::initWithDL(std::vector<DateLesson*> &dates,Course *cr){
 	}
 	cr->sortDates();
 	this->dayPanel->ControlCollection->BeginUpdate();
+	int j;
 	for(int i=0;i<cr->dates.size();++i){
+		for(j=0;j<rooms.size();++j)if(cr->dates[i]->room==rooms[j])break;
+		if(j==rooms.size()) rooms.push_back(cr->dates[j]->room);
 		TRowItem* ri=this->dayPanel->RowCollection->Add();
 		ri->SizeStyle=ssAbsolute;
 		ri->Value=this->rowHeight;

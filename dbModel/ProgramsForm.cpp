@@ -9,10 +9,11 @@
 #pragma resource "*.dfm"
 //---------------------------------------------------------------------------
 __fastcall TProgramsForm::TProgramsForm(TComponent* Owner)
-	: TEntitiesForm(Owner)
+	: TComplexEntitiesForm(Owner)
 {
 	this->modalForm=reinterpret_cast<TModalEntityForm **>(&App::ModalForms::programModal);
-	this->OnShow=FormShow;
+	this->OnShow=onShow;
+	this->Button5->OnClick=this->onOkButton;
 	this->images=this->ImageList1;
 	panel=new ProgramRows(this);
 	panel->Align=alTop;
@@ -23,11 +24,38 @@ __fastcall TProgramsForm::TProgramsForm(TComponent* Owner)
 	panel->Padding->Right=2;
 	panel->Padding->Top=2;
 	panel->Padding->Bottom=2;
+	std::vector<SDODBImage::EntityTypeEvent> events;
+	SDODBImage::EntityTypeEvent ete;ete.entType=SDODBImage::EntityType::EProgram;ete.eventType=SDODBImage::EventType::Delete;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::EProgram;ete.eventType=SDODBImage::EventType::Create;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::EProgram;ete.eventType=SDODBImage::EventType::Update;
+	events.push_back(ete);
+	App::db->attachHandler(this,events);
+}
+__fastcall TProgramsForm::~TProgramsForm(){
+	App::db->detachHandler(this);
+}
+void TProgramsForm::Handle(std::vector<EntEvent> &entities){
+	if(this->Visible==false)return;
+	for(int i=0;i<entities.size();++i){
+		if(entities[i].eventType==SDODBImage::EventType::Delete){
+			for(int j=0;j<panel->rows.size();++j){
+				if(panel->rows[j]->initEntity->getID()==entities[i].id){
+					panel->rows[j]->hideInPanel();
+					panel->deletedRows.push_back(panel->rows[j]);
+					panel->rows.erase(panel->rows.begin()+j);
+				}
+			}
+		}
+		if(entities[i].eventType==SDODBImage::EventType::Create){
+			panel->addRow(App::db->getPrograms()->getById(entities[i].id));
+		}
+	}
 }
 //---------------------------------------------------------------------------
 
-ProgramRow::ProgramRow(ProgramRows *parent):EntityRow(parent){
-	initEntity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
+ProgramRow::ProgramRow(ARowsPanel *parent, int size):AEntityRow(parent,size){
 	tempEntity=new Program("","",0,true,true,1,0,16777215,0,0,0,0);
 	name=new TEdit((HWND)0);
 	name->Font->Size=12;
@@ -40,31 +68,10 @@ ProgramRow::ProgramRow(ProgramRows *parent):EntityRow(parent){
 	isProgram=new TCheckBox((HWND)0);
 	isProgram->Width=20;
 
-	parent->ControlCollection->AddControl(editButton);
-	editButton->Parent=parent;
-	editButton->OnClick=editBClick;
-	parent->ControlCollection->AddControl(isActive);
-	isActive->Parent=parent;
-	parent->ControlCollection->AddControl(name);
-	name->Parent=parent;
-	parent->ControlCollection->AddControl(key);
-	key->Parent=parent;
-	parent->ControlCollection->AddControl(isProgram);
-	isProgram->Parent=parent;
-	parent->ControlCollection->AddControl(deleteButton);
-	deleteButton->Parent=parent;
-	deleteButton->OnClick=deleteBClick;
-}
-bool programSort(KAEntity *a,KAEntity *b){
-	Program *cr1=dynamic_cast<Program*>(a);
-	Program *cr2=dynamic_cast<Program*>(b);
-	if(cr1->isactual!=cr2->isactual){
-		return cr1->isactual>cr2->isactual;
-	}else if(cr1->istraining!=cr2->istraining){
-		return cr1->istraining>cr2->istraining;
-	}else if(cr1->key!=cr2->key){
-		return cr1->key<cr2->key;
-    }else return cr1->name<cr2->name;
+	controls[1]=isActive;
+	controls[2]=name;
+	controls[3]=key;
+	controls[4]=isProgram;
 }
 void ProgramRow::writeToRow(KAEntity* entity){
 	Program *pr=dynamic_cast<Program*>(entity);
@@ -80,12 +87,6 @@ void ProgramRow::writeToEntity(KAEntity* entity){
 	pr->istraining=isProgram->Checked;
 	pr->key=key->Text;
 }
-void __fastcall ProgramRow::editBClick(TObject *Sender){
-	onedit();
-}
-void __fastcall ProgramRow::deleteBClick(TObject *Sender){
-	ondelete();
-}
 ProgramRow::~ProgramRow(){
 	delete name;
 	delete key;
@@ -93,21 +94,7 @@ ProgramRow::~ProgramRow(){
 	delete isProgram;
 }
 
-EntityRow* ProgramRows::addRow(KAEntity *entity){
-	this->ControlCollection->BeginUpdate();
-	this->RowCollection->BeginUpdate();
-	ProgramRow *pr=new ProgramRow(this);
-	pr->init(entity);
-	TCellItem *ci=this->RowCollection->operator [](RowCollection->Count-1);
-	ci->SizeStyle=ssAbsolute;
-	ci->Value=rowHeight;
-	this->Height+=rowHeight;
-	rows.push_back(pr);
-	this->RowCollection->EndUpdate();
-	this->ControlCollection->EndUpdate();
-}
-
-__fastcall ProgramRows::ProgramRows(TComponent *Owner):RowsPanel(Owner){
+__fastcall ProgramRows::ProgramRows(TComponent *Owner):RRowsPanel<ProgramRow,6>(Owner){
 	entTable=App::db->getPrograms();
 	this->ColumnCollection->Clear();
 	this->RowCollection->Clear();
@@ -123,7 +110,7 @@ __fastcall ProgramRows::ProgramRows(TComponent *Owner):RowsPanel(Owner){
 	ci->Value=100;
 	ci=this->ColumnCollection->Add();
 	ci->SizeStyle=ssAbsolute;
-	ci->Value=50;
+	ci->Value=75;
 	ci=this->ColumnCollection->Add();
 	ci->SizeStyle=ssAbsolute;
 	ci->Value=50;
@@ -134,23 +121,6 @@ __fastcall ProgramRows::ProgramRows(TComponent *Owner):RowsPanel(Owner){
 }
 __fastcall ProgramRows::~ProgramRows(){
 }
-
-void __fastcall TProgramsForm::FormShow(TObject *Sender)
-{
-	panel->clear();
-	std::sort(panel->entTable->begin(),panel->entTable->end(),programSort);
-	for(int i=0;i<panel->entTable->size();++i){
-		panel->addRow(panel->entTable->at(i));
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TProgramsForm::Button5Click(TObject *Sender)
-{
-	this->Visible=false;
-	panel->applyChanges();
-	this->Close();
-}
 //---------------------------------------------------------------------------
 
 void __fastcall TProgramsForm::Button2Click(TObject *Sender)
@@ -160,7 +130,6 @@ void __fastcall TProgramsForm::Button2Click(TObject *Sender)
 	int hy=modalForm[0]->ShowModal();
 	if(hy==mrOk){
 		*pr=*modalForm[0]->getEntity();
-
 		panel->addRow(pr);
 	}
 }

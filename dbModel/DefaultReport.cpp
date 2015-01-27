@@ -240,6 +240,7 @@ void __fastcall TDefaultReport::Button1Click(TObject *Sender)
 						groupLayer[j]->planReal[ps]->first=new std::vector<Course*>();
 						groupLayer[j]->planReal[ps]->second=new std::vector<Course*>();
 					}
+					course->sortDates();
 					groupLayer[j]->planReal[ps]->second->push_back(course);
 				}
 			}
@@ -261,6 +262,7 @@ void __fastcall TDefaultReport::Button1Click(TObject *Sender)
 						groupLayer[j]->planReal[ps]->first=new std::vector<Course*>();
 						groupLayer[j]->planReal[ps]->second=new std::vector<Course*>();
 					}
+					course->sortDates();
                     groupLayer[j]->planReal[ps]->first->push_back(course);
 				}
 			}
@@ -337,7 +339,10 @@ void __fastcall TDefaultReport::Button1Click(TObject *Sender)
 							}else{
 								oldCell=3+getDayOfDate(cr->dates[ij]->date);
 								String rooms=cr->dates[0]->room->name;
-								for(int rd=1;rd<cr->dates.size();++rd)rooms+=cr->dates[rd]->room->name;
+								std::vector<KAEntity*> rmsv;
+								for(int rd=0;rd<cr->dates.size();++rd) rmsv.push_back(cr->dates[rd]->room);
+								std::sort(rmsv.begin(),rmsv.end(),App::db->getRooms()->sortFuncU);
+								for(int rd=1;rd<rmsv.size();++rd)if(rmsv[rd]!=rmsv[rd-1])rooms+=","+((ClassRoom*)rmsv[rd])->name;
 								excelRow->at(oldCell)->setSpan(IntToStr(cr->students) + "/"+rooms,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,10921638);
 								excelRow->at(oldCell)->course=cr;
 							}
@@ -360,7 +365,10 @@ void __fastcall TDefaultReport::Button1Click(TObject *Sender)
 							}else{
 								oldCell=newCell;
 								String rooms=cr->dates[0]->room->name;
-								for(int rd=1;rd<cr->dates.size();++rd)rooms+=cr->dates[rd]->room->name;
+								std::vector<KAEntity*> rmsv;
+								for(int rd=0;rd<cr->dates.size();++rd) rmsv.push_back(cr->dates[rd]->room);
+								std::sort(rmsv.begin(),rmsv.end(),App::db->getRooms()->sortFuncU);
+								for(int rd=1;rd<rmsv.size();++rd)if(rmsv[rd]!=rmsv[rd-1])rooms+=","+((ClassRoom*)rmsv[rd])->name;
 								excelRow->at(oldCell)->setSpan(IntToStr(cr->students) + "/"+rooms,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,cr->program->color);
 								excelRow->at(oldCell)->course=cr;
 							}
@@ -392,21 +400,34 @@ void __fastcall TDefaultReport::Button1Click(TObject *Sender)
 				monthsGS[i]->operator [](*it)=0;
 			std::set<ProgSmena>::iterator it;
 			int ERow=0,oldRow;
+			std::vector<Course*> rcoursesOnMonth;
 			for(it=pss.begin();it!=pss.end();++it){
+                rcoursesOnMonth.clear();
 				if(monthsPS[i]->count((*it).prog)<1)monthsPS[i]->insert(std::pair<Program*,int>((*it).prog,0));
 				if(groupLayer[i]->planReal.count((*it))>0){
 					courseVector=groupLayer[i]->planReal[(*it)]->first;
 					for(int j=0;j<courseVector->size();++j){
-						Course *cr=dynamic_cast<Course *>(courseVector->at(i));
+						Course *cr=dynamic_cast<Course *>(courseVector->at(j));
 						if(isIntoMonth(cr->dates[cr->dates.size()-1]->date,groupLayer[i]->month)){
 							monthsPS[i]->operator [](cr->program)+=cr->students;
+							rcoursesOnMonth.push_back(cr);
 						}
 					}
  					courseVector=groupLayer[i]->planReal[(*it)]->second;
 					for(int j=0;j<courseVector->size();++j){
 						Course *cr=dynamic_cast<Course *>(courseVector->at(j));
-						if(cr->dates[cr->dates.size()-1]->date>TDate::CurrentDate()){
-							monthsPS[i]->operator [](cr->program)+=cr->students;
+						if(isIntoMonth(cr->dates[cr->dates.size()-1]->date,groupLayer[i]->month) && cr->dates[cr->dates.size()-1]->date>TDate::CurrentDate()){
+							bool stepCount=true;
+							for(int ij=0;ij<rcoursesOnMonth.size()&&stepCount;++ij){
+								if(cr->dates.size()==rcoursesOnMonth[ij]->dates.size()){
+									int ci;
+									for(ci=0;ci<cr->dates.size();++cr){
+										if(cr->dates[ci]->date!=rcoursesOnMonth[ij]->dates[ci]->date)break;
+									}
+									if(ci==cr->dates.size())stepCount=false;
+								}
+							}
+							if(stepCount)monthsPS[i]->operator [](cr->program)+=cr->students;
 						}
 					}
 				}

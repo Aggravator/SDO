@@ -53,7 +53,11 @@ public:
 	bool isHas(KAEntity* entity);
 	SDODBImage * parent;
 	virtual void debind();
+	virtual void debindEntities(std::vector<int> &ids);
+	virtual void debindEntities(std::vector<KAEntity*> &ents);
+	virtual void fetchEntities(std::vector<int> *ids=0,std::map<KAEntity*,int>* diffs=NULL)=0;
 	bool (*sortFuncU) (KAEntity*,KAEntity*);
+	std::vector<KAEntity*> garbage;
 protected:
 	virtual bool deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities)=0;
 	virtual bool createQueryBuilder(String &query,std::vector<KAEntity*> &entities)=0;
@@ -79,6 +83,7 @@ class Specifics:public KAEntityTable{
 public:
 	Specifics(SDODBImage *parent);
 	bool createEntities(std::vector<KAEntity*> &entities);
+	void fetchEntities(std::vector<int> *ids=0,std::map<KAEntity*,int>* diffs=NULL);
 protected:
 	bool deleteQueryBuilder(String& query,std::vector<KAEntity*> &entities);
 	bool createQueryBuilder(String &query,std::vector<KAEntity*> &entities);
@@ -111,6 +116,7 @@ class Rooms:public KAEntityTable{
 public:
 	Rooms(SDODBImage *parent);
 	bool createEntities(std::vector<KAEntity*> &entities);
+	void fetchEntities(std::vector<int> *ids=0,std::map<KAEntity*,int>* diffs=NULL);
 protected:
 	bool deleteQueryBuilder(String &query,std::vector<KAEntity*> &entities);
 	bool createQueryBuilder(String &query,std::vector<KAEntity*> &entities);
@@ -145,6 +151,7 @@ class Groups:public KAEntityTable{
 public:
 	Groups(SDODBImage *parent);
 	bool createEntities(std::vector<KAEntity*> &entities);
+	void fetchEntities(std::vector<int> *ids=0,std::map<KAEntity*,int>* diffs=NULL);
 protected:
 	bool deleteQueryBuilder(String &query,std::vector<KAEntity*> &entities);
 	bool createQueryBuilder(String &query,std::vector<KAEntity*> &entities);
@@ -182,6 +189,7 @@ class  Programs:public KAEntityTable{
 public:
 	Programs(SDODBImage *parent);
 	bool createEntities(std::vector<KAEntity*> &entities);
+	void fetchEntities(std::vector<int> *ids=0,std::map<KAEntity*,int>* diffs=NULL);
 protected:
 	bool deleteQueryBuilder(String &query,std::vector<KAEntity*> &entities);
 	bool createQueryBuilder(String &query,std::vector<KAEntity*> &entities);
@@ -222,6 +230,7 @@ class CourseTable:public KAEntityTable{
 public:
 	CourseTable(SDODBImage *parent);
 	bool createEntities(std::vector<KAEntity*> &entities);
+	void fetchEntities(std::vector<int> *ids=0,std::map<KAEntity*,int>* diffs=NULL);
 	bool loadMonth(TDate date);
 	void addMonth(TDate);
 	bool hasMonth(TDate month);
@@ -245,19 +254,13 @@ public:
 	RealTable(SDODBImage *parent);
 };
 
-class DBEvent{
-public:
-//    std::vector<
-};
-
-class SDOHandler{
-
-};
+class SDOHandler;
 
 class SDODBImage{
 public:
 	SDODBImage(TADOConnection *connection,int uid);
 	int getUID();
+
 	Specifics * getSpecifics();
 	Groups *getGroups();
 	Programs *getPrograms();
@@ -271,17 +274,36 @@ public:
 	void refreshPlantable();
 	void refreshRealtable();
 	~SDODBImage();
+	enum EntityType{ESpecific=0,EGroup=1,ERoom=2,EProgram=3,EPCourse=4,ERCourse=5};
+	struct TypeEntityId{
+	public:
+		TypeEntityId(){}
+		TypeEntityId(EntityType type,const int idd):entityType(type),id(idd){}
+		int id;
+		EntityType entityType;
+		bool operator<(const TypeEntityId te)const{
+			if(entityType==entityType) return id<te.id;
+			else return entityType<entityType;
+		}
+	};
+	enum EventType{Create=1,Update=2,Delete=4};
 	struct TableEvent{
-		enum EventType{Create=1,Update=2,Delete=4};
 		String table;
 		EventType eType;
 	};
+	struct EntityTypeEvent{
+		EntityType entType;
+		EventType eventType;
+	};
+	void attachHandler(SDOHandler* handler,std::vector<EntityTypeEvent>& events);
+	void detachHandler(SDOHandler* handler);
 protected:
 	void refreshTable(String tableName);
 	void __fastcall checkUpdates(TObject *Sender);
-	std::map<SDOHandler*,std::vector<TableEvent>*> handlerEvents;
+	std::map<SDOHandler*,std::vector<EntityTypeEvent>*> handlerEvents;
 	int uid;
 	TDate lastSync;
+	long int lastId;
 	Programs *programs;
 	Groups *groups;
 	Rooms *rooms;
@@ -300,6 +322,20 @@ protected:
 	friend class Programs;
 	friend class Program;
 	friend class CourseTable;
+};
+struct EntEvent{
+public:
+	EntEvent(SDODBImage::EventType eventType,SDODBImage::EntityType entType,int id,int diff);
+	EntEvent& operator=(const EntEvent &e);
+	SDODBImage::EventType eventType;
+	SDODBImage::EntityType entType;
+	int id;
+	int diff;
+};
+
+class SDOHandler{
+public:
+	virtual void Handle(std::vector<EntEvent> &entities)=0;
 };
 
 #endif

@@ -24,7 +24,6 @@ __fastcall TForm2::TForm2(TComponent* Owner)
 	}
 	delete af;
 	this->Caption="SDO ver. "+IntToStr(App::version);
-
 	//MessageBox(this->Handle,L"xmxmx",L"Ошибка",MB_OK);
 	/*db=new SDODBImage(App::connection,App::uid);
 	TDate month=EncodeDate(2012,11,01);

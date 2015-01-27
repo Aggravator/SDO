@@ -8,7 +8,7 @@
 #include <Vcl.StdCtrls.hpp>
 #include <Vcl.Forms.hpp>
 #include <Vcl.ImgList.hpp>
-#include "ComplexEntitiesFrom.h"
+#include "ComplexEntitiesForm.h"
 #include "App.h"
 #include "GroupModal.h"
 #include <Vcl.ExtCtrls.hpp>
@@ -16,7 +16,7 @@
 #include <Vcl.ExtCtrls.hpp>
 //---------------------------------------------------------------------------
 class GroupRows;
-class TGroupsForm : public TComplexEntitiesForm
+class TGroupsForm : public TComplexEntitiesForm,public SDOHandler
 {
 __published:	// IDE-managed Components
 	TButton *Button5;
@@ -28,8 +28,11 @@ __published:	// IDE-managed Components
 	TLabel *Label2;
 	void __fastcall Button1Click(TObject *Sender);
 private:	// User declarations
+protected:
+	void Handle(std::vector<EntEvent> &entities);
 public:		// User declarations
 	__fastcall TGroupsForm(TComponent* Owner);
+	__fastcall ~TGroupsForm();
 };
 
 class GroupRow:public AEntityRow{

@@ -234,6 +234,7 @@ void __fastcall TReportClass::Button1Click(TObject *Sender)
 			ExcelRow *exr=new ExcelRow(dayCount+1);
 			exr->room=*it;
 			oldC=-1;
+			newCr=oldCr=NULL;
 			dr.room=exr->room;
 			exr->at(0)->setSpan(dr.room->name,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,dr.room->isrent ? RGB(252,213,180) : 16777215);
 			for(int j=0;j<dayCount;++j){
@@ -257,14 +258,17 @@ void __fastcall TReportClass::Button1Click(TObject *Sender)
 						newCr=dayCourses->second->at(maxCrInd);
                     }
 				}
-				if(newCr==NULL) continue;
+				if(newCr==NULL){
+					oldCr=NULL;
+					continue;
+				}
 				if(newCr==oldCr){
 					exr->at(oldC)->hspan+=1;
 				}else{
 					oldCr=newCr;
 					bool isReal=dynamic_cast<PlanTable*>(newCr->getParent())==0;
 					if(!isReal)usedPP[i]->insert(newCr->program);
-					exr->at(j+1)->setSpan(IntToStr(newCr->students)+"/"+newCr->program->name,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,isReal ? 14277081 : newCr->program->color);
+					exr->at(j+1)->setSpan(IntToStr(newCr->students)+"/"+newCr->program->key,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,isReal ? 14277081 : newCr->program->color);
 					oldC=j+1;
 				}
 			}

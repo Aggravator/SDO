@@ -88,11 +88,32 @@ __fastcall TTableForm::TTableForm(TComponent* Owner)
 	planTable->loadMonth(IncMonth( month, 1 ));
 	//this->sstringRedraw();
 	ccf=new TCourseCreate(this,this);
+	std::vector<SDODBImage::EntityTypeEvent> events;
+	SDODBImage::EntityTypeEvent ete;ete.entType=SDODBImage::EntityType::ERCourse;ete.eventType=SDODBImage::EventType::Delete;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::ERCourse;ete.eventType=SDODBImage::EventType::Create;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::ERCourse;ete.eventType=SDODBImage::EventType::Update;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::EPCourse;ete.eventType=SDODBImage::EventType::Delete;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::EPCourse;ete.eventType=SDODBImage::EventType::Create;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::EPCourse;ete.eventType=SDODBImage::EventType::Update;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::ERoom;ete.eventType=SDODBImage::EventType::Delete;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::EProgram;ete.eventType=SDODBImage::EventType::Delete;
+	events.push_back(ete);
+	App::db->attachHandler(this,events);
 }
 __fastcall TTableForm::~TTableForm(){
 	clearCells();
 	clearProgs();
 	delete ccf;
+}
+void TTableForm::Handle(std::vector<EntEvent> &entities){
+	if(entities.size()>0)this->sstringRedraw();
 }
 bool TTableForm::isIntoPeriod(KAEntity* ent){
 	Course *cr=dynamic_cast<Course*>(ent);
@@ -156,19 +177,34 @@ int getYearOfDate(TDate date){
 int TTableForm::gatherStCountForMonth(Program *pr,TDate month){
 	int res=0;
 	TDate maxDate;
+	std::vector<Course*> inreal;
 	for(int i=0;i<this->realTable->size();++i){
 		Course *cr=dynamic_cast<Course*>(this->realTable->at(i));
 		maxDate=getMaxDateFromCourse(cr);
 		if(cr->program==pr && dateIntoMonth(maxDate,month)){
 			res+=cr->students;
+			inreal.push_back(cr);
+			cr->sortDates();
 		}
 	}
 	TDate currentD=TDate::CurrentDate();
-    for(int i=0;i<this->planTable->size();++i){
+	bool stepCount;
+	for(int i=0;i<this->planTable->size();++i){
 		Course *cr=dynamic_cast<Course*>(this->planTable->at(i));
 		maxDate=getMaxDateFromCourse(cr);
 		if(cr->program==pr && dateIntoMonth(maxDate,month) && maxDate>currentD){
-			res+=cr->students;
+			stepCount=true;
+			cr->sortDates();
+			for(int j=0;j<inreal.size();++j){
+				if(cr->dates.size()==inreal[j]->dates.size()){
+					int ij;
+					for(ij=0;ij<cr->dates.size();++ij){
+						if(cr->dates[ij]->date!=inreal[j]->dates[ij]->date) break;
+					}
+					if(ij==cr->dates.size())stepCount=false;
+				}
+            }
+			if(stepCount)res+=cr->students;
 		}
 	}
 	return res;
@@ -423,7 +459,6 @@ void TTableForm::sstringRedraw(){
 	refreshStCSInf(progs);
 	refreshGrCS();
 	regenerateCells(progs);
-
 	stringResizing();
 }
 bool groupSort(KAEntity *a,KAEntity *b){
@@ -511,7 +546,8 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 				if(yPlan!=-1){
 					double perMonth=yPlan/12.0;
 					double temp=perMonth*month1;
-					if(stForYear>temp)temp=1.0+(stForYear-temp)/(yPlan-temp);else temp=stForYear/(temp);
+					double temp2=(yPlan-temp)==0? 0 : (stForYear-temp)/(yPlan-temp);
+					if(stForYear>temp)temp=1.0+temp2;else temp=stForYear/(temp);
 					cRow->at(cRow->size()-1)->color=getGradient(temp);
 					perMonth=(yPlan-(stForYear-stForMonth))/(12.0-month1+1);
 					temp=(perMonth<0.0001 && perMonth>-0.0001) ? 2.0 : stForMonth/perMonth;
@@ -527,7 +563,7 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 			if(gr->isactual==false)break;
 			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
 			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
-			cRow->at(0)->setSpan(cells[i]->size()-2,1,gr->name,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+			cRow->at(0)->setSpan(cRow->size()-2,1,gr->name,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
 			cRow->at(0)->courseP=reinterpret_cast<Course*>(gr);
 			for(int j=1;j<cRow->size()-2;++j)cRow->at(j)->cellType=EEmpty;
 			int yPlan=getPlanOfGrOnYear(gr,year1);
@@ -538,7 +574,8 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 			if(yPlan!=-1){
 				double perMonth=yPlan/12.0;
 				double temp=perMonth*month1;
-				if(stForYear>temp)temp=1.0+(stForYear-temp)/(yPlan-temp);else temp=stForYear/(temp);
+				double temp2=(yPlan-temp)==0? 0 : (stForYear-temp)/(yPlan-temp);
+				if(stForYear>temp)temp=1.0+temp2;else temp=stForYear/(temp);
 				cRow->at(cRow->size()-1)->color=getGradient(temp);
 				perMonth=(yPlan-(stForYear-stForMonth))/(12.0-month1+1);
 				temp=(perMonth<0.0001 && perMonth>-0.0001) ? 2.0 : stForMonth/perMonth;
@@ -588,7 +625,7 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 void TTableForm::stringResizing(){
 	int fixcols=4;
 	//StringGrid1->Cells[StringGrid1->ColCount-2][1]="12345";
-	StringGrid1->DefaultColWidth=(StringGrid1->Width-(50+160+30+70+35+35)-StringGrid1->ColCount-fixcols)/(StringGrid1->ColCount-fixcols-2);
+	StringGrid1->DefaultColWidth=(StringGrid1->Width-(50+160+30+70+35+35)-fixcols)/(StringGrid1->ColCount-fixcols-2);
 	StringGrid1->ColWidths[0]=50;
 	StringGrid1->ColWidths[1]=160;
 	StringGrid1->ColWidths[2]=30;
@@ -602,112 +639,135 @@ void __fastcall TTableForm::FormResize(TObject *Sender)
 	this->stringResizing();
 }
 //---------------------------------------------------------------------------
-void drawBorder(TCanvas *canvas,TRect &rect){
-	canvas->MoveTo(rect.left,rect.top);
-	canvas->LineTo(rect.Left,rect.Bottom);
-	canvas->LineTo(rect.Right,rect.Bottom);
-	canvas->LineTo(rect.Right,rect.Top);
-	canvas->LineTo(rect.Left,rect.Top);
+void drawBorder(TCanvas *canvas,TRect &rect,int flags=15){
+	if(flags&1){
+		canvas->MoveTo(rect.left,rect.top);
+		canvas->LineTo(rect.Left,rect.Bottom);
+	}
+	if(flags&2){
+		canvas->MoveTo(rect.left,rect.top);
+		canvas->LineTo(rect.Right,rect.Top);
+	}
+	if(flags&4){
+		canvas->MoveTo(rect.right,rect.top);
+		canvas->LineTo(rect.Right,rect.Bottom);
+	}
+	if(flags&8){
+		canvas->MoveTo(rect.right,rect.bottom);
+		canvas->LineTo(rect.left,rect.Bottom);
+	}
 }
 void __fastcall TTableForm::StringGrid1DrawCell(TObject *Sender, int ACol, int ARow,
           TRect &Rect, TGridDrawState State)
 {
+	TRect tRect;
 	int fixcols=4;
 	StringGrid1->Canvas->Brush->Color=clWhite;
-	if(ACol<fixcols || ARow<2)StringGrid1->Canvas->Pen->Color=clBlack;
-	else{
+	if(ACol<fixcols || ARow<2)
+		StringGrid1->Canvas->Pen->Color=clBlack;
+	else
 		StringGrid1->Canvas->Pen->Color=clGray;
-		Rect.Top-=1;
-		Rect.left-=1;
-	}
 	StringGrid1->Canvas->Pen->Width=1;
 	if(ACol<fixcols || ARow<2)StringGrid1->Canvas->Brush->Color=RGB(240,240,240);
 	else if(ACol<fixcols+4 || ACol>=StringGrid1->ColCount-4 || DayOfWeek(month-4-fixcols+ACol)==1 || DayOfWeek(month-4-fixcols+ACol)==7)StringGrid1->Canvas->Brush->Color=RGB(248,248,248);
+
 	if(ARow<2 || StringGrid1->RowCount==3){
-		if(ACol<4){
-			Rect.Top-=2;
-			Rect.left-=2;
-		}
-		if(ACol>=StringGrid1->ColCount-2){
-			Rect.Top-=2;
-		}
 		StringGrid1->Canvas->FillRect(Rect);
 		if(ACol>=4 && ACol<StringGrid1->ColCount-2)drawBorder(StringGrid1->Canvas,Rect);
+		else if(ACol>=StringGrid1->ColCount-2){
+			drawBorder(StringGrid1->Canvas,Rect,15^2^8);
+			tRect=Rect;
+			if(ARow==1)drawBorder(StringGrid1->Canvas,tRect,8);
+			else if(ARow==2)drawBorder(StringGrid1->Canvas,tRect,2);
+			else if(ARow==0)drawBorder(StringGrid1->Canvas,tRect,2);
+		}
 		tagRECT tr;
 		tr.left=Rect.Left+1;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
 		DrawText(StringGrid1->Canvas->Handle, StringGrid1->Cells[ACol][ARow].w_str(), StringGrid1->Cells[ACol][ARow].Length(), &tr,DT_CENTER);
-		return;
-    }
-	if(cells.size()==0)return;
-	Cell *cl=cells[ARow-2]->at(ACol);
-	TRect tempRect;
-	int width=0,height=0,i;
-	Course *active;
-	tagRECT tr;
-	switch(cl->cellType){
-		case EUsual:
-			StringGrid1->Canvas->FillRect(Rect);
-			drawBorder(StringGrid1->Canvas,Rect);
-			//StringGrid1->Canvas->TextOutW(Rect.Left+1,Rect.Top+1);
-		break;
-		case ESpan:
-			for(int i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i]+1;
-			for(int i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
-			Rect.Right=Rect.Left+width-1;
-			Rect.Bottom=Rect.Top+height-1;
-			StringGrid1->Canvas->FillRect(Rect);
-			drawBorder(StringGrid1->Canvas,Rect);
-			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
-			DrawText(StringGrid1->Canvas->Handle, cl->text.w_str(), cl->text.Length(), &tr,cl->flags);
-		break;
-		case EStaticS:
-			for(i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i]+1;
-			for(i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
-			Rect.Right=Rect.Left+width;
-			Rect.Bottom=Rect.Top+height;
-			StringGrid1->Canvas->Brush->Color=cl->color;
-			StringGrid1->Canvas->FillRect(Rect);
-			drawBorder(StringGrid1->Canvas,Rect);
-			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
-			DrawText(StringGrid1->Canvas->Handle, cl->text.w_str(), cl->text.Length(), &tr,cl->flags);
-		break;
-		case ECourseS:
-			Rect.Left+=1;
-			Rect.Top+=1;
-			for(int i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i]+1;
-			for(int i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
-			Rect.Right=Rect.Left+width-1;
-			Rect.Bottom=Rect.Top+height-1;
-			if(cl->courseR==0 || (cl->courseP==selectedCourse && selectedCourse!=NULL && showPlan) || !showReal)active=cl->courseP;else active=cl->courseR;
-			if(cl->courseR==active)StringGrid1->Canvas->Brush->Color=executedCourseColor;
-			else if(cl->courseP!=0)StringGrid1->Canvas->Brush->Color=cl->courseP->program->color;
-			if(active==selectedCourse) StringGrid1->Canvas->Pen->Color=clBlue;
-			StringGrid1->Canvas->FillRect(Rect);
-			if(active==selectedCourse){
-				Rect.Right-=1;
-				Rect.Bottom-=1;
-				drawBorder(StringGrid1->Canvas,Rect);
-            }
-			String text=IntToStr(active->students);
-			if(active->dates.size()>0){
-				text+=" /";
-				std::vector<ClassRoom*> rooms;
-				for(int i=0;i<active->dates.size();++i){
-					bool isNotHas=true;
-					for(int j=0;j<rooms.size() && isNotHas;++j)
-						if(rooms[j]==active->dates[i]->room)
-							isNotHas=false;
-					rooms.push_back(active->dates[i]->room);
-					if(isNotHas)text+=active->dates[i]->room->name+", ";
-				}
-				text=text.SubString(0,text.Length()-2);
-			}
-			tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
-			DrawText(StringGrid1->Canvas->Handle, text.w_str(), text.Length(), &tr,cl->flags);
-		break;
-
-
 	}
+	if(cells.size()!=0 && ARow>1){
+		Cell *cl=cells[ARow-2]->at(ACol);
+		TRect tempRect;
+		int width=0,height=0,i;
+		Course *active;
+		tagRECT tr;
+		switch(cl->cellType){
+			case EUsual:
+				tempRect=Rect;
+				if(ACol<1 ||(ACol>0 && cells[ARow-2]->at(ACol-1)->cellType==EUsual)){
+					StringGrid1->Canvas->FillRect(tempRect);
+					drawBorder(StringGrid1->Canvas,tempRect,15);
+				}else{
+					tempRect.Left+=1;
+					StringGrid1->Canvas->FillRect(tempRect);
+					drawBorder(StringGrid1->Canvas,tempRect,15^1);
+				}
+			break;
+			case ESpan:
+				tempRect=Rect;
+				for(int i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i];
+				for(int i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
+				tempRect.Right=tempRect.Left+width;
+				tempRect.Bottom=tempRect.Top+height;
+				StringGrid1->Canvas->FillRect(tempRect);
+				drawBorder(StringGrid1->Canvas,tempRect);
+				tr.left=tempRect.Left+2;tr.right=tempRect.Right;tr.top=tempRect.Top+1;tr.bottom=tempRect.Bottom;
+				DrawText(StringGrid1->Canvas->Handle, cl->text.w_str(), cl->text.Length(), &tr,cl->flags);
+			break;
+			case EStaticS:
+				tempRect=Rect;
+				for(i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i];
+				for(i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i];
+				tempRect.Right=tempRect.Left+width;
+				tempRect.Bottom=tempRect.Top+height;
+				StringGrid1->Canvas->Brush->Color=cl->color;
+				StringGrid1->Canvas->FillRect(tempRect);
+				drawBorder(StringGrid1->Canvas,tempRect);
+				tr.left=tempRect.Left+2;tr.right=tempRect.Right;tr.top=tempRect.Top+1;tr.bottom=tempRect.Bottom;
+				DrawText(StringGrid1->Canvas->Handle, cl->text.w_str(), cl->text.Length(), &tr,cl->flags);
+			break;
+			case ECourseS:
+				for(int i=ACol;i<ACol+cl->hspan;++i)width+=StringGrid1->ColWidths[i];
+				for(int i=ARow;i<ARow+cl->vspan;++i)height+=StringGrid1->RowHeights[i]+1;
+				Rect.Right=Rect.Left+width;
+				Rect.Bottom=Rect.Top+height-1;
+				if(cl->courseR==0 || (cl->courseP==selectedCourse && selectedCourse!=NULL && showPlan) || !showReal)active=cl->courseP;else active=cl->courseR;
+				if(cl->courseR==active)StringGrid1->Canvas->Brush->Color=executedCourseColor;
+				else if(cl->courseP!=0)StringGrid1->Canvas->Brush->Color=cl->courseP->program->color;
+				if(active==selectedCourse) StringGrid1->Canvas->Pen->Color=clBlue;
+				StringGrid1->Canvas->FillRect(Rect);
+
+				drawBorder(StringGrid1->Canvas,Rect);
+
+				String text=IntToStr(active->students);
+				if(active->dates.size()>0){
+					text+=" /";
+					std::vector<ClassRoom*> rooms;
+					for(int i=0;i<active->dates.size();++i){
+						bool isNotHas=true;
+						for(int j=0;j<rooms.size() && isNotHas;++j)
+							if(rooms[j]==active->dates[i]->room)
+								isNotHas=false;
+						rooms.push_back(active->dates[i]->room);
+						if(isNotHas)text+=active->dates[i]->room->name+", ";
+					}
+					text=text.SubString(0,text.Length()-2);
+				}
+				tr.left=Rect.Left+2;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
+				DrawText(StringGrid1->Canvas->Handle, text.w_str(), text.Length(), &tr,cl->flags);
+			break;
+		}
+	}
+
+	if(ACol==StringGrid1->ColCount-1){
+		Rect.Right-=1;
+		drawBorder(StringGrid1->Canvas,Rect,4);
+	}
+	if(ARow==StringGrid1->RowCount-1){
+		Rect.Bottom-=1;
+		drawBorder(StringGrid1->Canvas,Rect,8);
+	}
+
 }
 //---------------------------------------------------------------------------
 
@@ -766,11 +826,19 @@ void __fastcall TTableForm::StringGrid1DblClick(TObject *Sender)
 			Cell *cell=cells[row-2]->at(col);
 			if(cell->courseP!=NULL && cell->courseR ==NULL && showPlan){
 				Course *newC=new Course(*cell->courseP);
-				App::db->getRealTable()->createEntity(newC);
-				pts->real.push_back(newC);
-				this->selectedCourse=newC;
-				this->regenerateCells(progs);
-				this->StringGrid1->Repaint();
+				newC->desc="";
+				ccf->initFromCourse(newC);
+				ccf->isReal=true;ccf->isPlan=false;
+				if(ccf->ShowModal()==mrOk){
+					newC->students=ccf->studentsC;
+					App::db->getRealTable()->createEntity(newC);
+					pts->real.push_back(newC);
+					this->selectedCourse=newC;
+					tempSelectedC=*selectedCourse;
+					this->RichEdit1->Text=newC->desc;
+					this->regenerateCells(progs);
+					this->StringGrid1->Repaint();
+				}else delete newC;
 				return;
 			}
 			if(cell->courseP==NULL || cell->courseR ==NULL){

@@ -23,6 +23,34 @@ __fastcall TSpecificsForm::TSpecificsForm(TComponent* Owner):TComplexEntitiesFor
 	panel->Padding->Right=2;
 	panel->Padding->Top=2;
 	panel->Padding->Bottom=2;
+	std::vector<SDODBImage::EntityTypeEvent> events;
+	SDODBImage::EntityTypeEvent ete;ete.entType=SDODBImage::EntityType::ESpecific;ete.eventType=SDODBImage::EventType::Delete;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::ESpecific;ete.eventType=SDODBImage::EventType::Create;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::ESpecific;ete.eventType=SDODBImage::EventType::Update;
+	events.push_back(ete);
+	App::db->attachHandler(this,events);
+}
+__fastcall TSpecificsForm::~TSpecificsForm(){
+	App::db->detachHandler(this);
+}
+void TSpecificsForm::Handle(std::vector<EntEvent> &entities){
+	if(this->Visible==false)return;
+	for(int i=0;i<entities.size();++i){
+		if(entities[i].eventType==SDODBImage::EventType::Delete){
+			for(int j=0;j<panel->rows.size();++j){
+				if(panel->rows[j]->initEntity->getID()==entities[i].id){
+					panel->rows[j]->hideInPanel();
+					panel->deletedRows.push_back(panel->rows[j]);
+					panel->rows.erase(panel->rows.begin()+j);
+				}
+			}
+		}
+		if(entities[i].eventType==SDODBImage::EventType::Create){
+			panel->addRow(App::db->getSpecifics()->getById(entities[i].id));
+		}
+	}
 }
 SpecificRow::SpecificRow(ARowsPanel *parent, int size):AEntityRow(parent,size){
 	name=new TEdit((HWND)0);

@@ -5,7 +5,7 @@ object Form2: TForm2
   BorderStyle = bsSingle
   BorderWidth = 1
   ClientHeight = 233
-  ClientWidth = 260
+  ClientWidth = 266
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -21,7 +21,7 @@ object Form2: TForm2
     AlignWithMargins = True
     Left = 3
     Top = 95
-    Width = 254
+    Width = 260
     Height = 40
     Align = alTop
     Caption = #1050#1083#1072#1089#1089#1099
@@ -33,12 +33,13 @@ object Form2: TForm2
     ParentFont = False
     TabOrder = 1
     OnClick = Button1Click
+    ExplicitWidth = 254
   end
   object Button2: TButton
     AlignWithMargins = True
     Left = 3
     Top = 141
-    Width = 254
+    Width = 260
     Height = 40
     Align = alTop
     Caption = #1057#1087#1077#1094#1080#1092#1080#1082#1080
@@ -50,12 +51,13 @@ object Form2: TForm2
     ParentFont = False
     TabOrder = 2
     OnClick = Button2Click
+    ExplicitWidth = 254
   end
   object Button3: TButton
     AlignWithMargins = True
     Left = 3
     Top = 187
-    Width = 254
+    Width = 260
     Height = 40
     Align = alTop
     Caption = #1043#1088#1091#1087#1087#1099
@@ -67,12 +69,13 @@ object Form2: TForm2
     ParentFont = False
     TabOrder = 3
     OnClick = Button3Click
+    ExplicitWidth = 254
   end
   object Button4: TButton
     AlignWithMargins = True
     Left = 3
     Top = 49
-    Width = 254
+    Width = 260
     Height = 40
     Align = alTop
     Caption = #1055#1088#1086#1075#1088#1072#1084#1084#1099
@@ -84,12 +87,13 @@ object Form2: TForm2
     ParentFont = False
     TabOrder = 4
     OnClick = Button4Click
+    ExplicitWidth = 254
   end
   object Button5: TButton
     AlignWithMargins = True
     Left = 3
     Top = 3
-    Width = 254
+    Width = 260
     Height = 40
     Align = alTop
     Caption = #1056#1072'c'#1087#1080#1089#1072#1085#1080#1077
@@ -101,5 +105,6 @@ object Form2: TForm2
     ParentFont = False
     TabOrder = 0
     OnClick = Button5Click
+    ExplicitWidth = 254
   end
 end

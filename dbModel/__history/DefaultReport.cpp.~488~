@@ -1,0 +1,569 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "DefaultReport.h"
+#include <set>
+#include <math.h>
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+//---------------------------------------------------------------------------
+String months[]={"Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"};
+bool isIntoPeriod(TDate date,TDate sdate, TDate edate){
+	unsigned short syear,eyear, smonth,emonth,sday,eday;
+	unsigned short cyear,cmonth,cday;
+	date.DecodeDate(&cyear,&cmonth,&cday);
+	sdate.DecodeDate(&syear,&smonth,&sday);
+	edate.DecodeDate(&eyear,&emonth,&eday);
+	sdate=EncodeDate(syear,smonth,sday);
+	edate=EncodeDate(eyear,emonth,eday);
+	date=EncodeDate(cyear,cmonth,cday);
+	if(date>=sdate && date<=edate) return true;
+	return false;
+}
+bool isIntoMonth(TDate date, TDate month){
+	TDate start,end;
+	unsigned short year,monthi,day;
+	month.DecodeDate(&year,&monthi,&day);
+	start=EncodeDate(year,monthi,1);
+	end=IncMonth(start,1)-1.0;
+	return isIntoPeriod(date,start,end);
+}
+bool isCourseIntoMonth(Course *course,TDate month){
+	for(int i=0;i<course->dates.size();++i){
+		if(isIntoMonth(course->dates[i]->date,month)) return true;
+	}
+	return false;
+}
+int dateDayDiff(TDate first,TDate second){
+	unsigned short year,month,day;
+	first.DecodeDate(&year,&month,&day);
+	first=TDate(year,month,day);
+	second.DecodeDate(&year,&month,&day);
+	second=TDate(year,month,day);
+	return abs((int)(second-first));
+}
+int getDayOfDate(TDate date){
+	unsigned short year,month,day;
+	date.DecodeDate(&year,&month,&day);
+	return day;
+}
+int getMonthOfDate(TDate date){
+	unsigned short year,month,day;
+	date.DecodeDate(&year,&month,&day);
+	return month;
+}
+int getYearOfDate(TDate date){
+	unsigned short year,month,day;
+	date.DecodeDate(&year,&month,&day);
+	return year;
+}
+void TDefaultReport::excelPageToVariant(ExcelPage *page,Variant &var){
+	var=VarArrayCreate(OPENARRAY(int, (1, page->rows.size(), 1, page->rows[0]->size())), varVariant);
+	for(int i=0;i<page->rows.size();++i){
+		ExcelRow *eRow=page->rows[i];
+		for(int j=0;j<eRow->size();++j){
+			if(eRow->at(j)->type!=ExcelCellType::EXEmpty){
+				var.PutElement(WideString(eRow->at(j)->text),i+1,j+1);
+			}
+		}
+	}
+}
+TDefaultReport::ExcelCell::ExcelCell(){
+	init("",ExcelCellType::EXEmpty,NULL,1,1,ExcelHAlign::Left,ExcelVAlign::Top,16777215,14277081);
+}
+void TDefaultReport::ExcelCell::setSpan(String text,int hspan,int vspan,ExcelHAlign halign,ExcelVAlign valign,unsigned fillColor){
+	init(text,ExcelCellType::EXSpan,NULL,hspan,vspan,halign,valign,fillColor,14277081);
+}
+void TDefaultReport::ExcelCell::init(String text,ExcelCellType type,Course *course,int hspan,int vspan, ExcelHAlign halign,ExcelVAlign valign,unsigned fillColor,unsigned borderColor){
+	this->text=text;
+	this->type=type;
+	this->course=course;
+	this->hspan=hspan;
+	this->vspan=vspan;
+	this->halign=halign;
+	this->valign=valign;
+	this->fillColor=fillColor;
+	this->borderColor=borderColor;
+}
+TDefaultReport::ExcelRow::ExcelRow():std::vector<ExcelCell*>(){}
+TDefaultReport::ExcelRow::ExcelRow(int length):std::vector<ExcelCell*>(length){
+	for(int i=0;i<length;++i)this->at(i)=new ExcelCell();
+}
+TDefaultReport::ExcelRow::~ExcelRow(){
+	for(int j=0;j<this->size();++j)delete this->at(j);
+}
+TDefaultReport::ExcelPage::~ExcelPage(){
+	for(int i=0;i<rows.size();++i) delete rows[i];
+}
+
+TDefaultReport::ProgSmena::operator <(const ProgSmena &ps)const{
+	//if(this->prog->isactual==ps.prog->isactual){
+		if(this->prog->istraining==ps.prog->istraining){
+			if(this->prog->key==ps.prog->key){
+				if(this->prog->name==ps.prog->name){
+					unsigned short hour1,min1,hour2,min2,sec,msec;
+					this->smena.first.DecodeTime(&hour1,&min1,&sec,&msec);
+					ps.smena.first.DecodeTime(&hour2,&min2,&sec,&msec);
+					if(hour1==hour2){
+						return min1<min2;
+					}else return hour1<hour2;
+				}else this->prog->name<ps.prog->name;
+			}else return this->prog->key<ps.prog->key;
+		}else return this->prog->istraining>ps.prog->istraining;
+	//}else return this->prog->isactual<ps.prog->isactual;
+}
+TDefaultReport::ProgSmena::operator ==(ProgSmena &ps){
+	unsigned short hour1,min1,hour2,min2,sec,msec;
+	this->smena.first.DecodeTime(&hour1,&min1,&sec,&msec);
+	ps.smena.first.DecodeTime(&hour2,&min2,&sec,&msec);
+	bool res=this->prog->isactual==ps.prog->isactual && this->prog==ps.prog && hour1==hour2 && min1==min2;
+	this->smena.second.DecodeTime(&hour1,&min1,&sec,&msec);
+	ps.smena.second.DecodeTime(&hour2,&min2,&sec,&msec);
+	res=res && hour1==hour2 && min1==min2;
+	return res;
+}
+
+TDefaultReport::ProgsForMonth::~ProgsForMonth(){
+	std::map<ProgSmena,std::pair<std::vector<Course*>*,std::vector<Course*>*>*>::iterator it;
+	for(it=planReal.begin();it!=planReal.end();++it){
+		delete (*it).second->first;
+		delete (*it).second->second;
+		delete (*it).second;
+	}
+}
+
+__fastcall TDefaultReport::TDefaultReport(TComponent* Owner)
+	: TForm(Owner)
+{
+	showReal=showPlan=true;
+	this->ComboBox1->Items->Add("1");
+	this->ComboBox1->Items->Add("2");
+	this->ComboBox1->Items->Add("3");
+	this->ComboBox1->Items->Add("4");
+	this->ComboBox1->Items->Add("5");
+	this->ComboBox1->Items->Add("6");
+	this->ComboBox1->Items->Add("7");
+	this->ComboBox1->Items->Add("8");
+	this->ComboBox1->Items->Add("9");
+	this->ComboBox1->Items->Add("10");
+	this->ComboBox1->Items->Add("11");
+	this->ComboBox1->Items->Add("12");
+	this->ComboBox2->Items->Add("1");
+	this->ComboBox2->Items->Add("2");
+	this->ComboBox2->Items->Add("3");
+	this->ComboBox2->Items->Add("4");
+	this->ComboBox2->Items->Add("5");
+	this->ComboBox2->Items->Add("6");
+	this->ComboBox2->Items->Add("7");
+	this->ComboBox2->Items->Add("8");
+	this->ComboBox2->Items->Add("9");
+	this->ComboBox2->Items->Add("10");
+	this->ComboBox2->Items->Add("11");
+	this->ComboBox2->Items->Add("12");
+}
+//---------------------------------------------------------------------------
+void TDefaultReport::startEndToForm(){
+	unsigned short year,day,month;
+	start.DecodeDate(&year,&month,&day);
+	Edit1->Text=IntToStr(year);
+	ComboBox1->ItemIndex=month-1;
+	end.DecodeDate(&year,&month,&day);
+	ComboBox2->ItemIndex=month-1;
+}
+void TDefaultReport::startEndFromForm(){
+	unsigned short year,day,month;
+	year=StrToInt(Edit1->Text);
+	month=ComboBox1->ItemIndex+1;
+	start=EncodeDate(year,month,1);
+	month=ComboBox2->ItemIndex+1;
+	end=EncodeDate(year,month,1);
+}
+void TDefaultReport::clearGroupLayer(){
+	for(int i=0;i<groupLayer.size();++i){
+		delete groupLayer[i];
+	}
+	groupLayer.clear();
+}
+void TDefaultReport::clearExcelLayer(){
+	for(int i=0;i<excelLayer.size();++i){
+		delete excelLayer[i];
+	}
+	excelLayer.clear();
+}
+
+void __fastcall TDefaultReport::Button1Click(TObject *Sender)
+{
+	this->showPlan=CheckBox1->Checked;
+	this->showReal=CheckBox2->Checked;
+	clearGroupLayer();
+	clearExcelLayer();
+	CourseTable *plan,*real;
+	real=App::db->getRealTable();
+	plan=App::db->getPlanTable();
+	startEndFromForm();
+	unsigned short year,startm,endm;
+	{
+		unsigned short day;
+		start.DecodeDate(&year,&startm,&day);
+		end.DecodeDate(&year,&endm,&day);
+		if(endm-startm<0)return;
+	}
+	groupLayer.resize(endm-startm+1);
+	for(int i=0;i<endm-startm+1;++i){
+		TDate tmonth=EncodeDate(year,startm+i,1);
+		groupLayer[i]=new ProgsForMonth();
+		groupLayer[i]->month=tmonth;
+		real->loadMonth(tmonth);
+		plan->loadMonth(tmonth);
+	}
+	//Gather data
+	std::set<Program*> usedPrograms;
+	std::set<ProgSmena> pss;
+	ProgSmena ps;
+	Course *course;
+	unsigned short tmonth;
+	for(int i=0;i<plan->size();++i){
+		course=dynamic_cast<Course*>(plan->at(i));
+		usedPrograms.insert(course->program);
+		ps.prog=course->program;
+		ps.smena.first=course->start;
+		ps.smena.second=course->end;
+		pss.insert(ps);
+		{
+			for(int j=0;j<groupLayer.size();++j){
+				if(isCourseIntoMonth(course,groupLayer[j]->month)){
+					if(groupLayer[j]->planReal.count(ps)<1){
+						groupLayer[j]->planReal[ps]=new std::pair<std::vector<Course*>*,std::vector<Course*>*>();
+						groupLayer[j]->planReal[ps]->first=new std::vector<Course*>();
+						groupLayer[j]->planReal[ps]->second=new std::vector<Course*>();
+					}
+					groupLayer[j]->planReal[ps]->second->push_back(course);
+				}
+			}
+        }
+	}
+
+	for(int i=0;i<real->size();++i){
+		course=dynamic_cast<Course*>(real->at(i));
+		usedPrograms.insert(course->program);
+		ps.prog=course->program;
+		ps.smena.first=course->start;
+		ps.smena.second=course->end;
+		pss.insert(ps);
+		{
+			for(int j=0;j<groupLayer.size();++j){
+				if(isCourseIntoMonth(course,groupLayer[j]->month)){
+					if(groupLayer[j]->planReal.count(ps)<1){
+						groupLayer[j]->planReal[ps]=new std::pair<std::vector<Course*>*,std::vector<Course*>*>();
+						groupLayer[j]->planReal[ps]->first=new std::vector<Course*>();
+						groupLayer[j]->planReal[ps]->second=new std::vector<Course*>();
+					}
+                    groupLayer[j]->planReal[ps]->first->push_back(course);
+				}
+			}
+        }
+	}
+	excelLayer.resize(groupLayer.size());
+    //Gather all Program-Smena pairs
+	{
+		Programs *prgs=App::db->getPrograms();
+		for(int i=0;i<prgs->size();++i){
+			ps.prog=(Program*)prgs->at(i);
+			if(!ps.prog->isactual)continue;
+			for(int j=0;j<ps.prog->times.size();++j){
+				ps.smena=*ps.prog->times[j];
+				pss.insert(ps);
+			}
+		}
+	}
+	//Generate Excel courses
+	{
+		std::vector<Course*>* courseVector;
+		Course *cr;
+		Program *oldP=NULL,*newP=NULL;
+		ExcelRow *excelRow,*excelTRow;
+		int dayCount;
+		for(int i=0;i<groupLayer.size();++i){
+			dayCount=MonthDays[IsLeapYear(year)][startm+i-1];
+			excelLayer[i]=new ExcelPage();
+			//excelLayer[i]->rows.resize(pss.size());
+			std::set<ProgSmena>::iterator it;
+			int ERow=0,oldRow;
+			oldP=NULL;
+			newP=NULL;
+			for(it=pss.begin();it!=pss.end();++it){
+				newP=(*it).prog;
+				excelRow=new ExcelRow(dayCount+6);
+				excelLayer[i]->rows.push_back(excelRow);
+				if(oldP==NULL || oldP->istraining!=newP->istraining){
+					String text=newP->istraining ? "Повышение квалификации" : "Семинары";
+					excelRow->at(0)->setSpan(text,dayCount+6,1,ExcelHAlign::Center,ExcelVAlign::Middle,14277081);
+					excelRow->type=ExcelRowType::EHeader;
+					++ERow;
+					excelRow=new ExcelRow(dayCount+6);
+					excelLayer[i]->rows.push_back(excelRow);
+					oldRow=ERow;
+				}
+				excelRow->type=ExcelRowType::EProgSmena;
+				excelRow->prog=newP;
+                excelRow->smena=(*it).smena;
+				if(newP==oldP){
+					excelTRow=excelLayer[i]->rows[oldRow];
+					excelTRow->at(0)->vspan+=1;
+					excelTRow->at(1)->vspan+=1;
+					excelTRow->at(2)->vspan+=1;
+				}else{
+					oldRow=ERow;
+					excelRow->at(0)->setSpan(newP->key,1,1,ExcelHAlign::Left,ExcelVAlign::Middle);
+					excelRow->at(1)->setSpan(newP->name,1,1,ExcelHAlign::Left,ExcelVAlign::Middle);
+					excelRow->at(2)->setSpan(IntToStr(newP->hours),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				}
+				excelRow->at(3)->setSpan((*it).smena.first.FormatString("hh:nn")+"-"+(*it).smena.second.FormatString("hh:nn"),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				if(groupLayer[i]->planReal.count((*it))>0){
+					courseVector=groupLayer[i]->planReal[(*it)]->first;
+					for(int j=0;j<courseVector->size()&&showReal;++j){
+						cr=courseVector->at(j);
+						cr->sortDates();
+						TDate oldDate=TDate::CurrentDate()-10000.0;
+						int oldCell=-1;
+						for(int ij=0;ij<cr->dates.size();++ij){
+							if(!isIntoMonth(cr->dates[ij]->date,groupLayer[i]->month))continue;
+							if(dateDayDiff(cr->dates[ij]->date,oldDate)==1){
+								excelRow->at(oldCell)->hspan+=1;
+								excelRow->at(3+getDayOfDate(cr->dates[ij]->date))->course=cr;
+							}else{
+								oldCell=3+getDayOfDate(cr->dates[ij]->date);
+								String rooms=cr->dates[0]->room->name;
+								std::vector<KAEntity*> rmsv;
+								for(int rd=0;rd<cr->dates.size();++rd) rmsv.push_back(cr->dates[rd]->room);
+								std::sort(rmsv.begin(),rmsv.end(),App::db->getRooms()->sortFuncU);
+								for(int rd=1;rd<rmsv.size();++rd)if(rmsv[rd]!=rmsv[rd-1])rooms+=","+((ClassRoom*)rmsv[rd])->name;
+								excelRow->at(oldCell)->setSpan(IntToStr(cr->students) + "/"+rooms,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,10921638);
+								excelRow->at(oldCell)->course=cr;
+							}
+							oldDate=cr->dates[ij]->date;
+						}
+					}
+					courseVector=groupLayer[i]->planReal[(*it)]->second;
+					for(int j=0;j<courseVector->size()&&showPlan;++j){
+						cr=courseVector->at(j);
+						cr->sortDates();
+						TDate oldDate=TDate::CurrentDate()-10000.0;
+						int oldCell=-1,newCell;
+						for(int ij=0;ij<cr->dates.size();++ij){
+							if(!isIntoMonth(cr->dates[ij]->date,groupLayer[i]->month))continue;
+							newCell=3+getDayOfDate(cr->dates[ij]->date);
+							if(excelRow->at(newCell)->course!=NULL)continue;
+							if(dateDayDiff(cr->dates[ij]->date,oldDate)==1){
+								excelRow->at(oldCell)->hspan+=1;
+								excelRow->at(newCell)->course=cr;
+							}else{
+								oldCell=newCell;
+								String rooms=cr->dates[0]->room->name;
+								std::vector<KAEntity*> rmsv;
+								for(int rd=0;rd<cr->dates.size();++rd) rmsv.push_back(cr->dates[rd]->room);
+								std::sort(rmsv.begin(),rmsv.end(),App::db->getRooms()->sortFuncU);
+								for(int rd=1;rd<rmsv.size();++rd)if(rmsv[rd]!=rmsv[rd-1])rooms+=","+((ClassRoom*)rmsv[rd])->name;
+								excelRow->at(oldCell)->setSpan(IntToStr(cr->students) + "/"+rooms,1,1,ExcelHAlign::Center,ExcelVAlign::Middle,cr->program->color);
+								excelRow->at(oldCell)->course=cr;
+							}
+							oldDate=cr->dates[ij]->date;
+						}
+					}
+				}
+				++ERow;
+				oldP=newP;
+			}
+		}
+	}
+	//Gather statistic
+	{
+		std::vector<Course*>* courseVector;
+		std::vector<std::map<Program*,int>*> monthsPS(groupLayer.size());
+		std::vector<std::pair<int,int>*> monthsTrS(groupLayer.size());
+		std::set<Group*> usedGroups;
+		Groups *grps=App::db->getGroups();
+		for(int i=0;i<grps->size();++i){
+			if(((Group*)grps->at(i))->isactual)usedGroups.insert(((Group*)grps->at(i)));
+		}
+		std::vector<std::map<Group*,int>*> monthsGS(groupLayer.size());
+		for(int i=0;i<groupLayer.size();++i){
+			monthsPS[i]=new std::map<Program*,int>();
+			monthsGS[i]=new std::map<Group *,int>();
+			monthsTrS[i]=new std::pair<int,int>(0,0);
+			for(std::set<Group*>::iterator it=usedGroups.begin();it!=usedGroups.end();++it)
+				monthsGS[i]->operator [](*it)=0;
+			std::set<ProgSmena>::iterator it;
+			int ERow=0,oldRow;
+			std::vector<Course*> rcoursesOnMonth;
+			for(it=pss.begin();it!=pss.end();++it){
+                rcoursesOnMonth.clear();
+				if(monthsPS[i]->count((*it).prog)<1)monthsPS[i]->insert(std::pair<Program*,int>((*it).prog,0));
+				if(groupLayer[i]->planReal.count((*it))>0){
+					courseVector=groupLayer[i]->planReal[(*it)]->first;
+					for(int j=0;j<courseVector->size();++j){
+						Course *cr=dynamic_cast<Course *>(courseVector->at(j));
+						if(isIntoMonth(cr->dates[cr->dates.size()-1]->date,groupLayer[i]->month)){
+							monthsPS[i]->operator [](cr->program)+=cr->students;
+							rcoursesOnMonth.push_back(cr);
+						}
+					}
+ 					courseVector=groupLayer[i]->planReal[(*it)]->second;
+					for(int j=0;j<courseVector->size();++j){
+						Course *cr=dynamic_cast<Course *>(courseVector->at(j));
+						if(isIntoMonth(cr->dates[cr->dates.size()-1]->date,groupLayer[i]->month) && cr->dates[cr->dates.size()-1]->date>TDate::CurrentDate()){
+							bool stepCount=true;
+							for(int ij=0;ij<rcoursesOnMonth.size();++ij){
+
+							}
+							if(stepCount)monthsPS[i]->operator [](cr->program)+=cr->students;
+						}
+					}
+				}
+			}
+			std::map<Program*,int>::iterator pit;
+			for(pit=monthsPS[i]->begin();pit!=monthsPS[i]->end();++pit){
+				if((*pit).first->istraining)monthsTrS[i]->first+=(*pit).second;
+				else monthsTrS[i]->second+=(*pit).second;
+				for(int j=0;j<(*pit).first->groups.size();++j){
+					if(usedGroups.count((*pit).first->groups[j])>0){
+						monthsGS[i]->operator []((*pit).first->groups[j])+=(*pit).second;
+					}
+				}
+			}
+		}
+		//fill statistic
+		for(int i=0;i<excelLayer.size();++i){
+			for(int j=0;j<excelLayer[i]->rows.size();++j){
+				ExcelRow *erow=excelLayer[i]->rows[j];
+				if(erow->type==ExcelRowType::EProgSmena){
+					erow->at(erow->size()-2)->setSpan(IntToStr(monthsPS[i]->operator [](erow->prog)),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+					int aggSum=0;
+					for(int ij=0;ij<=i;++ij) aggSum+=monthsPS[ij]->operator [](erow->prog);
+					erow->at(erow->size()-1)->setSpan(IntToStr(aggSum),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				}
+			}
+			std::map<Group*,int>::iterator it;
+			for(it=monthsGS[i]->begin();it!=monthsGS[i]->end();++it){
+				ExcelRow *erow=new ExcelRow(excelLayer[i]->rows[0]->size());
+				erow->at(0)->setSpan((*it).first->name,erow->size()-2,1,ExcelHAlign::Left,ExcelVAlign::Middle);
+				erow->at(erow->size()-2)->setSpan(IntToStr((*it).second),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				int aggSum=0;
+				for(int ij=0;ij<=i;++ij) aggSum+=monthsGS[ij]->operator []((*it).first);
+				erow->at(erow->size()-1)->setSpan(IntToStr(aggSum),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				excelLayer[i]->rows.push_back(erow);
+			}
+			{
+				ExcelRow *erow=new ExcelRow(excelLayer[i]->rows[0]->size());
+				erow->at(0)->setSpan("ИТОГО Повышение квалификации",erow->size()-2,1,ExcelHAlign::Left,ExcelVAlign::Middle);
+				erow->at(erow->size()-2)->setSpan(IntToStr(monthsTrS[i]->first),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				int aggSumT=0;
+				for(int ij=0;ij<=i;++ij) aggSumT+=monthsTrS[ij]->first;
+				erow->at(erow->size()-1)->setSpan(IntToStr(aggSumT),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				excelLayer[i]->rows.push_back(erow);
+
+				erow=new ExcelRow(excelLayer[i]->rows[0]->size());
+				erow->at(0)->setSpan("ИТОГО Семинары",erow->size()-2,1,ExcelHAlign::Left,ExcelVAlign::Middle);
+				erow->at(erow->size()-2)->setSpan(IntToStr(monthsTrS[i]->second),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				int aggSum=0;
+				for(int ij=0;ij<=i;++ij) aggSum+=monthsTrS[ij]->second;
+				erow->at(erow->size()-1)->setSpan(IntToStr(aggSum),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				excelLayer[i]->rows.push_back(erow);
+
+				erow=new ExcelRow(excelLayer[i]->rows[0]->size());
+				erow->at(0)->setSpan("ИТОГО",erow->size()-2,1,ExcelHAlign::Left,ExcelVAlign::Middle);
+				erow->at(erow->size()-2)->setSpan(IntToStr(monthsTrS[i]->second+monthsTrS[i]->first),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				erow->at(erow->size()-1)->setSpan(IntToStr(aggSum+aggSumT),1,1,ExcelHAlign::Center,ExcelVAlign::Middle);
+				excelLayer[i]->rows.push_back(erow);
+			}
+		}
+		for(int i=0;i<monthsPS.size();++i)delete monthsPS[i];
+		for(int i=0;i<monthsTrS.size();++i)delete monthsTrS[i];
+        for(int i=0;i<monthsGS.size();++i)delete monthsGS[i];
+	}
+	excelLayerToBook();
+}
+//---------------------------------------------------------------------------
+void TDefaultReport::excelLayerToBook(){
+	Variant EApp, EBook, ESheet;
+	EApp = CreateOleObject("Excel.Application");
+	String pathToBook=App::progFolder+"scheduleF.xlsx";
+	EBook=EApp.OlePropertyGet("Workbooks").OleFunction(L"Open",WideString(pathToBook.c_str()),0,true);
+	ESheet=EBook.OlePropertyGet("ActiveSheet");
+	int smonth=getMonthOfDate(start)-1;
+	for(int i=1;i<excelLayer.size();++i) ESheet.OleProcedure("Copy",ESheet);
+	{
+		Variant ESheets=EBook.OlePropertyGet("Worksheets");
+		for(int i=0;i<excelLayer.size();++i){
+			ESheet=ESheets.OlePropertyGet("Item",i+1);
+			ESheet.OlePropertySet("Name",WideString(months[smonth+i].w_str()));
+			ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",1,5).OlePropertySet("Value",WideString(months[smonth+i]));
+			WideString tt=months[smonth].LowerCase()+"-"+months[smonth+i].LowerCase();
+			ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",1,37).OlePropertySet("Value",tt);
+			for(int j=31;j>MonthDays[IsLeapYear(getYearOfDate(start))][smonth+i];--j)
+				ESheet.OlePropertyGet("Columns").OlePropertyGet("Item",4+j).OleProcedure("Delete");
+		}
+	}
+	for(int i=0;i<excelLayer.size();++i){
+		ESheet=EBook.OlePropertyGet("Worksheets").OlePropertyGet("Item",i+1);
+		Variant range;
+		excelPageToVariant(excelLayer[i],range);
+		Variant ERange=ESheet.OlePropertyGet("Range",ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",4,1),ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",4+excelLayer[i]->rows.size()-1,excelLayer[i]->rows[0]->size()));
+		ERange.OlePropertySet("Value",range);
+		TDate curDay=EncodeDate(getYearOfDate(start),smonth+i+1,1);
+		int dayCount=MonthDays[IsLeapYear(getYearOfDate(start))][smonth+i];
+		for(int j=0;j<dayCount;++j){
+			int dOW=DayOfWeek(curDay+j);
+			if(dOW==7){
+				if(j+1<dayCount)ERange=ESheet.OlePropertyGet("Range",ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",3,5+j),ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",4+excelLayer[i]->rows.size()-1,6+j));
+				else ERange=ESheet.OlePropertyGet("Range",ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",3,5+j),ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",4+excelLayer[i]->rows.size()-1,5+j));
+				ERange.OlePropertyGet("Interior").OlePropertySet("Color",14277081);
+				++j;
+			}else if(dOW==1){
+				ERange=ESheet.OlePropertyGet("Range",ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",3,5+j),ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",4+excelLayer[i]->rows.size()-1,5+j));
+				ERange.OlePropertyGet("Interior").OlePropertySet("Color",14277081);
+			}
+		}
+		excelPageToSheet(excelLayer[i],ESheet);
+	}
+	EBook.OlePropertyGet("Worksheets").OlePropertyGet("Item",1).OleProcedure("Activate");
+	EApp.OlePropertySet("Visible",true);
+}
+void TDefaultReport::excelPageToSheet(ExcelPage *ep,Variant &sheet){
+	Variant eRange;
+	for(int i=0;i<ep->rows.size();++i){
+		ExcelRow *eRow=ep->rows[i];
+		for(int j=0;j<eRow->size();++j){
+			ExcelCell *cell=eRow->at(j);
+			if(eRow->at(j)->type!=ExcelCellType::EXEmpty){
+				if(cell->fillColor!=16777215){
+					sheet.OlePropertyGet("Cells").OlePropertyGet("Item",4+i,j+1).OlePropertyGet("Interior").OlePropertySet("Color",cell->fillColor);
+				}
+				if(cell->hspan!=1 || cell->vspan!=1){
+					eRange=sheet.OlePropertyGet("Range",sheet.OlePropertyGet("Cells").OlePropertyGet("Item",4+i,j+1),sheet.OlePropertyGet("Cells").OlePropertyGet("Item",3+i+cell->vspan,j+cell->hspan));
+					eRange.OleProcedure("Merge");
+				}
+				if(cell->course!=NULL && cell->course->desc!=""){
+					sheet.OlePropertyGet("Cells").OlePropertyGet("Item",4+i,j+1).OleProcedure("AddComment",WideString(cell->course->desc));
+				}
+				if(j==1){
+					sheet.OlePropertyGet("Cells").OlePropertyGet("Item",4+i,j+1).OlePropertySet("WrapText",true);
+				}
+            }
+		}
+	}
+}
+
+void __fastcall TDefaultReport::FormShow(TObject *Sender)
+{
+	unsigned short year,month,day;
+	TDate::CurrentDate().DecodeDate(&year,&month,&day);
+	start=EncodeDate(year,1,1);
+	end=EncodeDate(year,month,1);
+	this->startEndToForm();
+}
+//---------------------------------------------------------------------------
+

@@ -18,6 +18,7 @@
 #include "ProgramsForm.h"
 #include "TableForm.h"
 #include <Vcl.ComCtrls.hpp>
+#include <Vcl.Grids.hpp>
 class TSpecificsForm;
 //---------------------------------------------------------------------------
 class TForm2 : public TForm

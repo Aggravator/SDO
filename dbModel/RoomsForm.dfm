@@ -131,8 +131,6 @@ object RoomsForm: TRoomsForm
     Font.Style = []
     ParentFont = False
     TabOrder = 1
-    ExplicitLeft = -5
-    ExplicitTop = 253
   end
   object Button2: TButton
     Left = 0
@@ -149,6 +147,7 @@ object RoomsForm: TRoomsForm
     ParentFont = False
     TabOrder = 2
     OnClick = Button2Click
+    ExplicitTop = 219
   end
   object ScrollBox1: TScrollBox
     Left = 0
@@ -170,7 +169,7 @@ object RoomsForm: TRoomsForm
     Left = 223
     Top = 184
     Bitmap = {
-      494C010102001400580019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102001400600019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

@@ -33,6 +33,7 @@ __published:	// IDE-managed Components
 	TEdit *Edit1;
 	TButton *Button3;
 	TLabel *Label5;
+	TGridPanel *GridPanel1;
 	void __fastcall FormShow(TObject *Sender);
 	void __fastcall Button1Click(TObject *Sender);
 	void __fastcall ListBox1DblClick(TObject *Sender);
@@ -40,6 +41,11 @@ __published:	// IDE-managed Components
 	void __fastcall ListBox2DblClick(TObject *Sender);
 	void __fastcall Button3Click(TObject *Sender);
 	void __fastcall Edit1KeyDown(TObject *Sender, WORD &Key, TShiftState Shift);
+	void __fastcall ListBox1DrawItem(TWinControl *Control, int Index, TRect &Rect, TOwnerDrawState State);
+	void __fastcall ListBox1MeasureItem(TWinControl *Control, int Index, int &Height);
+	void __fastcall FormResize(TObject *Sender);
+
+
 private:	// User declarations
 public:		// User declarations
 	__fastcall TCourseCreate(TComponent* Owner,TTableForm *pp);
@@ -49,6 +55,8 @@ public:		// User declarations
 	void showSmena();
 	void showRooms();
 	void showStudents();
+	void resizeProg();
+	void initFromCourse(Course *course);
 	bool isPlan,isReal;
 	int widthPlus,heightPlus;
 	std::pair<TDateTime,TDateTime> *smena;

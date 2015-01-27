@@ -22,11 +22,13 @@ object TableForm: TTableForm
     Width = 875
     Height = 277
     Align = alClient
+    BorderStyle = bsNone
     DefaultRowHeight = 20
     DefaultDrawing = False
     DrawingStyle = gdsClassic
     FixedCols = 4
     FixedRows = 2
+    GridLineWidth = 0
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSizing]
     ScrollBars = ssVertical
     TabOrder = 0
@@ -277,7 +279,7 @@ object TableForm: TTableForm
     Left = 416
     Top = 360
     Bitmap = {
-      494C0101050008009C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010105000800AC0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       000000000000360000002800000064000000320000000100200000000000204E
       0000000000000000000000000000000000000000000000000000110F117E524E
       51C7595258D15A525AD25D545CD261585FD3645A62D3675D64D3685F66D36B60

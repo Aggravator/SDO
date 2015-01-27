@@ -9,7 +9,7 @@
 #include <Vcl.Forms.hpp>
 #include <Vcl.ExtCtrls.hpp>
 #include <Vcl.ImgList.hpp>
-#include "EntitiesForm.h"
+#include "ComplexEntitiesForm.h"
 #include "App.h"
 #include "GroupModal.h"
 #include <algorithm>
@@ -17,7 +17,7 @@
 class ProgramRows;
 class MyCB;
 
-class TProgramsForm : public TEntitiesForm
+class TProgramsForm : public TComplexEntitiesForm,public SDOHandler
 {
 __published:	// IDE-managed Components
 	TGridPanel *GridPanel1;
@@ -29,28 +29,27 @@ __published:	// IDE-managed Components
 	TButton *Button2;
 	TScrollBox *ScrollBox1;
 	TImageList *ImageList1;
-	void __fastcall Button5Click(TObject *Sender);
 	void __fastcall Button2Click(TObject *Sender);
 private:	// User declarations
+protected:
+	void Handle(std::vector<EntEvent> &entities);
 public:		// User declarations
-	void __fastcall FormShow(TObject *Sender);
 	__fastcall TProgramsForm(TComponent* Owner);
+	__fastcall ~TProgramsForm();
 };
-class ProgramRow:public EntityRow{
+
+class ProgramRow:public AEntityRow{
 public:
 	TEdit *name,*key;
 	TCheckBox *isActive,*isProgram;
-	ProgramRow(ProgramRows *parent);
-	void __fastcall editBClick(TObject *Sender);
-	void __fastcall deleteBClick(TObject *Sender);
+	ProgramRow(ARowsPanel *parent,int size);
 	void writeToRow(KAEntity* entity);
 	void writeToEntity(KAEntity* entity);
 	~ProgramRow();
 };
 
-class ProgramRows:public RowsPanel{
+class ProgramRows:public RRowsPanel<ProgramRow,6>{
 public:
-	EntityRow* addRow(KAEntity *entity=0);
 	__fastcall ProgramRows(TComponent *Owner);
 	__fastcall ~ProgramRows();
 };

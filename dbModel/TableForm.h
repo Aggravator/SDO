@@ -45,7 +45,7 @@ public:
 	CellType cellType;
 };     */
 
-class TTableForm : public TForm
+class TTableForm : public TForm,public SDOHandler
 {
 __published:	// IDE-managed Components
 	TGroupBox *GroupBox1;
@@ -95,12 +95,9 @@ __published:	// IDE-managed Components
 	void __fastcall Button4Click(TObject *Sender);
 	void __fastcall Button6Click(TObject *Sender);
 	void __fastcall CheckBox4Click(TObject *Sender);
-
-
-
-
-
 private:	// User declarations
+protected:
+	void Handle(std::vector<EntEvent> &entities);
 public:		// User declarations
 	TDate month;
 	RealTable *realTable;

@@ -34,7 +34,7 @@ object ProgramsForm: TProgramsForm
       end
       item
         SizeStyle = ssAbsolute
-        Value = 50.000000000000000000
+        Value = 75.000000000000000000
       end
       item
         SizeStyle = ssAbsolute
@@ -84,7 +84,7 @@ object ProgramsForm: TProgramsForm
       ExplicitTop = 14
     end
     object Label2: TLabel
-      Left = 201
+      Left = 188
       Top = 6
       Width = 48
       Height = 13
@@ -93,7 +93,7 @@ object ProgramsForm: TProgramsForm
       ExplicitLeft = 204
     end
     object Label4: TLabel
-      Left = 380
+      Left = 367
       Top = 6
       Width = 20
       Height = 13
@@ -129,7 +129,6 @@ object ProgramsForm: TProgramsForm
     Font.Style = []
     ParentFont = False
     TabOrder = 1
-    OnClick = Button5Click
   end
   object Button2: TButton
     Left = 0
@@ -167,7 +166,7 @@ object ProgramsForm: TProgramsForm
     Left = 223
     Top = 184
     Bitmap = {
-      494C010102001400700019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101020014007C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

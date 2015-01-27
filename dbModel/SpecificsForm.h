@@ -17,7 +17,7 @@
 #include <Vcl.Buttons.hpp>
 #include <Vcl.Mask.hpp>
 #include <vector>
-#include "ComplexEntitiesFrom.h"
+#include "ComplexEntitiesForm.h"
 #include "CoreData.h"
 #include "App.h"
 #include <algorithm>
@@ -26,7 +26,7 @@
 //---------------------------------------------------------------------------
 
 class SpecificRows;
-class TSpecificsForm : public TComplexEntitiesForm
+class TSpecificsForm : public TComplexEntitiesForm,public SDOHandler
 {
 __published:	// IDE-managed Components
 	TButton *Button5;
@@ -37,8 +37,11 @@ __published:	// IDE-managed Components
 	TLabel *Label2;
 	void __fastcall Button1Click(TObject *Sender);
 private:	// User declarations
+protected:
+	void Handle(std::vector<EntEvent> &entities);
 public:		// User declarations
 	__fastcall TSpecificsForm(TComponent* Owner);
+	__fastcall ~TSpecificsForm();
 };
 
 class SpecificRow:public AEntityRow{

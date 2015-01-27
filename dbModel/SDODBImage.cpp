@@ -10,7 +10,22 @@
 #include "DefaultReport.h"
 
 
+USEFORM("ReportClass.cpp", Form14);
+USEFORM("ReportFirst.cpp", Form11);
+USEFORM("RoomModal.cpp", Form8);
+USEFORM("ProgramModal.cpp", ProgramModal);
+USEFORM("ProgramsForm.cpp", ProgramsForm);
+USEFORM("RoomsForm.cpp", Form7);
+USEFORM("SpecificsForm.cpp", Form3);
+USEFORM("TableForm.cpp", Form9);
 USEFORM("Unit2.cpp", Form2);
+USEFORM("SpecificModal.cpp", Form13);
+USEFORM("CourseCreateForm.cpp", Form10);
+USEFORM("CourseModal.cpp", Form12);
+USEFORM("AuthForm.cpp", Form1);
+USEFORM("DefaultReport.cpp", Form4);
+USEFORM("GroupModal.cpp", Form6);
+USEFORM("GroupsForm.cpp", Form5);
 //---------------------------------------------------------------------------
 int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR str, int)
 {

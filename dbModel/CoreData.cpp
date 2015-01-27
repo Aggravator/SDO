@@ -4,6 +4,11 @@
 
 #include "CoreData.h"
 #include "App.h"
+#include <set>
+KAEntity * findEntityById(std::vector<KAEntity*> &ents,int id){
+	for(int i=0;i<ents.size();++i)if(ents[i]->getID()==id)return ents[i];
+	return NULL;
+}
 bool KAEntity::deleteEntity(){
 	if(parent!=0){
 		std::vector<KAEntity *> dell;
@@ -105,6 +110,23 @@ bool KAEntityTable::isHas(KAEntity* entity){
 void KAEntityTable::debind(){
 	for(int i=0;i<this->size();++i)this->at(i)->debind();
 }
+void KAEntityTable::debindEntities(std::vector<int> &ids){
+	std::vector<KAEntity*> ents;
+	for(int i=0;i<ids.size();++i){
+		KAEntity *ent=this->getById(ids[i]);
+		if(ent!=NULL)ents.push_back(ent);
+	}
+	if(ents.size()>0)debindEntities(ents);
+}
+void KAEntityTable::debindEntities(std::vector<KAEntity*> &ents){
+	for(int i=0;i<ents.size();++i){
+		if(ents[i]!=NULL && ents[i]->hasParent() && ents[i]->getParent()==this){
+			garbage.push_back(ents[i]);
+			ents[i]->parent=NULL;
+			this->erase(std::find(this->begin(),this->end(),ents[i]));
+		}
+	}
+}
 
 Specific::Specific(String name){
 	this->name=name;
@@ -126,7 +148,7 @@ bool Specific::updateQueryBuilder(String &query,KAEntity *entity){
 	return true;
 }
 bool Specific::validate()const{
-	if(this->name.Length()>=1) return true;
+	if(this->name.Length()>=1 && this->name.Length()>45) return true;
 	return false;
 }
 int Specific::isDifferent(KAEntity *entity)const{
@@ -203,6 +225,37 @@ bool Specifics::createQueryBuilder(String& query,std::vector<KAEntity*> &entitie
 		else query+=String().sprintf(L"('%s',%d);",ent->name,parent->getUID());
 	}
 	return true;
+}
+void Specifics::fetchEntities(std::vector<int> *ids,std::map<KAEntity*,int>* diffs){
+	TADOQuery &query=*(new TADOQuery(0));
+	String condition="";
+	if(ids!=NULL){
+		String idss=IntToStr(ids->at(0));
+		for(int i=1;i<ids->size();++i)idss+=","+IntToStr(ids->at(i));
+		condition=String().sprintf(L" where specificity_id in (%s)",idss);
+	}
+	query.SQL->Add("select specificity_id,specificity_name from specificity"+condition+";");
+	query.Connection=this->parent->connection;
+	query.Active=true;
+	Specific *specN,*specO;
+	for(int i=0;i<query.RecordCount;++i){
+		specO=(Specific*)this->getById(query["specificity_id"]);
+		specN=new Specific(query["specificity_name"]);
+		if(specO==NULL){
+			specN->id=query["specificity_id"];
+			specN->parent=this;
+			this->push_back(specN);
+		}else{
+			if(diffs!=0)
+				diffs->operator[](specO)=specO->isDifferent(specN);
+			*specO=*specN;
+            delete specN;
+        }
+
+		query.Next();
+	}
+	query.Close();
+	delete &query;
 }
 
 ClassRoom::ClassRoom(String name,int capacity,bool isrent,int isactual,std::vector<Specific*> *specifics){
@@ -284,11 +337,11 @@ bool ClassRoom::updateQueryBuilder(String &query,KAEntity *entity){
 }
 bool ClassRoom::validate()const{
 	bool result=true;
-	if(this->name.Length()<1) result=false;
+	if(this->name.Length()<1 || this->name.Length()>10) result=false;
 //THERE POTENTIALL MISTAKE
-	/*KAEntityTable *specs=parent->parent->getSpecifics();
+	KAEntityTable *specs=App::db->getSpecifics();
 	for(int i=0;i<specifics.size() && result;++i)
-		if(!specs->isHas(specifics[i]))result=false; */
+		if(!specs->isHas(specifics[i]))result=false;
 	return result;
 }
 void ClassRoom::removeSlave(KAEntity* entity){
@@ -398,6 +451,53 @@ bool Rooms::createSubQueryBuilder(String& query,std::vector<KAEntity*> &entities
 	}
 	return false;
 }
+void Rooms::fetchEntities(std::vector<int> *ids,std::map<KAEntity*,int>* diffs){
+	TADOQuery &query=*(new TADOQuery(0));
+	String condition="";
+	if(ids!=NULL){
+		String idss=IntToStr(ids->at(0));
+		for(int i=1;i<ids->size();++i)idss+=","+IntToStr(ids->at(i));
+		condition=String().sprintf(L" where class_id in (%s)",idss);
+	}
+	query.SQL->Add("select class_id, class_name,class_isactual, class_stcapacity, class_isrent from class"+condition+";");
+	query.Connection=this->parent->connection;
+	query.Active=true;
+	ClassRoom *nRoom,*oRoom;
+	std::vector<KAEntity*> temp;
+	for(int i=0;i<query.RecordCount;++i){
+		oRoom=(ClassRoom*)this->getById(query["class_id"]);
+		nRoom=new ClassRoom(query["class_name"],query["class_stcapacity"], query["class_isrent"], query["class_isactual"]);
+		nRoom->id=query["class_id"];
+		if(oRoom==NULL)	nRoom->parent=this;
+		temp.push_back(nRoom);
+		query.Next();
+	}
+	query.Close();
+	query.SQL->Clear();
+	query.SQL->Add("select class_id, specificity_id from specclass"+condition+";");
+	query.Active=true;
+	Specific * spec;
+	for(int i=0;i<query.RecordCount;++i){
+		spec=dynamic_cast<Specific*>(parent->specifics->getById(query["specificity_id"]));
+		nRoom=dynamic_cast<ClassRoom*>(findEntityById(temp,query["class_id"]));
+		if(nRoom!=0 && spec!=0)	nRoom->specifics.push_back(spec);
+		query.Next();
+	}
+	for(int i=0;i<temp.size();++i){
+		if(temp[i]->hasParent()){
+			this->push_back(temp[i]);
+			temp[i]->bind();
+		}else{
+			oRoom=(ClassRoom*)this->getById(temp[i]->id);
+			if(diffs!=NULL) diffs->operator[](oRoom)=oRoom->isDifferent(temp[i]);
+			*oRoom=*temp[i];
+			oRoom->bind();
+			delete temp[i];
+		}
+	}
+	query.Close();
+	delete &query;
+}
 
 bool isEqPlan(std::pair<int,int>* plan1,std::pair<int,int>* plan2){
 	if(plan1->first==plan2->first){
@@ -480,7 +580,7 @@ bool Group::updateQueryBuilder(String &query,KAEntity *entity){
 }
 bool Group::validate()const{
 	bool result=true;
-	if(this->name.Length()<1) result=false;
+	if(this->name.Length()<1 || this->name.Length()>80) result=false;
 	for(int i=0;i<plan.size() && result;++i)
 		if(plan[i]->first<2000 || plan[i]->second<0)result=false;
 	return result;
@@ -592,6 +692,52 @@ bool Groups::createSubQueryBuilder(String &query,std::vector<KAEntity*> &entitie
 		return true;
 	}
 	return false;
+}
+void Groups::fetchEntities(std::vector<int> *ids,std::map<KAEntity*,int>* diffs){
+	TADOQuery &query=*(new TADOQuery(0));
+	String condition="";
+	if(ids!=NULL){
+		String idss=IntToStr(ids->at(0));
+		for(int i=1;i<ids->size();++i)idss+=","+IntToStr(ids->at(i));
+		condition=String().sprintf(L" where group_id in (%s)",idss);
+	}
+	query.SQL->Add("select group_id, group_name, group_isactual from sdo.group"+condition+";");
+	query.Connection=this->parent->connection;
+	query.Active=true;
+	Group *group;
+	std::vector<KAEntity*> temp;
+	for(int i=0;i<query.RecordCount;++i){
+		group=new Group(query["group_name"],query["group_isactual"]);
+		group->id=query["group_id"];
+		if(this->getById(group->id)==NULL)group->parent=this;
+		temp.push_back(group);
+		query.Next();
+	}
+	query.Close();
+	query.SQL->Clear();
+	query.SQL->Add("select group_id, groupplan_year,groupplan_count from groupplan"+condition+";");
+	query.Active=true;
+	std::pair<int,int>* plan;
+	for(int i=0;i<query.RecordCount;++i){
+		plan=new std::pair<int,int>(query["groupplan_year"],query["groupplan_count"]);
+		group=dynamic_cast<Group*>(findEntityById(temp,query["group_id"]));
+		if(group!=0)group->plan.push_back(plan);
+		query.Next();
+	}
+	for(int i=0;i<temp.size();++i){
+		if(temp[i]->hasParent()){
+			this->push_back(temp[i]);
+			temp[i]->bind();
+		}else{
+			group=(Group*)this->getById(temp[i]->id);
+			if(diffs!=NULL) diffs->operator[](group)=group->isDifferent(temp[i]);
+			*group=*temp[i];
+			group->bind();
+			delete temp[i];
+		}
+	}
+	query.Close();
+	delete &query;
 }
 
 bool isEqTime(std::pair<TDateTime,TDateTime>* plan1,std::pair<TDateTime,TDateTime>* plan2){
@@ -832,15 +978,25 @@ bool Program::updateQueryBuilder(String &query,KAEntity *entity){
 
 bool Program::validate()const{
 	bool result=true;
-	if(this->name.Length()<1) result=false;
+	if(this->name.Length()<1 || this->name.Length()>250) result=false;
 	if(this->color>16777215) result=false;
 	for(int i=0;i<plan.size() && result;++i)
 		if(!(plan[i]->first>2000 && plan[i]->second>=0))result=false;
+	std::set< std::pair<int,int> > planSet;
+	for(int i=0;i<plan.size() && result;++i)planSet.insert(std::pair<int,int>(plan[i]->first,plan[i]->second));
+	if(planSet.size()!=plan.size())return false;
+
 	for(int i=0;i<times.size() && result;++i)
 		if(times[i]->first>times[i]->second)result=false;
+
+	std::set<KAEntity *> entSet;
 	KAEntityTable *specs=App::db->getSpecifics();
 	for(int i=0;i<specifics.size() && result;++i)
 		if(!specs->isHas(specifics[i]))result=false;
+	for(int i=0;i<specifics.size() && result;++i)entSet.insert(specifics[i]);
+	if(entSet.size()!=specifics.size())result=false;
+	entSet.clear();
+
 	KAEntityTable *grps=App::db->getGroups();
 	for(int i=0;i<groups.size() && result;++i)
 		if(!grps->isHas(groups[i]))result=false;
@@ -905,9 +1061,20 @@ Program::~Program(){
 	for(int i=0;i<plan.size();++i) delete plan[i];
 	for(int i=0;i<times.size();++i)delete times[i];
 }
-
+bool sortProgramsEntityUser(KAEntity *a,KAEntity *b){
+	Program *cr1=dynamic_cast<Program*>(a);
+	Program *cr2=dynamic_cast<Program*>(b);
+	if(cr1->isactual!=cr2->isactual){
+		return cr1->isactual>cr2->isactual;
+	}else if(cr1->istraining!=cr2->istraining){
+		return cr1->istraining>cr2->istraining;
+	}else if(cr1->key!=cr2->key){
+		return cr1->key<cr2->key;
+    }else return cr1->name<cr2->name;
+}
 Programs::Programs(SDODBImage *parent){
 	this->parent=parent;
+	sortFuncU=sortProgramsEntityUser;
 }
 bool Programs::createEntities(std::vector<KAEntity*> &entities){
 	bool result=true;
@@ -966,7 +1133,7 @@ bool Programs::createQueryBuilder(String& query,std::vector<KAEntity*> &entities
 	query="insert into program(program_name,program_key,program_istraining, program_isactual, program_stcapacity,program_days,program_hours,program_color,creator) values ";
 	for(int i=0;i<entities.size();++i){
 		ent=dynamic_cast<Program*>(entities[i]);
-		query+=String().sprintf(L"('%s','%s',%d,%d,%d,%d,%d,%d,%d)",ent->name,ent->key,ent->istraining,ent->isactual,ent->days,ent->hours,ent->capacity,ent->color,parent->getUID());
+		query+=String().sprintf(L"('%s','%s',%d,%d,%d,%d,%d,%d,%d)",ent->name,ent->key,ent->istraining,ent->isactual,ent->capacity,ent->days,ent->hours,ent->color,parent->getUID());
 		if(i!=entities.size()-1)query+=",";else query+=";";
 	}
 	return true;
@@ -1002,6 +1169,85 @@ bool Programs::createSubQueryBuilder(String &query,std::vector<KAEntity*> &entit
 		return true;
 	}
 	else return false;
+}
+void Programs::fetchEntities(std::vector<int> *ids,std::map<KAEntity*,int>* diffs){
+	TADOQuery &query=*(new TADOQuery(0));
+	String condition="";
+	if(ids!=NULL){
+		String idss=IntToStr(ids->at(0));
+		for(int i=1;i<ids->size();++i)idss+=","+IntToStr(ids->at(i));
+		condition=String().sprintf(L" where program_id in (%s)",idss);
+	}
+	query.SQL->Add("select program_id, program_name, program_key, program_istraining, program_isactual, program_stcapacity,program_days,program_hours,program_color from program"+condition+";");
+	query.Connection=this->parent->connection;
+	query.Active=true;
+	Program *program;
+	std::vector<KAEntity*> temp;
+	for(int i=0;i<query.RecordCount;++i){
+		program=new Program(query["program_name"],query["program_key"], query["program_stcapacity"],query["program_istraining"],query["program_isactual"],query["program_days"],query["program_hours"],query["program_color"]);
+		program->id=query["program_id"];
+		if(this->getById(program->id)==NULL)program->parent=this;
+		temp.push_back(program);
+		query.Next();
+	}
+	query.Close();
+	query.SQL->Clear();
+	query.SQL->Add("select program_id, programplan_year,programplan_count from programplan"+condition+";");
+	query.Active=true;
+	std::pair<int,int>* plan;
+	for(int i=0;i<query.RecordCount;++i){
+		plan=new std::pair<int,int>(query["programplan_year"],query["programplan_count"]);
+		program=dynamic_cast<Program*>(findEntityById(temp,query["program_id"]));
+		if(program!=0)program->plan.push_back(plan);
+		query.Next();
+	}
+	query.Close();
+	query.SQL->Clear();
+	query.SQL->Add("select program_id, specificity_id from specprogram"+condition+";");
+	query.Active=true;
+	Specific * spec;
+	for(int i=0;i<query.RecordCount;++i){
+		spec=dynamic_cast<Specific*>(parent->specifics->getById(query["specificity_id"]));
+		program=dynamic_cast<Program*>(findEntityById(temp,query["program_id"]));
+		if(program!=0 && spec!=0)program->specifics.push_back(spec);
+		query.Next();
+	}
+	query.Close();
+	query.SQL->Clear();
+	query.SQL->Add("select program_id, group_id from programgroups"+condition+";");
+	query.Active=true;
+	Group * group;
+	for(int i=0;i<query.RecordCount;++i){
+		group=dynamic_cast<Group*>(parent->groups->getById(query["group_id"]));
+		program=dynamic_cast<Program*>(findEntityById(temp,query["program_id"]));
+		if(program!=0 && group!=0)	program->groups.push_back(group);
+		query.Next();
+	}
+	query.Close();
+	query.SQL->Clear();
+	query.SQL->Add("select program_id, programtime_start,programtime_end from programtime"+condition+";");
+	query.Active=true;
+	std::pair<TDateTime,TDateTime>* times;
+	for(int i=0;i<query.RecordCount;++i){
+		times=new std::pair<TDateTime,TDateTime>(StrToDateTime(query["programtime_start"]),StrToDateTime(query["programtime_end"]));
+		program=dynamic_cast<Program*>(findEntityById(temp,query["program_id"]));
+		if(program!=0)program->times.push_back(times);
+		query.Next();
+	}
+	for(int i=0;i<temp.size();++i){
+		if(temp[i]->hasParent()){
+			this->push_back(temp[i]);
+			temp[i]->bind();
+		}else{
+			program=(Program*)this->getById(temp[i]->id);
+			if(diffs!=NULL) diffs->operator[](program)=program->isDifferent(temp[i]);
+			*program=*temp[i];
+			program->bind();
+			delete temp[i];
+		}
+	}
+	query.Close();
+	delete &query;
 }
 
 bool isEqLesson(DateLesson* l1,DateLesson* l2){
@@ -1072,14 +1318,14 @@ bool Course::updateQueryBuilder(String &query,KAEntity *entity){
 			for(int i=0;i<remove.size()-1;++i){
 				dl=dynamic_cast<DateLesson*>(remove[i]);
 				query+=String().sprintf(L"'%s',",dl->date.FormatString("yyyy-mm-dd"));
-				addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE'),",L"datesplantable",parent->parent->getUID(),this->id);
+				addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE'),","dates"+((CourseTable*)parent)->tableName,parent->parent->getUID(),this->id);
 				it=std::find(dates.begin(),dates.end(),remove[i]);
 				delete *it;
 				dates.erase(it);
 			}
 			dl=dynamic_cast<DateLesson*>(remove[remove.size()-1]);
 			query+=String().sprintf(L"'%s');\t",dl->date.FormatString("yyyy-mm-dd"));
-			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');",L"datesplantable",parent->parent->getUID(),this->id);
+			addString+=String().sprintf(L"('%s',%d,Now(),%d,'DELETE');","dates"+((CourseTable*)parent)->tableName,parent->parent->getUID(),this->id);
 			query+=addString;
 			it=std::find(dates.begin(),dates.end(),remove[remove.size()-1]);
 			delete *it;
@@ -1319,7 +1565,89 @@ bool CourseTable::loadMonth(TDate date){
 	query.Close();
 	delete &query;
 }
-
+void CourseTable::fetchEntities(std::vector<int> *ids,std::map<KAEntity*,int>* diffs){
+	TADOQuery &query=*(new TADOQuery(0));
+	String condition="";
+	if(ids!=NULL){
+		String idss=IntToStr(ids->at(0));
+		for(int i=1;i<ids->size();++i)idss+=","+IntToStr(ids->at(i));
+		condition=String().sprintf(L" and %s_id in (%s)",tableName,idss);
+	}
+	CourseTable *table=this;
+	if(table->months.size()>0){
+		TADOQuery &query=*(new TADOQuery(0));
+		String tq=String().sprintf(L"(dates%s_date>='%%s' and dates%s_date<'%%s')",tableName,tableName);
+		String condq;
+		for(int i=0;i<table->months.size();++i){
+			condq+=String().sprintf(tq.w_str(),table->months[i].FormatString("yyyy-mm-01").w_str(),(table->months[i]+32).FormatString("yyyy-mm-01").w_str());
+			if(i+1!=table->months.size())condq+=" or ";
+		}
+		String qS=String().sprintf(L"SELECT %s_id as id,dates%s_date as date, dates%s_class as class FROM dates%s where ",tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str());
+		qS+=condq+condition+";";
+		query.SQL->Add(qS);
+		query.Connection=this->parent->connection;
+		query.Active=true;
+		std::map<int,std::vector<DateLesson*>*> ls;
+		std::map<int,std::vector<DateLesson*>*>::iterator it;
+		for(int i=0;i<query.RecordCount;++i){
+			DateLesson* dt;
+			dt=new DateLesson();
+			dt->date=StrToDate(query["date"]);
+			dt->room=dynamic_cast<ClassRoom*>(parent->rooms->getById(query["class"]));
+			if(ls.find(query["id"])!=ls.end()){
+				it=ls.find(query["id"]);
+				it->second->push_back(dt);
+			}else{
+				ls[query["id"]]=new std::vector<DateLesson*>();
+				ls[query["id"]]->push_back(dt);
+			}
+			query.Next();
+		}
+		query.SQL->Clear();
+		query.Close();
+		if(ls.size()>0){
+			qS=String().sprintf(L"SELECT %s_id as id,program_id, %s_timestart as start,%s_students as students, %s_timeend as end, %s_desc as descr FROM %s where ",tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str());
+			condq=String().sprintf(L"%s_id in(",tableName.w_str());
+			it=ls.begin();
+			condq+=IntToStr(it->first);
+			++it;
+			for(it;it!=ls.end();++it){
+				condq+=","+IntToStr(it->first);
+			}
+			condq+=");";
+			qS+=condq;
+			query.SQL->Add(qS);
+			query.Active=true;
+			Course *course;
+			for(int i=0;i<query.RecordCount;++i){
+				course=new Course((Program*)parent->programs->getById(query["program_id"]),StrToDateTime(query["start"]),StrToDateTime(query["end"]),query["students"],ls[query["id"]],query["descr"]);
+				course->id=query["id"];
+				if(this->getById(course->id)==NULL){
+					table->push_back(course);
+					course->parent=table;
+					course->bind();
+				}else{
+					Course *oCourse=(Course*)this->getById(course->id);
+					if(diffs!=NULL) diffs->operator[](oCourse)=oCourse->isDifferent(course);
+					*oCourse=*course;
+					delete course;
+					oCourse->bind();
+				}
+				query.Next();
+			}
+		}
+		for(it=ls.begin();it!=ls.end();++it){
+			while(it->second->size()>0){
+				delete it->second->at(0);
+				it->second->erase(it->second->begin());
+			}
+			delete it->second;
+        }
+		ls.clear();
+		query.Close();
+		delete &query;
+	}
+}
 PlanTable::PlanTable(SDODBImage *parent):CourseTable(parent){
 	this->tableName="plantable";
 }
@@ -1342,10 +1670,12 @@ SDODBImage::SDODBImage(TADOConnection *connection,int uid):programs(0),groups(0)
 	this->realTable=new RealTable(this);
 	this->planTable=new PlanTable(this);
 	TADOQuery &query=*(new TADOQuery(0));
-	query.SQL->Add("select Now() as time");
+	lastId=0;
+	query.SQL->Add("SELECT max(changes_id) as mid FROM changes;");
 	query.Connection=this->connection;
 	query.Active=true;
-	lastSync=StrToDateTime(query["time"]);
+	if(query.RecordCount>0 && !query.FieldByName("mid")->IsNull)
+		lastId=query["mid"];
 	query.Close();
 	delete &query;
 }
@@ -1355,20 +1685,7 @@ void SDODBImage::refreshSpecifics(){
 		for(int i=0;i<specifics->size();++i)delete specifics->at(i);
 		specifics->clear();
 	}else specifics=new Specifics(this);
-	TADOQuery &query=*(new TADOQuery(0));
-	query.SQL->Add("select specificity_id,specificity_name from specificity;");
-	query.Connection=this->connection;
-	query.Active=true;
-	Specific *spec;
-	for(int i=0;i<query.RecordCount;++i){
-		spec=new Specific(query["specificity_name"]);
-		spec->id=query["specificity_id"];
-		spec->parent=specifics;
-		specifics->push_back(spec);
-		query.Next();
-	}
-	query.Close();
-	delete &query;
+	specifics->fetchEntities();
 }
 void SDODBImage::refreshRooms(){
 	if(rooms!=0){
@@ -1376,32 +1693,7 @@ void SDODBImage::refreshRooms(){
 		for(int i=0;i<rooms->size();++i)delete rooms->at(i);
 		rooms->clear();
 	} else rooms=new Rooms(this);
-	TADOQuery &query=*(new TADOQuery(0));
-	query.SQL->Add("select class_id, class_name,class_isactual, class_stcapacity, class_isrent from class;");
-	query.Connection=this->connection;
-	query.Active=true;
-	ClassRoom *room;
-	for(int i=0;i<query.RecordCount;++i){
-		room=new ClassRoom(query["class_name"],query["class_stcapacity"], query["class_isrent"], query["class_isactual"]);
-		room->id=query["class_id"];
-		room->parent=rooms;
-		rooms->push_back(room);
-		query.Next();
-	}
-	query.Close();
-	query.SQL->Clear();
-	query.SQL->Add("select class_id, specificity_id from specclass;");
-	query.Active=true;
-	Specific * spec;
-	for(int i=0;i<query.RecordCount;++i){
-		spec=dynamic_cast<Specific*>(this->specifics->getById(query["specificity_id"]));
-		room=dynamic_cast<ClassRoom*>(rooms->getById(query["class_id"]));
-		if(room!=0 && spec!=0)	room->specifics.push_back(spec);
-		query.Next();
-	}
-	for(int i=0;i<rooms->size();++i)rooms->at(i)->bind();
-	query.Close();
-	delete &query;
+	rooms->fetchEntities();
 }
 void SDODBImage::refreshGroups(){
 	if(groups!=0){
@@ -1409,31 +1701,7 @@ void SDODBImage::refreshGroups(){
 		for(int i=0;i<groups->size();++i)delete groups->at(i);
 		groups->clear();
 	} else groups=new Groups(this);
-	TADOQuery &query=*(new TADOQuery(0));
-	query.SQL->Add("select group_id, group_name, group_isactual from sdo.group;");
-	query.Connection=this->connection;
-	query.Active=true;
-	Group *group;
-	for(int i=0;i<query.RecordCount;++i){
-		group=new Group(query["group_name"],query["group_isactual"]);
-		group->id=query["group_id"];
-		group->parent=groups;
-		groups->push_back(group);
-		query.Next();
-	}
-	query.Close();
-	query.SQL->Clear();
-	query.SQL->Add("select group_id, groupplan_year,groupplan_count from groupplan;");
-	query.Active=true;
-	std::pair<int,int>* plan;
-	for(int i=0;i<query.RecordCount;++i){
-		plan=new std::pair<int,int>(query["groupplan_year"],query["groupplan_count"]);
-		group=dynamic_cast<Group*>(this->groups->getById(query["group_id"]));
-		if(group!=0)group->plan.push_back(plan);
-		query.Next();
-	}
-	query.Close();
-	delete &query;
+	groups->fetchEntities();
 }
 void SDODBImage::refreshPrograms(){
 	if(programs!=0){
@@ -1441,68 +1709,7 @@ void SDODBImage::refreshPrograms(){
 		for(int i=0;i<programs->size();++i)delete programs->at(i);
 		programs->clear();
 	} else programs=new Programs(this);
-	TADOQuery &query=*(new TADOQuery(0));
-	query.SQL->Add("select program_id, program_name, program_key, program_istraining, program_isactual, program_stcapacity,program_days,program_hours,program_color from program;");
-	query.Connection=this->connection;
-	query.Active=true;
-	Program *program;
-	for(int i=0;i<query.RecordCount;++i){
-		program=new Program(query["program_name"],query["program_key"], query["program_stcapacity"],query["program_istraining"],query["program_isactual"],query["program_days"],query["program_hours"],query["program_color"]);
-		program->id=query["program_id"];
-		program->parent=programs;
-		programs->push_back(program);
-		query.Next();
-	}
-	query.Close();
-	query.SQL->Clear();
-	query.SQL->Add("select program_id, programplan_year,programplan_count from programplan;");
-	query.Active=true;
-	std::pair<int,int>* plan;
-	for(int i=0;i<query.RecordCount;++i){
-		plan=new std::pair<int,int>(query["programplan_year"],query["programplan_count"]);
-		program=dynamic_cast<Program*>(this->programs->getById(query["program_id"]));
-		if(program!=0)program->plan.push_back(plan);
-		query.Next();
-	}
-	query.Close();
-	query.SQL->Clear();
-	query.SQL->Add("select program_id, specificity_id from specprogram;");
-	query.Active=true;
-	Specific * spec;
-	for(int i=0;i<query.RecordCount;++i){
-		spec=dynamic_cast<Specific*>(this->specifics->getById(query["specificity_id"]));
-		program=dynamic_cast<Program*>(programs->getById(query["program_id"]));
-		if(program!=0 && spec!=0){
-			program->specifics.push_back(spec);
-			spec->addOwner(program);
-		}
-		query.Next();
-	}
-	query.Close();
-	query.SQL->Clear();
-	query.SQL->Add("select program_id, group_id from programgroups;");
-	query.Active=true;
-	Group * group;
-	for(int i=0;i<query.RecordCount;++i){
-		group=dynamic_cast<Group*>(this->groups->getById(query["group_id"]));
-		program=dynamic_cast<Program*>(programs->getById(query["program_id"]));
-		if(program!=0 && group!=0)	program->groups.push_back(group);
-		query.Next();
-	}
-	query.Close();
-	query.SQL->Clear();
-	query.SQL->Add("select program_id, programtime_start,programtime_end from programtime;");
-	query.Active=true;
-	std::pair<TDateTime,TDateTime>* times;
-	for(int i=0;i<query.RecordCount;++i){
-		times=new std::pair<TDateTime,TDateTime>(StrToDateTime(query["programtime_start"]),StrToDateTime(query["programtime_end"]));
-		program=dynamic_cast<Program*>(this->programs->getById(query["program_id"]));
-		if(program!=0)program->times.push_back(times);
-		query.Next();
-	}
-	for(int i=0;i<programs->size();++i)programs->at(i)->bind();
-	query.Close();
-	delete &query;
+	programs->fetchEntities();
 }
 void SDODBImage::refreshTable(String tableName){
 	CourseTable *table;
@@ -1521,73 +1728,7 @@ void SDODBImage::refreshTable(String tableName){
 		} else realTable=new RealTable(this);
 		table=realTable;
 	}
-
-	if(table->months.size()>0){
-		TADOQuery &query=*(new TADOQuery(0));
-//CHECK ON THE PRACTICE
-		String tq=String().sprintf(L"(dates%s_date>='%%s' and dates%s_date<'%%s')",tableName,tableName);
-		String condq;
-		for(int i=0;i<table->months.size();++i){
-			condq+=String().sprintf(tq.w_str(),table->months[i].FormatString("yyyy-mm-01").w_str(),(table->months[i]+32).FormatString("yyyy-mm-01").w_str());
-			if(i+1!=table->months.size())condq+=" and ";
-		}
-		String qS=String().sprintf(L"SELECT %s_id as id,dates%s_date as date, dates%s_class as class FROM dates%s where ",tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str());
-		qS+=condq+";";
-		query.SQL->Add(qS);
-		query.Connection=this->connection;
-		query.Active=true;
-		std::map<int,std::vector<DateLesson*>*> ls;
-		std::map<int,std::vector<DateLesson*>*>::iterator it;
-		for(int i=0;i<query.RecordCount;++i){
-			DateLesson* dt;
-			dt=new DateLesson();
-			dt->date=StrToDate(query["date"]);
-			dt->room=dynamic_cast<ClassRoom*>(this->rooms->getById(query["class"]));
-			if(ls.find(query["id"])!=ls.end()){
-				it=ls.find(query["id"]);
-				it->second->push_back(dt);
-			}else{
-				ls[query["id"]]=new std::vector<DateLesson*>();
-				ls[query["id"]]->push_back(dt);
-			}
-			query.Next();
-		}
-		query.SQL->Clear();
-		query.Close();
-		if(ls.size()>0){
-			qS=String().sprintf(L"SELECT %s_id as id,program_id, %s_timestart as start, %s_timeend as end, %s_desc as descr FROM %s where ",tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str());
-			condq=String().sprintf(L"%s_id in(",tableName.w_str());
-			it=ls.begin();
-			condq+=IntToStr(it->first);
-			++it;
-			for(it;it!=ls.end();++it){
-				condq+=","+IntToStr(it->first);
-			}
-			condq+=");";
-			qS+=condq;
-			query.SQL->Add(qS);
-			query.Active=true;
-			Course *course;
-			for(int i=0;i<query.RecordCount;++i){
-				course=new Course((Program*)programs->getById(query["program_id"]),StrToDateTime(query["start"]),StrToDateTime(query["end"]),query["students"],ls[query["id"]],query["descr"]);
-				course->parent=table;
-				table->push_back(course);
-				query.Next();
-			}
-		}
-		for(it=ls.begin();it!=ls.end();++it){
-			while(it->second->size()>0){
-				delete it->second->at(0);
-				it->second->erase(it->second->begin());
-			}
-			delete it->second;
-        }
-		ls.clear();
-		query.Close();
-		delete &query;
-		for(int i=0;i<table->size();++i)
-			table->at(i)->bind();
-	}
+	table->fetchEntities();
 }
 void SDODBImage::refreshPlantable(){
 	refreshTable("plantable");
@@ -1612,13 +1753,52 @@ PlanTable *SDODBImage::getPlanTable(){return this->planTable;};
 struct TableEntity{
 	String table;
 	int id;
+	bool operator<(const TableEntity& te)const{
+		if(table==te.table) return id<te.id;
+		else return table<te.table;
+    }
 };
-void convertTableToEnt(){
+
+void SDODBImage::attachHandler(SDOHandler* handler,std::vector<EntityTypeEvent>& events){
+	if(handlerEvents.count(handler)==0)
+		handlerEvents[handler]= new std::vector<EntityTypeEvent>();
+	handlerEvents[handler]->assign(events.begin(),events.end());
 }
+void SDODBImage::detachHandler(SDOHandler* handler){
+	if(handlerEvents.count(handler)>0){
+		delete handlerEvents[handler];
+		handlerEvents.erase(handlerEvents.find(handler));
+	}
+}
+
 void __fastcall SDODBImage::checkUpdates(TObject *Sender){
-	/*TADOQuery &query=*(new TADOQuery(0));
-	query.SQL->Add(String().sprintf(L"select distinct changes_table, changes_action,changes_rid from changes where changes_time>'%s' order by changes_time asc,changes_id asc;",lastSync.FormatString("yyyy-mm-dd hh:nn:ss")));
+	static std::map<String,EntityType> tableEvent;
+	static std::vector<String> mainTables;
+	static long int lid;
+	if(tableEvent.size()==0){
+		tableEvent["class"]=ERoom;tableEvent["datesplantable"]=EPCourse;tableEvent["datesrealtable"]=ERCourse;tableEvent["group"]=EGroup;tableEvent["groupplan"]=EGroup;tableEvent["plantable"]=EPCourse;tableEvent["program"]=EProgram;
+		tableEvent["programgroups"]=EProgram;tableEvent["programplan"]=EProgram;tableEvent["programtime"]=EProgram;tableEvent["realtable"]=ERCourse;tableEvent["specclass"]=ESpecific;tableEvent["specificity"]=ESpecific;tableEvent["specprogram"]=EProgram;
+		mainTables.push_back("class");mainTables.push_back("plantable");mainTables.push_back("realtable");mainTables.push_back("group");mainTables.push_back("program");mainTables.push_back("specificity");
+	}
+
+	static delTableCounter=0;
+	++delTableCounter;
+	if(delTableCounter==2){
+		connection->Execute("delete from sdo.changes where changes_time< addtime(Now(),'-0 0:30:0');");
+		delTableCounter=0;
+	}
+
+	TADOQuery &query=*(new TADOQuery(0));
 	query.Connection=this->connection;
+	query.SQL->Add("SELECT max(changes_id) as mid FROM changes;");
+	query.Active=true;
+	if(query.RecordCount>0 && !query.FieldByName("mid")->IsNull)
+		lid=query["mid"];
+	else lid=lastId;
+	query.Close();
+	query.SQL->Clear();
+	query.SQL->Add(String().sprintf(L"select distinct changes_table, changes_action,changes_rid from changes where changes_id>%d and changes_id<=%d and changes_user<>%d order by changes_time asc,changes_id asc;",this->lastId,lid,this->uid));
+
 	query.Active=true;
 	if(query.RecordCount>0){
 		std::map<TableEntity,int> refreshE;
@@ -1629,24 +1809,101 @@ void __fastcall SDODBImage::checkUpdates(TObject *Sender){
 			ent.id=query["changes_rid"];
 			if(refreshE.count(ent)<1)refreshE[ent]=0;
 			event=query["changes_action"];
-			if(event=="CREATE")refreshE[ent]|=TableEvent::Create;
-			else if(event=="UPDATE")refreshE[ent]|=TableEvent::Update;
-			else if(event=="DELETE")refreshE[ent]|=TableEvent::Delete;
+			if(event=="CREATE")refreshE[ent]|=EventType::Create;
+			else if(event=="UPDATE")refreshE[ent]|=EventType::Update;
+			else if(event=="DELETE")refreshE[ent]|=EventType::Delete;
 			query.Next();
 		}
-		std::map<TableEntity,int> hrE;
+		std::map<TypeEntityId,EventType> hrE;
+		TypeEntityId tempEI;
 		std::map<TableEntity,int>::iterator it;
 		for(it=refreshE.begin();it!=refreshE.end();++it){
-			it->first.table
+			tempEI.entityType=tableEvent[it->first.table];
+			tempEI.id=it->first.id;
+
+			EventType resEvent;
+			if(std::find(mainTables.begin(),mainTables.end(),it->first.table)==mainTables.end())resEvent=EventType::Update;
+			else{
+				if(it->second&EventType::Delete) resEvent=EventType::Delete;
+				else if(it->second&EventType::Create) resEvent=EventType::Create;
+				else resEvent=EventType::Update;
+			}
+			if(hrE.count(tempEI)==0)hrE[tempEI]=resEvent;
+			else{
+				if(hrE[tempEI]==EventType::Delete || resEvent==EventType::Delete) hrE[tempEI]=EventType::Delete;
+				else if(hrE[tempEI]==EventType::Create|| resEvent==EventType::Create) hrE[tempEI]=EventType::Create;
+				else hrE[tempEI]==EventType::Update;
+			}
 		}
+		static KAEntityTable* typeToTable[]={specifics,groups,rooms,programs,planTable,realTable};
+		std::vector<EntEvent> allEvents;
+		std::map<EntityType,std::vector<int>*> delCrUp;
+		std::map<TypeEntityId,EventType>::iterator it2;
+		for(it2=hrE.begin();it2!=hrE.end();++it2){
+			if(it2->second==EventType::Delete){
+				if(delCrUp.count(it2->first.entityType)==0)
+					delCrUp[it2->first.entityType]=new std::vector<int>();
+				delCrUp[it2->first.entityType]->push_back(it2->first.id);
+				allEvents.push_back(EntEvent(EventType::Delete,it2->first.entityType,it2->first.id,0));
+			}
+		}
+		for(int i=5;i>=0;--i){
+			EntityType rf=i;
+			if(delCrUp.count(i)>0 && delCrUp[rf]->size()>0)
+				typeToTable[i]->debindEntities(*delCrUp[(EntityType)i]);
+		}
+		for(std::map<EntityType,std::vector<int>*>::iterator it=delCrUp.begin();it!=delCrUp.end();++it)it->second->clear();
+
+		for(it2=hrE.begin();it2!=hrE.end();++it2){
+			if(it2->second==EventType::Create){
+				if(delCrUp.count(it2->first.entityType)==0)
+					delCrUp[it2->first.entityType]=new std::vector<int>();
+				delCrUp[it2->first.entityType]->push_back(it2->first.id);
+				allEvents.push_back(EntEvent(EventType::Create,it2->first.entityType,it2->first.id,0));
+			}
+		}
+		for(int i=0;i<=5;++i){
+			EntityType rf=i;
+			if(delCrUp.count(i)>0 && delCrUp[rf]->size()>0)
+				typeToTable[i]->fetchEntities(delCrUp[rf]);
+		}
+		for(std::map<EntityType,std::vector<int>*>::iterator it=delCrUp.begin();it!=delCrUp.end();++it)it->second->clear();
+
+		for(it2=hrE.begin();it2!=hrE.end();++it2){
+			if(it2->second==EventType::Update){
+				if(delCrUp.count(it2->first.entityType)==0)
+					delCrUp[it2->first.entityType]=new std::vector<int>();
+				delCrUp[it2->first.entityType]->push_back(it2->first.id);
+			}
+		}
+		std::map<KAEntity*,int> entDiff;
+		for(int i=0;i<=5;++i){
+			EntityType rf=i;
+			if(delCrUp.count(i)>0 && delCrUp[rf]->size()>0){
+				typeToTable[i]->fetchEntities(delCrUp[(EntityType)i],&entDiff);
+				for(std::map<KAEntity*,int>::iterator it=entDiff.begin();it!=entDiff.end();++it)
+					allEvents.push_back(EntEvent(EventType::Update,(EntityType)i,it->first->id,it->second));
+				entDiff.clear();
+			}
+		}
+		for(std::map<EntityType,std::vector<int>*>::iterator it=delCrUp.begin();it!=delCrUp.end();++it)it->second->clear();
+
+		std::map<SDOHandler*,std::vector<EntityTypeEvent>*>::iterator hit;
+		for(hit=handlerEvents.begin();hit!=handlerEvents.end();++hit){
+			std::vector<EntEvent> temp;
+			for(int i=0;i<allEvents.size();++i){
+				for(int j=0;j<hit->second->size();++j){
+					if(allEvents[i].eventType==hit->second->at(j).eventType && allEvents[i].entType==hit->second->at(j).entType){
+						temp.push_back(allEvents[i]);
+						break;
+					}
+				}
+			}
+			if(temp.size()>0)hit->first->Handle(temp);
+        }
 	}
 	query.Close();
-	query.SQL->Clear();
-	query.SQL->Add("select Now() as time");
-	query.Active=true;
-	lastSync=StrToDateTime(query["time"]);
-	query.Close();
-	delete &query ;*/
+	delete &query ;
 }
 int SDODBImage::getUID(){
 	return uid;
@@ -1656,4 +1913,20 @@ SDODBImage::~SDODBImage(){
 	delete timer;
 }
 //---------------------------------------------------------------------------
+
+EntEvent::EntEvent(SDODBImage::EventType eventType,SDODBImage::EntityType entType,int id,int diff){
+	this->eventType=eventType;
+	this->entType=entType;
+	this->id=id;
+	this->diff=diff;
+}
+EntEvent& EntEvent::operator=(const EntEvent &e){
+	if(this!=&e){
+		this->eventType=e.eventType;
+		this->entType=e.entType;
+		this->id=e.id;
+		this->diff=e.diff;
+	}
+	return *this;
+}
 

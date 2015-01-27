@@ -8,6 +8,7 @@
 #include <Vcl.StdCtrls.hpp>
 #include <Vcl.Forms.hpp>
 #include "App.h"
+#include <Vcl.ExtCtrls.hpp>
 class App;
 //---------------------------------------------------------------------------
 class TAuthForm : public TForm
@@ -19,6 +20,7 @@ __published:	// IDE-managed Components
 	TEdit *Edit1;
 	TButton *Button1;
 	TCheckBox *CheckBox1;
+	TGridPanel *GridPanel1;
 	void __fastcall Edit1KeyPress(TObject *Sender, System::WideChar &Key);
 	void __fastcall Button1Click(TObject *Sender);
 private:	// User declarations
