@@ -36,9 +36,9 @@ __fastcall TForm2::TForm2(TComponent* Owner)
 void __fastcall TForm2::Button1Click(TObject *Sender)
 {
 	if(roomsForm==0)roomsForm=new TRoomsForm(this);
-	roomsForm->ShowModal();
-	delete roomsForm;
-	roomsForm=0;
+	roomsForm->Show();
+	//delete roomsForm;
+	//roomsForm=0;
 }
 //---------------------------------------------------------------------------
 
@@ -46,9 +46,9 @@ void __fastcall TForm2::Button1Click(TObject *Sender)
 void __fastcall TForm2::Button2Click(TObject *Sender)
 {
 	if(specsForm==0)specsForm=new TSpecificsForm(this);
-	specsForm->ShowModal();
-	delete specsForm;
-	specsForm=0;
+	specsForm->Show();
+	//delete specsForm;
+	//specsForm=0;
 }
 //---------------------------------------------------------------------------
 
@@ -56,9 +56,9 @@ void __fastcall TForm2::Button2Click(TObject *Sender)
 void __fastcall TForm2::Button3Click(TObject *Sender)
 {
 	if(groupsForm==0)groupsForm=new TGroupsForm(this);
-	groupsForm->ShowModal();
-	delete groupsForm;
-	groupsForm=0;
+	groupsForm->Show();
+	//delete groupsForm;
+	//groupsForm=0;
 }
 //---------------------------------------------------------------------------
 
@@ -73,9 +73,9 @@ void __fastcall TForm2::Button5Click(TObject *Sender)
 void __fastcall TForm2::Button4Click(TObject *Sender)
 {
 	if(programsForm==0)programsForm=new TProgramsForm(this);
-	programsForm->ShowModal();
-	delete programsForm;
-	programsForm=0;
+	programsForm->Show();
+	//delete programsForm;
+	//programsForm=0;
 }
 //---------------------------------------------------------------------------
 

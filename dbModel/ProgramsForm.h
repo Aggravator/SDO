@@ -12,12 +12,15 @@
 #include "ComplexEntitiesForm.h"
 #include "App.h"
 #include "GroupModal.h"
+#include <Vcl.Dialogs.hpp>
 #include <algorithm>
+#include <ComObj.hpp>
+#include <utilcls.h>
 //---------------------------------------------------------------------------
 class ProgramRows;
 class MyCB;
 
-class TProgramsForm : public TComplexEntitiesForm,public SDOHandler
+class TProgramsForm : public TComplexEntitiesForm
 {
 __published:	// IDE-managed Components
 	TGridPanel *GridPanel1;
@@ -29,10 +32,13 @@ __published:	// IDE-managed Components
 	TButton *Button2;
 	TScrollBox *ScrollBox1;
 	TImageList *ImageList1;
+	TPanel *Panel1;
+	TButton *Button1;
+	TOpenDialog *OpenDialog1;
 	void __fastcall Button2Click(TObject *Sender);
+	void __fastcall Button1Click(TObject *Sender);
 private:	// User declarations
 protected:
-	void Handle(std::vector<EntEvent> &entities);
 public:		// User declarations
 	__fastcall TProgramsForm(TComponent* Owner);
 	__fastcall ~TProgramsForm();

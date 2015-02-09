@@ -2,7 +2,7 @@ object SpecificsForm: TSpecificsForm
   Left = 0
   Top = 0
   Caption = #1057#1087#1077#1094#1080#1092#1080#1082#1080
-  ClientHeight = 327
+  ClientHeight = 440
   ClientWidth = 509
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -17,18 +17,19 @@ object SpecificsForm: TSpecificsForm
     Left = 0
     Top = 27
     Width = 509
-    Height = 231
+    Height = 344
     VertScrollBar.Tracking = True
     Align = alClient
     BevelInner = bvNone
     BevelOuter = bvNone
     BorderStyle = bsNone
     TabOrder = 2
+    ExplicitHeight = 231
   end
   object Button5: TButton
     AlignWithMargins = True
     Left = 0
-    Top = 294
+    Top = 407
     Width = 509
     Height = 33
     Margins.Left = 0
@@ -43,10 +44,11 @@ object SpecificsForm: TSpecificsForm
     Font.Style = []
     ParentFont = False
     TabOrder = 1
+    ExplicitTop = 294
   end
   object Button1: TButton
     Left = 0
-    Top = 258
+    Top = 371
     Width = 509
     Height = 33
     Align = alBottom
@@ -59,6 +61,7 @@ object SpecificsForm: TSpecificsForm
     ParentFont = False
     TabOrder = 0
     OnClick = Button1Click
+    ExplicitTop = 258
   end
   object GridPanel1: TGridPanel
     Left = 0
@@ -125,7 +128,7 @@ object SpecificsForm: TSpecificsForm
     Left = 256
     Top = 152
     Bitmap = {
-      494C010102001400440019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101020014004C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

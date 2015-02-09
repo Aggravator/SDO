@@ -29,6 +29,7 @@ USEFORM("GroupsForm.cpp", Form5);
 //---------------------------------------------------------------------------
 int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR str, int)
 {
+	srand( time(0) );
 	try
 	{
 		if(App::init(str)>1) return 0;

@@ -255,7 +255,7 @@ public:
 };
 
 class SDOHandler;
-
+struct EntEvent;
 class SDODBImage{
 public:
 	SDODBImage(TADOConnection *connection,int uid);
@@ -274,7 +274,9 @@ public:
 	void refreshPlantable();
 	void refreshRealtable();
 	~SDODBImage();
-	enum EntityType{ESpecific=0,EGroup=1,ERoom=2,EProgram=3,EPCourse=4,ERCourse=5};
+	enum EntityType{ESpecific=0,EGroup=1,ERoom=2,EProgram=3,EPCourse=4,ERCourse=5,EUndefined=-1};
+	EntityType getEntityType(KAEntity *entity);
+	EntityType getEntityType(KAEntityTable *table);
 	struct TypeEntityId{
 	public:
 		TypeEntityId(){}
@@ -297,6 +299,7 @@ public:
 	};
 	void attachHandler(SDOHandler* handler,std::vector<EntityTypeEvent>& events);
 	void detachHandler(SDOHandler* handler);
+	void handleEvent(const std::vector<EntEvent> &allEvents,SDOHandler *handler=NULL);
 protected:
 	void refreshTable(String tableName);
 	void __fastcall checkUpdates(TObject *Sender);

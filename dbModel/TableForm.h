@@ -70,6 +70,8 @@ __published:	// IDE-managed Components
 	TStatusBar *StatusBar1;
 	TCheckBox *CheckBox4;
 	TEdit *Edit1;
+	TCheckBox *CheckBox5;
+	TComboBox *groupsBox;
 	void __fastcall FormResize(TObject *Sender);
 	void __fastcall StringGrid1DrawCell(TObject *Sender, int ACol, int ARow, TRect &Rect,
           TGridDrawState State);
@@ -95,6 +97,8 @@ __published:	// IDE-managed Components
 	void __fastcall Button4Click(TObject *Sender);
 	void __fastcall Button6Click(TObject *Sender);
 	void __fastcall CheckBox4Click(TObject *Sender);
+	void __fastcall CheckBox5Click(TObject *Sender);
+	void __fastcall groupsBoxChange(TObject *Sender);
 private:	// User declarations
 protected:
 	void Handle(std::vector<EntEvent> &entities);
@@ -161,7 +165,7 @@ public:		// User declarations
 	void refreshGrCS();
 	Course *selectedCourse,tempSelectedC;
 	bool showReal,showPlan;
-	bool showAllPrograms,filterHourse;
+	bool showAllPrograms,filterHourse,filterGroup;
 	bool hasCtrlPressedMC;
 	int gatherStCountForMonth(Program *pr,TDate month);
 	int gatherStCFMG(Group* gr,TDate month);

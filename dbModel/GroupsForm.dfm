@@ -2,7 +2,7 @@ object GroupsForm: TGroupsForm
   Left = 0
   Top = 0
   Caption = #1043#1088#1091#1087#1087#1099
-  ClientHeight = 243
+  ClientHeight = 518
   ClientWidth = 527
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,7 +16,7 @@ object GroupsForm: TGroupsForm
   object Button5: TButton
     AlignWithMargins = True
     Left = 0
-    Top = 210
+    Top = 485
     Width = 527
     Height = 33
     Margins.Left = 0
@@ -31,10 +31,11 @@ object GroupsForm: TGroupsForm
     Font.Style = []
     ParentFont = False
     TabOrder = 0
+    ExplicitTop = 210
   end
   object Button1: TButton
     Left = 0
-    Top = 174
+    Top = 449
     Width = 527
     Height = 33
     Align = alBottom
@@ -47,17 +48,19 @@ object GroupsForm: TGroupsForm
     ParentFont = False
     TabOrder = 1
     OnClick = Button1Click
+    ExplicitTop = 174
   end
   object ScrollBox1: TScrollBox
     Left = 0
     Top = 25
     Width = 527
-    Height = 149
+    Height = 424
     Align = alClient
     BevelInner = bvNone
     BevelOuter = bvNone
     BorderStyle = bsNone
     TabOrder = 2
+    ExplicitHeight = 149
   end
   object GridPanel1: TGridPanel
     Left = 0
@@ -144,7 +147,7 @@ object GroupsForm: TGroupsForm
     Left = 312
     Top = 136
     Bitmap = {
-      494C010102001400580019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010102001400600019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

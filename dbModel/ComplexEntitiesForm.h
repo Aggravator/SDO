@@ -10,13 +10,14 @@ class EntityRow;
 
 class ARowsPanel;
 
-class TComplexEntitiesForm: public TForm{
+class TComplexEntitiesForm: public TForm,public SDOHandler{
 public:
 	__fastcall TComplexEntitiesForm(TComponent* Owner);
 	TModalEntityForm* *modalForm;
 	ARowsPanel *panel;
 	TImageList *images;
 protected:
+	void Handle(std::vector<EntEvent> &entities);
 	void __fastcall onShow(TObject *Sender);
 	//void __fastcall onAddButton(TObject *Sender);
 	void __fastcall onOkButton(TObject *Sender);
@@ -34,7 +35,7 @@ public:
 protected:
 	ARowsPanel *parent;
 	std::vector<TControl*> controls;
-
+	String deleteMessage;
 	TButton *editButton,*deleteButton;
 	virtual void writeToRow(KAEntity* entity)=0;
 	virtual void writeToEntity(KAEntity* entity)=0;

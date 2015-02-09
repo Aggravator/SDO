@@ -49,13 +49,13 @@ object CourseModal: TCourseModal
     Layout = tlCenter
   end
   object Label3: TLabel
-    Left = 216
+    Left = 210
     Top = 48
-    Width = 127
+    Width = 139
     Height = 18
     Align = alCustom
     Alignment = taCenter
-    Caption = #1050#1086#1083'-'#1074#1086' '#1089#1090#1091#1076#1077#1085#1090#1086#1074':'
+    Caption = #1050#1086#1083'-'#1074#1086' '#1089#1083#1091#1096#1072#1090#1077#1083#1077#1081':'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -15
@@ -66,16 +66,17 @@ object CourseModal: TCourseModal
   end
   object ComboBox2: TComboBox
     Left = 62
-    Top = 45
+    Top = 46
     Width = 131
     Height = 27
+    Style = csDropDownList
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -16
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 0
+    TabOrder = 1
   end
   object Edit1: TEdit
     Left = 352
@@ -89,7 +90,7 @@ object CourseModal: TCourseModal
     Font.Style = []
     NumbersOnly = True
     ParentFont = False
-    TabOrder = 1
+    TabOrder = 2
   end
   object Edit2: TEdit
     Left = 93
@@ -104,7 +105,7 @@ object CourseModal: TCourseModal
     Font.Style = []
     ParentFont = False
     ReadOnly = True
-    TabOrder = 2
+    TabOrder = 0
   end
   object Button1: TButton
     AlignWithMargins = True
@@ -308,7 +309,7 @@ object CourseModal: TCourseModal
       object Label7: TLabel
         Left = 0
         Top = 0
-        Width = 89
+        Width = 438
         Height = 18
         Align = alTop
         Caption = #1055#1088#1080#1084#1077#1095#1072#1085#1080#1077':'
@@ -319,6 +320,7 @@ object CourseModal: TCourseModal
         Font.Style = []
         ParentFont = False
         Layout = tlCenter
+        ExplicitWidth = 89
       end
       object RichEdit1: TRichEdit
         Left = 0
@@ -345,7 +347,7 @@ object CourseModal: TCourseModal
     Left = 384
     Top = 80
     Bitmap = {
-      494C0101030014007C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010103001400840019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

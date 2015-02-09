@@ -20,6 +20,23 @@ void __fastcall TComplexEntitiesForm::onShow(TObject *Sender){
 		panel->addRow(panel->entTable->at(i));
 	}
 }
+void TComplexEntitiesForm::Handle(std::vector<EntEvent> &entities){
+	if(this->Visible==false)return;
+	for(int i=0;i<entities.size();++i){
+		if(entities[i].eventType==SDODBImage::EventType::Delete){
+			for(int j=0;j<panel->rows.size();++j){
+				if(panel->rows[j]->initEntity->getID()==entities[i].id){
+					panel->rows[j]->hideInPanel();
+					panel->deletedRows.push_back(panel->rows[j]);
+					panel->rows.erase(panel->rows.begin()+j);
+				}
+			}
+		}
+		if(entities[i].eventType==SDODBImage::EventType::Create){
+			panel->addRow(App::db->getPrograms()->getById(entities[i].id));
+		}
+	}
+}
 
 AEntityRow::AEntityRow(ARowsPanel* parent, int size){
 
@@ -102,7 +119,10 @@ void __fastcall AEntityRow::editButtonClick(TObject *Sender){
 void __fastcall AEntityRow::deleteButtonClick(TObject *Sender){
 	//removeFromPanel();
 	//parent->deleteRow(this);
-	parent->hideRow(this);
+	if(deleteMessage!=""){
+		int res=Application->MessageBoxW(deleteMessage.w_str(),L"Предупреждение", MB_ICONWARNING+MB_OKCANCEL);
+		if(res==IDOK)parent->hideRow(this);
+	}else parent->hideRow(this);
 }
 
 
@@ -128,27 +148,34 @@ void ARowsPanel::hideRow(AEntityRow* row){
 	}
 }
 void ARowsPanel::applyChanges(){
+	SDODBImage::EntityType entType=App::db->getEntityType(entTable);
+	std::vector<EntEvent> allEvents;
 	for(int i=rows.size()-1;i>=0;--i){
 		AEntityRow *er=rows[i];
 		er->writeToEntity(er->tempEntity);
 		if(er->initEntity->hasParent()){
 			if(er->initEntity->isDifferent(er->tempEntity) && er->tempEntity->validate()){
+				allEvents.push_back(EntEvent(SDODBImage::EventType::Update,entType,er->initEntity->getID(),er->initEntity->isDifferent(er->tempEntity)));
 				er->initEntity->updateEntity(er->tempEntity);
 			}
 		}else{
 			if(er->tempEntity->validate()){
 				*er->initEntity=*er->tempEntity;
 				entTable->createEntity(er->initEntity);
+				allEvents.push_back(EntEvent(SDODBImage::EventType::Create,entType,er->initEntity->getID(),0));
 			}else delete er->initEntity;
 		}
 	}
 	for(int i=0;i<rows.size();++i) delete rows[i];
 	rows.clear();
 	for(int i=0;i<deleteEntities.size();++i){
-		if(deleteEntities[i]->hasParent()) deleteEntities[i]->deleteEntity();
-		delete deleteEntities[i];
+		if(deleteEntities[i]->hasParent()){
+			allEvents.push_back(EntEvent(SDODBImage::EventType::Delete,entType,deleteEntities[i]->getID(),0));
+			deleteEntities[i]->deleteEntity();
+		}
 	}
 	deleteEntities.clear();
+	App::db->handleEvent(allEvents,((TComplexEntitiesForm*)this->Owner));
 }
 void ARowsPanel::clear(){
 	for(int i=rows.size()-1;i>=0;--i){
@@ -161,7 +188,8 @@ void ARowsPanel::clear(){
 	}
 	deleteEntities.clear();
 	for(int i=0;i<deletedRows.size();++i){
-		if(!deletedRows[i]->initEntity->hasParent())delete deletedRows[i]->initEntity;
+		if(!deletedRows[i]->initEntity->hasParent())
+			delete deletedRows[i]->initEntity;
 		delete deletedRows[i];
 	}
 	deletedRows.clear();

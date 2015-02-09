@@ -44,9 +44,13 @@ __published:	// IDE-managed Components
 	void __fastcall ListBox1DrawItem(TWinControl *Control, int Index, TRect &Rect, TOwnerDrawState State);
 	void __fastcall ListBox1MeasureItem(TWinControl *Control, int Index, int &Height);
 	void __fastcall FormResize(TObject *Sender);
+	void __fastcall ListBox2DrawItem(TWinControl *Control, int Index, TRect &Rect, TOwnerDrawState State);
+
 
 
 private:	// User declarations
+	void makeCenter();
+	std::vector<bool> isColor;
 public:		// User declarations
 	__fastcall TCourseCreate(TComponent* Owner,TTableForm *pp);
 	bool checkRoom(KAEntity* r);
@@ -60,6 +64,7 @@ public:		// User declarations
 	bool isPlan,isReal;
 	int widthPlus,heightPlus;
 	std::pair<TDateTime,TDateTime> *smena;
+	TDate startDate;
 	Program *prog;
 	ClassRoom *room;
 	int studentsC;

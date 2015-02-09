@@ -71,8 +71,7 @@ __fastcall TTableForm::TTableForm(TComponent* Owner)
 {
 	executedCourseColor=RGB(230,230,230);
 	showReal=showPlan=true;
-	showAllPrograms=false;
-	this->filterHourse=false;
+	showAllPrograms=filterHourse=filterGroup=false;
 	dragCell=NULL;
 	month=TDate::CurrentDate();
 	realTable=App::db->getRealTable();
@@ -104,6 +103,10 @@ __fastcall TTableForm::TTableForm(TComponent* Owner)
 	ete.entType=SDODBImage::EntityType::ERoom;ete.eventType=SDODBImage::EventType::Delete;
 	events.push_back(ete);
 	ete.entType=SDODBImage::EntityType::EProgram;ete.eventType=SDODBImage::EventType::Delete;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::EProgram;ete.eventType=SDODBImage::EventType::Update;
+	events.push_back(ete);
+	ete.entType=SDODBImage::EntityType::EProgram;ete.eventType=SDODBImage::EventType::Create ;
 	events.push_back(ete);
 	App::db->attachHandler(this,events);
 }
@@ -192,7 +195,7 @@ int TTableForm::gatherStCountForMonth(Program *pr,TDate month){
 	for(int i=0;i<this->planTable->size();++i){
 		Course *cr=dynamic_cast<Course*>(this->planTable->at(i));
 		maxDate=getMaxDateFromCourse(cr);
-		if(cr->program==pr && dateIntoMonth(maxDate,month) && maxDate>currentD){
+		if(cr->program==pr && dateIntoMonth(maxDate,month) && maxDate>=currentD){
 			stepCount=true;
 			cr->sortDates();
 			for(int j=0;j<inreal.size();++j){
@@ -505,6 +508,11 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 			}
 		}
 
+		gr=NULL;
+		if(this->filterGroup){
+			gr=reinterpret_cast<Group*>(this->groupsBox->Items->Objects[this->groupsBox->ItemIndex]);
+		}
+
 		int i,row=0;
 		bool lastTr;
 		std::vector<Cell*>* cRow;
@@ -513,6 +521,13 @@ void TTableForm::regenerateCells(std::vector<ProgTables*> &progs){
 			if(hour!=-1){
 				if(progs[i]->prog->hours!=hour)continue;
 			}
+			if(gr!=NULL){
+				bool isGr=true;
+				for(int j=0;j<progs[i]->prog->groups.size()&& isGr;++j){
+					if(gr==progs[i]->prog->groups[j])isGr=false;
+				}
+				if(isGr)continue;
+            }
 			cRow=new std::vector<Cell*>(dayCount+8+fixcols+2);
 			for(int ci=0;ci<cRow->size();++ci)cRow->at(ci)=new Cell();
 			if(row==0 || lastTr!=progs[i]->prog->istraining){
@@ -669,7 +684,7 @@ void __fastcall TTableForm::StringGrid1DrawCell(TObject *Sender, int ACol, int A
 		StringGrid1->Canvas->Pen->Color=clGray;
 	StringGrid1->Canvas->Pen->Width=1;
 	if(ACol<fixcols || ARow<2)StringGrid1->Canvas->Brush->Color=RGB(240,240,240);
-	else if(ACol<fixcols+4 || ACol>=StringGrid1->ColCount-4 || DayOfWeek(month-4-fixcols+ACol)==1 || DayOfWeek(month-4-fixcols+ACol)==7)StringGrid1->Canvas->Brush->Color=RGB(248,248,248);
+	else if(/*ACol<fixcols+4 || ACol>=StringGrid1->ColCount-6 ||*/ DayOfWeek(month-4-fixcols+ACol)==1 || DayOfWeek(month-4-fixcols+ACol)==7)StringGrid1->Canvas->Brush->Color=RGB(240,240,240);
 
 	if(ARow<2 || StringGrid1->RowCount==3){
 		StringGrid1->Canvas->FillRect(Rect);
@@ -800,6 +815,7 @@ void __fastcall TTableForm::StringGrid1DblClick(TObject *Sender)
 			ccf->room=NULL;
 			ccf->studentsC=-1;
 			ccf->isPlan=ccf->isReal=false;
+			ccf->startDate=month-8+col;
 			if(ccf->ShowModal()==mrOk){
 				TDate dd=month-8+col;
 				std::vector<DateLesson*> dl;
@@ -847,6 +863,7 @@ void __fastcall TTableForm::StringGrid1DblClick(TObject *Sender)
 				ccf->room=NULL;
 				ccf->studentsC=-1;
 				ccf->isPlan=ccf->isReal=false;
+				ccf->startDate=month-8+col;
 				if(ccf->ShowModal()==mrOk){
 					TDate dd=month-8+col;
 					std::vector<DateLesson*> dl;
@@ -1093,6 +1110,27 @@ void __fastcall TTableForm::StringGrid1StartDrag(TObject *Sender, TDragObject *&
 
 void __fastcall TTableForm::FormShow(TObject *Sender)
 {
+	Groups *grps=App::db->getGroups();
+	std::sort(grps->begin(),grps->end(),grps->sortFuncU);
+	if(groupsBox->Items->Count>0){
+		Group *tGroup=reinterpret_cast<Group*>(groupsBox->Items->Objects[groupsBox->ItemIndex]);
+		groupsBox->Clear();
+		for(int i=0;i<grps->size();++i){
+			if(dynamic_cast<Group*>(grps->at(i))->isactual){
+				Group *gr=dynamic_cast<Group*>(grps->at(i));
+				groupsBox->AddItem(gr->name,(TObject*)gr);
+				if(gr==tGroup)groupsBox->ItemIndex=i;
+			}
+		}
+	}else{
+		for(int i=0;i<grps->size();++i){
+			if(dynamic_cast<Group*>(grps->at(i))->isactual){
+				Group *gr=dynamic_cast<Group*>(grps->at(i));
+				groupsBox->AddItem(gr->name,(TObject*)gr);
+			}
+		}
+		if(grps->size()>0)groupsBox->ItemIndex=0;
+	}
 	this->sstringRedraw();
 }
 //---------------------------------------------------------------------------
@@ -1158,6 +1196,19 @@ void __fastcall TTableForm::CheckBox4Click(TObject *Sender)
 {
 	this->filterHourse=this->CheckBox4->Checked;
 	this->regenerateCells(this->progs);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::CheckBox5Click(TObject *Sender)
+{
+	this->filterGroup=this->CheckBox5->Checked;
+	this->regenerateCells(this->progs);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TTableForm::groupsBoxChange(TObject *Sender)
+{
+	if(CheckBox5->Checked)this->regenerateCells(this->progs);
 }
 //---------------------------------------------------------------------------
 

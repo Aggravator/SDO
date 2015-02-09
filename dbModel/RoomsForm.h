@@ -16,7 +16,7 @@
 #include <algorithm>
 //---------------------------------------------------------------------------
 class RoomRows;
-class TRoomsForm : public TComplexEntitiesForm,public SDOHandler
+class TRoomsForm : public TComplexEntitiesForm
 {
 __published:	// IDE-managed Components
 	TGridPanel *GridPanel1;
@@ -31,7 +31,6 @@ __published:	// IDE-managed Components
 	void __fastcall Button2Click(TObject *Sender);
 private:	// User declarations
 protected:
-	void Handle(std::vector<EntEvent> &entities);
 public:		// User declarations
 	__fastcall TRoomsForm(TComponent* Owner);
 	__fastcall ~TRoomsForm();

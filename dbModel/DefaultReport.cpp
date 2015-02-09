@@ -416,7 +416,7 @@ void __fastcall TDefaultReport::Button1Click(TObject *Sender)
  					courseVector=groupLayer[i]->planReal[(*it)]->second;
 					for(int j=0;j<courseVector->size();++j){
 						Course *cr=dynamic_cast<Course *>(courseVector->at(j));
-						if(isIntoMonth(cr->dates[cr->dates.size()-1]->date,groupLayer[i]->month) && cr->dates[cr->dates.size()-1]->date>TDate::CurrentDate()){
+						if(isIntoMonth(cr->dates[cr->dates.size()-1]->date,groupLayer[i]->month) && cr->dates[cr->dates.size()-1]->date>=TDate::CurrentDate()){
 							bool stepCount=true;
 							for(int ij=0;ij<rcoursesOnMonth.size()&&stepCount;++ij){
 								if(cr->dates.size()==rcoursesOnMonth[ij]->dates.size()){

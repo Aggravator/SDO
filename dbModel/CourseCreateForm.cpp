@@ -4,10 +4,42 @@
 #pragma hdrstop
 
 #include "CourseCreateForm.h"
+#include <System.DateUtils.hpp>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
 //---------------------------------------------------------------------------
+int hourMinCompare(TDateTime f,TDateTime s){
+	unsigned short hour1,hour2,min1,min2,sec;
+	f.DecodeTime(&hour1,&min1,&sec,&sec);
+	s.DecodeTime(&hour2,&min2,&sec,&sec);
+	if(hour1>hour2) return 1;
+	else if(hour1<hour2) return -1;
+	else if (min1>min2)return 1;
+	else if (min1<min2)return -1;
+	else return 0;
+}
+bool isHourTimeIntersec(std::pair<TDateTime,TDateTime> *f,std::pair<TDateTime,TDateTime> *s){
+	if(hourMinCompare(f->first,s->first)>=0 && hourMinCompare(f->first,s->second)<=0){
+		return true;
+	}else{
+		if(hourMinCompare(f->second,s->first)>=0 && hourMinCompare(f->second,s->second)<=0){
+			return true;
+		}else{
+			if(hourMinCompare(f->first,s->first)<0 && hourMinCompare(f->second,s->second)>0){
+				return true;
+			}
+		}
+	}
+	return false;
+}
+int dateCompare(TDate f,TDate s){
+	TValueRelationship t=CompareDate(f,s);
+	if(t==LessThanValue)return -1;
+	else if(t==EqualsValue) return 0;
+	else return 1;
+
+}
 __fastcall TCourseCreate::TCourseCreate(TComponent* Owner,TTableForm *pp)
 	: TForm(Owner)
 {
@@ -114,6 +146,7 @@ void TCourseCreate::showPrograms(){
 	this->ListBox1->Repaint();
 	this->resizeProg();
 	this->ListBox1->Repaint();
+	makeCenter();
 }
 void TCourseCreate::showSmena(){
 	this->Panel4->SetBounds(0,0,Panel4->Width,Panel4->Height);
@@ -126,8 +159,67 @@ void TCourseCreate::showSmena(){
 		ListBox3->AddItem(prog->times[i]->first.FormatString("hh:nn")+"-"+prog->times[i]->second.FormatString("hh:nn"),(TObject*)prog->times[i]);
 	}
 	this->Panel4->Visible=true;
+	makeCenter();
 }
+struct TimeHourComp {
+  bool operator() (const std::pair<TDateTime,TDateTime>& lhs, const std::pair<TDateTime,TDateTime>& rhs) const
+  {
+  	if(hourMinCompare(lhs.first,rhs.first)==-1)return true; else false;
+  }
+};
 void TCourseCreate::showRooms(){
+	CourseTable * crt;
+	std::vector<Course*> planData,realData;
+	TValueRelationship comp=CompareDate(startDate+prog->days-1,TDate::CurrentDate());
+	if(comp==GreaterThanValue){
+		crt=App::db->getPlanTable();
+		for(int i=0;i<crt->size();++i){
+			Course *cr=(Course*)crt->at(i);
+			for(int j=0;j<cr->dates.size();++j){
+				comp=CompareDate(cr->dates[j]->date,startDate-1);
+				if(comp==GreaterThanValue &&
+				CompareDate(cr->dates[j]->date,startDate+prog->days)==LessThanValue){
+					planData.push_back(cr);
+					break;
+				}
+			}
+		}
+	}
+	crt=App::db->getRealTable();
+	for(int i=0;i<crt->size();++i){
+		Course *cr=(Course*)crt->at(i);
+		for(int j=0;j<cr->dates.size();++j){
+			comp=CompareDate(cr->dates[j]->date,startDate-1);
+			if(comp==GreaterThanValue &&
+			CompareDate(cr->dates[j]->date,startDate+prog->days)==LessThanValue){
+				realData.push_back(cr);
+				break;
+			}
+		}
+	}
+
+	//cleaning
+	for(int i=0;i<planData.size();++i){
+		planData[i]->sortDates();
+		for(int j=0;j<realData.size();++j){
+			if(planData[i]->program==realData[j]->program && hourMinCompare(planData[i]->start,realData[j]->start)==0 && hourMinCompare(planData[i]->end,realData[j]->end)==0){
+				realData[j]->sortDates();
+				if(realData[j]->dates.size()==planData[i]->dates.size()){
+					int ij;
+					for(ij=0;ij<planData[i]->dates.size();++ij)
+						if(dateCompare(planData[i]->dates[ij]->date,realData[j]->dates[ij]->date)!=0)
+							break;
+					if(ij==planData[i]->dates.size()){
+						planData.erase(planData.begin()+i);
+						--i;
+						break;
+                    }
+				}
+			}
+		}
+	}
+	isColor.clear();
+	std::map<TDate, std::set<std::pair<TDateTime,TDateTime>,TimeHourComp> > roomData;
 	this->Panel3->SetBounds(0,0,Panel3->Width,Panel3->Height);
 	Panel3->Align=alClient;
 	this->Width=Panel3->Width+widthPlus;
@@ -137,11 +229,50 @@ void TCourseCreate::showRooms(){
 	std::sort(prg->begin(),prg->end(),sortR);
 	for(int i=0;i<prg->size();++i){
 		if(checkRoom(prg->at(i))){
+			isColor.push_back(false);
+			ClassRoom *rm=(ClassRoom*)prg->at(i);
+			for (int j=0; j<planData.size(); ++j) {
+				Course *cr=(Course*)planData[j];
+				for(int ij=0;ij<cr->dates.size();++ij){
+					if(cr->dates[ij]->room==rm && dateCompare(cr->dates[ij]->date,startDate)>=0 && dateCompare(cr->dates[ij]->date,startDate+prog->days)<0){
+						std::pair<TDateTime,TDateTime> tp=std::pair<TDateTime,TDateTime>(cr->start,cr->end);
+						roomData[cr->dates[ij]->date].insert(tp);
+						if(isHourTimeIntersec(&tp,smena))
+							isColor[isColor.size()-1]=true;
+					}
+				}
+			}
+			for (int j=0; j<realData.size(); ++j) {
+				Course *cr=(Course*)realData[j];
+				for(int ij=0;ij<cr->dates.size();++ij){
+					if(cr->dates[ij]->room==rm && dateCompare(cr->dates[ij]->date,startDate)>=0 && dateCompare(cr->dates[ij]->date,startDate+prog->days)<0){
+						std::pair<TDateTime,TDateTime> tp=std::pair<TDateTime,TDateTime>(cr->start,cr->end);
+						roomData[cr->dates[ij]->date].insert(tp);
+						if(isHourTimeIntersec(&tp,smena))
+							isColor[isColor.size()-1]=true;
+					}
+				}
+			}
+			String infoString;
+			std::set<std::pair<TDateTime,TDateTime>,TimeHourComp>::iterator it;
+			for(int j=0;j<prog->days;++j){
+				if(roomData.count(startDate+j)>0){
+					it=roomData[startDate+j].begin();
+					infoString+=" "+(startDate+j).FormatString("mm.dd ")+it->first.FormatString("hh:nn-")+it->second.FormatString("hh:nn");
+					for(++it;it!=roomData[startDate+j].end();++it){
+						infoString+=", "+it->first.FormatString("hh:nn-")+it->second.FormatString("hh:nn");
+					}
+					infoString+=";";
+				}
+
+			}
 			ClassRoom *p=(ClassRoom*)prg->at(i);
-			ListBox2->AddItem(p->name,(TObject*)p);
+			ListBox2->AddItem(p->name+infoString,(TObject*)p);
+			roomData.clear();
 		}
 	}
 	this->Panel3->Visible=true;
+	makeCenter();
 }
 void TCourseCreate::showStudents(){
 	this->Panel5->SetBounds(0,0,Panel5->Width,Panel5->Height);
@@ -152,6 +283,7 @@ void TCourseCreate::showStudents(){
 	this->Label5->Caption="max="+IntToStr(this->room->capacity);
 	this->Panel5->Visible=true;
 	this->Edit1->SetFocus();
+	makeCenter();
 }
 void __fastcall TCourseCreate::Button1Click(TObject *Sender)
 {
@@ -303,6 +435,24 @@ void __fastcall TCourseCreate::FormResize(TObject *Sender)
 	Panel3->Repaint();
 	Panel4->Repaint();
 	Panel5->Repaint();
+}
+//---------------------------------------------------------------------------
+void TCourseCreate::makeCenter(){
+	Forms::TMonitor* mon=Screen->MonitorFromWindow(NativeUInt(this->Handle));
+	this->Left = mon->Left+mon->Width/2-Width/2;
+	this->Top = mon->Top+mon->Height/2-Height/2;
+}
+void __fastcall TCourseCreate::ListBox2DrawItem(TWinControl *Control, int Index, TRect &Rect,
+          TOwnerDrawState State)
+{
+	if(isColor.size()>Index && isColor[Index]){
+		ListBox2->Canvas->Brush->Color=RGB(255,127,0);
+	}
+	ListBox2->Canvas->FillRect(Rect);
+	String tt=ListBox2->Items->operator [](Index);
+	tagRECT tr;
+	tr.left=Rect.Left+1;tr.right=Rect.Right;tr.top=Rect.Top+1;tr.bottom=Rect.Bottom;
+	DrawText(ListBox2->Canvas->Handle, tt.w_str(), tt.Length(), &tr,DT_LEFT);
 }
 //---------------------------------------------------------------------------
 

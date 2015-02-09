@@ -60,6 +60,7 @@ public:
 			date->Align=alClient;
 			//date->Font->Size=12;
 			room=new TComboBox((HWND)0);
+			room->Style=csDropDownList;
 			room->Align=alClient;
 			room->Font->Size=14;
 		}

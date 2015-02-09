@@ -68,12 +68,12 @@ object TableForm: TTableForm
     object GroupBox1: TGroupBox
       Left = 1
       Top = 0
-      Width = 113
+      Width = 106
       Height = 78
       Caption = #1057#1083#1086#1080
       TabOrder = 0
       object CheckBox1: TCheckBox
-        Left = 12
+        Left = 9
         Top = 20
         Width = 97
         Height = 17
@@ -84,7 +84,7 @@ object TableForm: TTableForm
         OnClick = CheckBox1Click
       end
       object CheckBox2: TCheckBox
-        Left = 12
+        Left = 9
         Top = 49
         Width = 97
         Height = 17
@@ -96,24 +96,24 @@ object TableForm: TTableForm
       end
     end
     object GroupBox2: TGroupBox
-      Left = 120
+      Left = 112
       Top = 0
-      Width = 249
+      Width = 281
       Height = 77
       Caption = #1060#1080#1083#1100#1090#1088#1099
       TabOrder = 1
     end
     object GroupBox3: TGroupBox
-      Left = 375
+      Left = 399
       Top = 0
-      Width = 362
+      Width = 338
       Height = 77
       Anchors = [akLeft, akRight]
       Caption = #1050#1091#1088#1089
       TabOrder = 2
       Visible = False
       DesignSize = (
-        362
+        338
         77)
       object Button1: TButton
         Left = 4
@@ -140,7 +140,7 @@ object TableForm: TTableForm
       object RichEdit1: TRichEdit
         Left = 40
         Top = 13
-        Width = 314
+        Width = 290
         Height = 60
         Anchors = [akLeft, akTop, akRight]
         Font.Charset = RUSSIAN_CHARSET
@@ -185,11 +185,11 @@ object TableForm: TTableForm
     end
   end
   object CheckBox3: TCheckBox
-    Left = 131
+    Left = 122
     Top = 19
-    Width = 214
+    Width = 174
     Height = 17
-    Caption = #1058#1086#1083#1100#1082#1086' '#1079#1072#1076#1077#1081#1089#1090#1074#1086#1074#1072#1085#1085#1099#1077' '#1087#1088#1086#1075#1088#1072#1084#1084#1099
+    Caption = #1047#1072#1076#1077#1081#1089#1090#1074#1086#1074#1072#1085#1085#1099#1077' '#1087#1088#1086#1075#1088#1072#1084#1084#1099
     Checked = True
     State = cbChecked
     TabOrder = 2
@@ -256,8 +256,8 @@ object TableForm: TTableForm
       end>
   end
   object CheckBox4: TCheckBox
-    Left = 132
-    Top = 50
+    Left = 300
+    Top = 20
     Width = 53
     Height = 17
     Caption = #1063#1072#1089#1099':'
@@ -265,12 +265,30 @@ object TableForm: TTableForm
     OnClick = CheckBox4Click
   end
   object Edit1: TEdit
-    Left = 180
-    Top = 48
+    Left = 349
+    Top = 19
     Width = 37
     Height = 21
     NumbersOnly = True
     TabOrder = 6
+  end
+  object CheckBox5: TCheckBox
+    Left = 122
+    Top = 49
+    Width = 58
+    Height = 17
+    Caption = #1043#1088#1091#1087#1087#1072':'
+    TabOrder = 7
+    OnClick = CheckBox5Click
+  end
+  object groupsBox: TComboBox
+    Left = 183
+    Top = 48
+    Width = 142
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 8
+    OnChange = groupsBoxChange
   end
   object ImageList1: TImageList
     ColorDepth = cd32Bit
@@ -279,7 +297,7 @@ object TableForm: TTableForm
     Left = 416
     Top = 360
     Bitmap = {
-      494C010105000800AC0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010105000800BC0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       000000000000360000002800000064000000320000000100200000000000204E
       0000000000000000000000000000000000000000000000000000110F117E524E
       51C7595258D15A525AD25D545CD261585FD3645A62D3675D64D3685F66D36B60

@@ -25,7 +25,7 @@ BOOL createprog(const wchar_t path[]){
 		&pi);
 }
 TADOConnection * App::connection=0;
-int App::version=5;
+int App::version=9;
 int App::uid=0;
 String App::login="";
 String App::password="";

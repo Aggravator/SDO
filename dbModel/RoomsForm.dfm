@@ -2,7 +2,7 @@ object RoomsForm: TRoomsForm
   Left = 0
   Top = 0
   Caption = #1050#1072#1073#1080#1085#1077#1090#1099
-  ClientHeight = 291
+  ClientHeight = 503
   ClientWidth = 341
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -116,7 +116,7 @@ object RoomsForm: TRoomsForm
   object Button5: TButton
     AlignWithMargins = True
     Left = 0
-    Top = 258
+    Top = 470
     Width = 341
     Height = 33
     Margins.Left = 0
@@ -131,10 +131,11 @@ object RoomsForm: TRoomsForm
     Font.Style = []
     ParentFont = False
     TabOrder = 1
+    ExplicitTop = 258
   end
   object Button2: TButton
     Left = 0
-    Top = 222
+    Top = 434
     Width = 341
     Height = 33
     Align = alBottom
@@ -147,18 +148,19 @@ object RoomsForm: TRoomsForm
     ParentFont = False
     TabOrder = 2
     OnClick = Button2Click
-    ExplicitTop = 219
+    ExplicitTop = 222
   end
   object ScrollBox1: TScrollBox
     Left = 0
     Top = 25
     Width = 341
-    Height = 197
+    Height = 409
     Align = alClient
     BevelInner = bvNone
     BevelOuter = bvNone
     BorderStyle = bsNone
     TabOrder = 3
+    ExplicitHeight = 197
   end
   object ImageList1: TImageList
     ColorDepth = cd32Bit
@@ -169,7 +171,7 @@ object RoomsForm: TRoomsForm
     Left = 223
     Top = 184
     Bitmap = {
-      494C010102001400600019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101020014006C0019001900FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000640000001900000001002000000000001027
       00000000000000000000000000000000000000000000000000000E0E0E952020
       20E2050505600000000000000000000000000000000000000000000000000000

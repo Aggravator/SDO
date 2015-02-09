@@ -4,9 +4,11 @@
 #pragma hdrstop
 
 #include "ProgramsForm.h"
+#include <System.DateUtils.hpp>
 //---------------------------------------------------------------------------
 //#pragma package(smart_init)
 #pragma resource "*.dfm"
+#include "fstream"
 //---------------------------------------------------------------------------
 __fastcall TProgramsForm::TProgramsForm(TComponent* Owner)
 	: TComplexEntitiesForm(Owner)
@@ -36,23 +38,6 @@ __fastcall TProgramsForm::TProgramsForm(TComponent* Owner)
 __fastcall TProgramsForm::~TProgramsForm(){
 	App::db->detachHandler(this);
 }
-void TProgramsForm::Handle(std::vector<EntEvent> &entities){
-	if(this->Visible==false)return;
-	for(int i=0;i<entities.size();++i){
-		if(entities[i].eventType==SDODBImage::EventType::Delete){
-			for(int j=0;j<panel->rows.size();++j){
-				if(panel->rows[j]->initEntity->getID()==entities[i].id){
-					panel->rows[j]->hideInPanel();
-					panel->deletedRows.push_back(panel->rows[j]);
-					panel->rows.erase(panel->rows.begin()+j);
-				}
-			}
-		}
-		if(entities[i].eventType==SDODBImage::EventType::Create){
-			panel->addRow(App::db->getPrograms()->getById(entities[i].id));
-		}
-	}
-}
 //---------------------------------------------------------------------------
 
 ProgramRow::ProgramRow(ARowsPanel *parent, int size):AEntityRow(parent,size){
@@ -72,6 +57,7 @@ ProgramRow::ProgramRow(ARowsPanel *parent, int size):AEntityRow(parent,size){
 	controls[2]=name;
 	controls[3]=key;
 	controls[4]=isProgram;
+	this->deleteMessage="Внимание!\nУдаление программы приведет к удалению всех групп, которые занимались по данной программе!\n";
 }
 void ProgramRow::writeToRow(KAEntity* entity){
 	Program *pr=dynamic_cast<Program*>(entity);
@@ -131,6 +117,173 @@ void __fastcall TProgramsForm::Button2Click(TObject *Sender)
 	if(hy==mrOk){
 		*pr=*modalForm[0]->getEntity();
 		panel->addRow(pr);
+	}
+}
+//---------------------------------------------------------------------------
+void strToTimePair(char *str,std::vector<std::pair<TDateTime,TDateTime>*> &times){
+
+	if(strlen(str)>7){
+		char *sp=std::find(str,str+strlen(str),'-');
+		*sp='\0';
+		++sp;
+		times.push_back(new std::pair<TDateTime,TDateTime>(StrToTime(String(str)),StrToTime(String(sp))));
+	}
+}
+void __fastcall TProgramsForm::Button1Click(TObject *Sender)
+{
+	int g=3;
+	if(OpenDialog1->Execute(NULL)){
+		String pkey,pname;
+		AnsiString temp;
+		bool isTraining;
+		int dayCount,hourCount,plan;
+		std::vector<Program*> progs;
+		char buff[200];
+		std::vector<std::pair<TDateTime,TDateTime>*> times;
+		String name=OpenDialog1->FileName;
+		int tpos=name.LastDelimiter(".");
+		String format=name.SubString(tpos+1,name.Length()-tpos);
+		if(format=="csv"){
+			std::ifstream csvF;
+			csvF.open(AnsiString(name).c_str(),ios::in);
+			if(csvF.is_open()){
+				csvF.getline(buff,200,'\n');
+				while(!csvF.eof()){
+					csvF.getline(buff,200,';');
+					isTraining=atoi(buff);
+					csvF.getline(buff,200,';');
+					pkey=buff;
+					csvF.getline(buff,200,';');
+					pname=buff;
+					csvF.getline(buff,200,';');
+					dayCount=atoi(buff);
+					csvF.getline(buff,200,';');
+					hourCount=atoi(buff);
+					csvF.getline(buff,200,';');
+					plan=atoi(buff);
+					{
+						csvF.getline(buff,200,L';');
+						strToTimePair(buff,times);
+					}
+					{
+						csvF.getline(buff,200,L';');
+						strToTimePair(buff,times);
+					}
+					{
+						csvF.getline(buff,200,L';');
+						strToTimePair(buff,times);
+					}
+					{
+						csvF.getline(buff,200,L';');
+						strToTimePair(buff,times);
+					}
+					if(pkey!="" && pname!="" && dayCount!=0 && hourCount!=0){
+						std::vector<std::pair<int,int>*> planV;
+						if(plan!=0)
+							planV.push_back(new std::pair<int,int>(YearOf(TDate::CurrentDate()),plan));
+						progs.push_back(new Program(pname,pkey,0,isTraining,true,dayCount,hourCount,16777215,0,&planV,0,&times));
+						for(int i=0;i<planV.size();++i)delete planV[i];
+					}
+					for(int i=0;i<times.size();++i)delete times[i];
+					times.clear();
+				}
+				csvF.close();
+			}
+		}else if(format=="xls" || format=="xlsx"){
+			Variant EApp, EBook, ESheet;
+			EApp = CreateOleObject("Excel.Application");
+			//EApp.OlePropertySet("Visible",true);
+			EBook=EApp.OlePropertyGet("Workbooks").OleFunction(L"Open",WideString(name),0,true);
+			ESheet=EBook.OlePropertyGet("ActiveSheet");
+			for(int i=2;true;++i){
+				isTraining=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,1).OlePropertyGet("Value");
+				pkey=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,2).OlePropertyGet("Value");
+				pname=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,3).OlePropertyGet("Value");
+				dayCount=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,4).OlePropertyGet("Value");
+				hourCount=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,5).OlePropertyGet("Value");
+				plan=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,6).OlePropertyGet("Value");
+				{
+					temp=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,7).OlePropertyGet("Value");
+					strcpy(buff,temp.c_str());
+					strToTimePair(buff,times);
+				}
+				{
+					temp=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,8).OlePropertyGet("Value");
+					strcpy(buff,temp.c_str());
+					strToTimePair(buff,times);
+				}
+				{
+					temp=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,9).OlePropertyGet("Value");
+					strcpy(buff,temp.c_str());
+					strToTimePair(buff,times);
+				}
+				{
+					temp=ESheet.OlePropertyGet("Cells").OlePropertyGet("Item",i,10).OlePropertyGet("Value");
+					strcpy(buff,temp.c_str());
+					strToTimePair(buff,times);
+				}
+				//TDate
+				if(pkey!="" || pname!="" || dayCount!=0 || hourCount!=0){
+					std::vector<std::pair<int,int>*> planV;
+					if(plan!=0)
+						planV.push_back(new std::pair<int,int>(YearOf(TDate::CurrentDate()),plan));
+					progs.push_back(new Program(pname,pkey,0,isTraining,true,dayCount,hourCount,16777215,0,&planV,0,&times));
+					for(int i=0;i<planV.size();++i)delete planV[i];
+					for(int i=0;i<times.size();++i)delete times[i];
+					times.clear();
+				}else{
+					for(int i=0;i<times.size();++i)delete times[i];
+					times.clear();
+					break;
+				}
+			}
+			EApp.OleProcedure("Quit");
+		}
+		if(progs.size()>0){
+			std::vector<AEntityRow*> &rows=this->panel->rows;
+			std::sort(progs.begin(),progs.end(),App::db->getPrograms()->sortFuncU);
+			Programs *prgs=App::db->getPrograms();
+			int j,ij,iijj;
+			for(int i=0;i<progs.size();++i){
+				Program *tProg=progs[i],*cProg=NULL;
+				for(j=0;j<rows.size();++j){
+					cProg=dynamic_cast<Program*>(rows[j]->tempEntity);
+					if(cProg->key==tProg->key && cProg->name==tProg->name){
+						cProg->days=tProg->days;
+						cProg->hours=tProg->hours;
+						if(tProg->plan.size()>0){
+							int syear=tProg->plan.at(0)->first;
+							for(ij=0;ij<cProg->plan.size();++ij){
+								if(cProg->plan[ij]->first==syear){
+									cProg->plan[ij]->second=tProg->plan.at(0)->second;
+									break;
+								}
+							}
+							if(ij==cProg->plan.size())
+								cProg->plan.push_back(new std::pair<int,int>(syear,tProg->plan.at(0)->second));
+						}
+						if(tProg->times.size()>0){
+							unsigned short shour1,smin1,ehour1,emin1,shour2,smin2,ehour2,emin2,temp;
+							for(ij=0;ij<tProg->times.size();++ij){
+								tProg->times[ij]->first.DecodeTime(&shour1,&smin1,&temp,&temp);
+								tProg->times[ij]->second.DecodeTime(&ehour1,&emin1,&temp,&temp);
+								for(iijj=0;iijj<cProg->times.size();++iijj){
+									cProg->times[ij]->first.DecodeTime(&shour2,&smin2,&temp,&temp);
+									cProg->times[ij]->second.DecodeTime(&ehour2,&emin2,&temp,&temp);
+									if(shour1==shour2 && smin1==smin2 && ehour1==ehour1 && emin1==emin2)break;
+								}
+								if(iijj==cProg->times.size())
+									cProg->times.push_back(new std::pair<TDateTime,TDateTime>(*tProg->times[ij]));
+							}
+						}
+						break;
+					}
+				}
+				if(j==rows.size()){
+					this->panel->addRow(tProg);
+                }
+            }
+        }
 	}
 }
 //---------------------------------------------------------------------------

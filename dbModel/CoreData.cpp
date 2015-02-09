@@ -84,6 +84,8 @@ bool KAEntityTable::deleteEntities(std::vector<KAEntity*> &entities){
 		}
 		for(int i=0;i<entities.size();++i){
 			entities[i]->debind();
+			entities[i]->parent=NULL;
+			garbage.push_back(entities[i]);
 			KAEntityTable::iterator it=std::find(this->begin(),this->end(),entities[i]);
 			this->erase(it);
 		}
@@ -1391,7 +1393,30 @@ void Course::removeSlave(KAEntity* entity){
 		for(int i=0;i<this->parent->size();++i){
 			if(this->parent->at(i)==this){
 				this->parent->erase(this->parent->begin()+i);
-				delete this;
+				this->parent->garbage.push_back(this);
+				this->parent=NULL;
+				break;
+			}
+		}
+		return;
+	}
+	if(dynamic_cast<ClassRoom*>(entity)!=0){
+		ClassRoom *rm=dynamic_cast<ClassRoom*>(entity);
+		for(int i=0;i<dates.size();++i){
+			if(rm==dates[i]->room){
+				delete dates[i];
+				dates.erase(dates.begin()+i);
+				--i;
+			}
+		}
+		if(dates.size()==0 && hasParent()){
+			for(int i=0;i<this->parent->size();++i){
+				if(this->parent->at(i)==this){
+					this->parent->erase(this->parent->begin()+i);
+					this->parent->garbage.push_back(this);
+					this->parent=NULL;
+					break;
+				}
 			}
 		}
 	}
@@ -1583,7 +1608,7 @@ void CourseTable::fetchEntities(std::vector<int> *ids,std::map<KAEntity*,int>* d
 			if(i+1!=table->months.size())condq+=" or ";
 		}
 		String qS=String().sprintf(L"SELECT %s_id as id,dates%s_date as date, dates%s_class as class FROM dates%s where ",tableName.w_str(),tableName.w_str(),tableName.w_str(),tableName.w_str());
-		qS+=condq+condition+";";
+		qS+="("+condq+")"+condition+";";
 		query.SQL->Add(qS);
 		query.Connection=this->parent->connection;
 		query.Active=true;
@@ -1772,6 +1797,7 @@ void SDODBImage::detachHandler(SDOHandler* handler){
 }
 
 void __fastcall SDODBImage::checkUpdates(TObject *Sender){
+	if(App::isConnectionActive()==false) Application->Terminate();
 	static std::map<String,EntityType> tableEvent;
 	static std::vector<String> mainTables;
 	static long int lid;
@@ -1783,7 +1809,7 @@ void __fastcall SDODBImage::checkUpdates(TObject *Sender){
 
 	static delTableCounter=0;
 	++delTableCounter;
-	if(delTableCounter==2){
+	if(delTableCounter==15){
 		connection->Execute("delete from sdo.changes where changes_time< addtime(Now(),'-0 0:30:0');");
 		delTableCounter=0;
 	}
@@ -1798,8 +1824,8 @@ void __fastcall SDODBImage::checkUpdates(TObject *Sender){
 	query.Close();
 	query.SQL->Clear();
 	query.SQL->Add(String().sprintf(L"select distinct changes_table, changes_action,changes_rid from changes where changes_id>%d and changes_id<=%d and changes_user<>%d order by changes_time asc,changes_id asc;",this->lastId,lid,this->uid));
-
 	query.Active=true;
+	this->lastId=lid;
 	if(query.RecordCount>0){
 		std::map<TableEntity,int> refreshE;
 		TableEntity ent;
@@ -1887,24 +1913,63 @@ void __fastcall SDODBImage::checkUpdates(TObject *Sender){
 			}
 		}
 		for(std::map<EntityType,std::vector<int>*>::iterator it=delCrUp.begin();it!=delCrUp.end();++it)it->second->clear();
-
-		std::map<SDOHandler*,std::vector<EntityTypeEvent>*>::iterator hit;
-		for(hit=handlerEvents.begin();hit!=handlerEvents.end();++hit){
-			std::vector<EntEvent> temp;
-			for(int i=0;i<allEvents.size();++i){
-				for(int j=0;j<hit->second->size();++j){
-					if(allEvents[i].eventType==hit->second->at(j).eventType && allEvents[i].entType==hit->second->at(j).entType){
-						temp.push_back(allEvents[i]);
-						break;
-					}
-				}
-			}
-			if(temp.size()>0)hit->first->Handle(temp);
-        }
+		handleEvent(allEvents);
 	}
 	query.Close();
 	delete &query ;
 }
+void SDODBImage::handleEvent(const std::vector<EntEvent> &allEvents,SDOHandler *handler){
+	std::map<SDOHandler*,std::vector<EntityTypeEvent>*>::iterator hit;
+	for(hit=handlerEvents.begin();hit!=handlerEvents.end();++hit){
+		if(hit->second==handler)continue;
+		std::vector<EntEvent> temp;
+		for(int i=0;i<allEvents.size();++i){
+			for(int j=0;j<hit->second->size();++j){
+				if(allEvents[i].eventType==hit->second->at(j).eventType && allEvents[i].entType==hit->second->at(j).entType){
+					temp.push_back(allEvents[i]);
+					break;
+				}
+			}
+		}
+		if(temp.size()>0)hit->first->Handle(temp);
+	}
+}
+
+SDODBImage::EntityType SDODBImage::getEntityType(KAEntity *entity){
+	if(dynamic_cast<Specific*>(entity)!=0){
+		return EntityType::ESpecific;
+	}else if(dynamic_cast<ClassRoom*>(entity)!=0){
+		return EntityType::ERoom;
+	}else if(dynamic_cast<Group*>(entity)!=0){
+		return EntityType::EGroup;
+	}else if(dynamic_cast<Program*>(entity)!=0){
+		return EntityType::EProgram;
+	}else if(dynamic_cast<Course*>(entity)!=0){
+		Course *cr=dynamic_cast<Course*>(entity);
+		if(cr->hasParent()){
+			if(dynamic_cast<PlanTable*>(cr->getParent())!=0)return EntityType::EPCourse;
+			else return EntityType::ERCourse;
+		}else return EntityType::EPCourse;
+	}
+	return EntityType::EUndefined;
+}
+SDODBImage::EntityType SDODBImage::getEntityType(KAEntityTable *table){
+	if(dynamic_cast<Specifics*>(table)!=0){
+		return EntityType::ESpecific;
+	}else if(dynamic_cast<Rooms*>(table)!=0){
+		return EntityType::ERoom;
+	}else if(dynamic_cast<Groups*>(table)!=0){
+		return EntityType::EGroup;
+	}else if(dynamic_cast<Programs*>(table)!=0){
+		return EntityType::EProgram;
+	}else if(dynamic_cast<RealTable*>(table)!=0){
+		return EntityType::ERCourse;
+	}else if(dynamic_cast<PlanTable*>(table)!=0){
+		return EntityType::EPCourse;
+	}
+	return EntityType::EUndefined;
+}
+
 int SDODBImage::getUID(){
 	return uid;
 }

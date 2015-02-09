@@ -26,7 +26,7 @@
 //---------------------------------------------------------------------------
 
 class SpecificRows;
-class TSpecificsForm : public TComplexEntitiesForm,public SDOHandler
+class TSpecificsForm : public TComplexEntitiesForm
 {
 __published:	// IDE-managed Components
 	TButton *Button5;
@@ -38,7 +38,6 @@ __published:	// IDE-managed Components
 	void __fastcall Button1Click(TObject *Sender);
 private:	// User declarations
 protected:
-	void Handle(std::vector<EntEvent> &entities);
 public:		// User declarations
 	__fastcall TSpecificsForm(TComponent* Owner);
 	__fastcall ~TSpecificsForm();

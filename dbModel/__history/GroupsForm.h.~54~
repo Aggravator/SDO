@@ -1,0 +1,55 @@
+//---------------------------------------------------------------------------
+
+#ifndef GroupsFormH
+#define GroupsFormH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include <Vcl.ImgList.hpp>
+#include "ComplexEntitiesForm.h"
+#include "App.h"
+#include "GroupModal.h"
+#include <Vcl.ExtCtrls.hpp>
+#include <algorithm>
+#include <Vcl.ExtCtrls.hpp>
+//---------------------------------------------------------------------------
+class GroupRows;
+class TGroupsForm : public TComplexEntitiesForm,public SDOHandler
+{
+__published:	// IDE-managed Components
+	TButton *Button5;
+	TButton *Button1;
+	TScrollBox *ScrollBox1;
+	TImageList *ImageList1;
+	TGridPanel *GridPanel1;
+	TLabel *Label1;
+	TLabel *Label2;
+	void __fastcall Button1Click(TObject *Sender);
+private:	// User declarations
+protected:
+	void Handle(std::vector<EntEvent> &entities);
+public:		// User declarations
+	__fastcall TGroupsForm(TComponent* Owner);
+	__fastcall ~TGroupsForm();
+};
+
+class GroupRow:public AEntityRow{
+public:
+	TEdit *name;
+	TCheckBox *isActive;
+	GroupRow(ARowsPanel *parent,int size);
+	void writeToRow(KAEntity* entity);
+	void writeToEntity(KAEntity* entity);
+	~GroupRow();
+};
+class GroupRows:public RRowsPanel<GroupRow,4>{
+public:
+	__fastcall GroupRows(TComponent *Owner);
+	__fastcall ~GroupRows();
+};
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+#endif

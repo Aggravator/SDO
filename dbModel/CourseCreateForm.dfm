@@ -19,8 +19,8 @@ object CourseCreate: TCourseCreate
   PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
-    Left = 24
-    Top = 48
+    Left = 9
+    Top = 12
     Width = 179
     Height = 112
     Margins.Left = 0
@@ -67,15 +67,11 @@ object CourseCreate: TCourseCreate
           Value = 50.000000000000000000
         end>
       TabOrder = 0
-      ExplicitLeft = -13
-      ExplicitTop = -2
-      ExplicitWidth = 192
-      ExplicitHeight = 114
       object Button1: TButton
         Left = 5
         Top = 5
-        Width = 173
-        Height = 51
+        Width = 169
+        Height = 49
         Align = alClient
         Caption = #1055#1086' '#1087#1083#1072#1085#1091
         Font.Charset = DEFAULT_CHARSET
@@ -86,16 +82,12 @@ object CourseCreate: TCourseCreate
         ParentFont = False
         TabOrder = 0
         OnClick = Button1Click
-        ExplicitLeft = 15
-        ExplicitTop = 8
-        ExplicitWidth = 161
-        ExplicitHeight = 41
       end
       object Button2: TButton
         Left = 5
-        Top = 60
-        Width = 173
-        Height = 51
+        Top = 58
+        Width = 169
+        Height = 49
         Align = alClient
         Caption = #1055#1086' '#1092#1072#1082#1090#1091
         Font.Charset = DEFAULT_CHARSET
@@ -106,18 +98,14 @@ object CourseCreate: TCourseCreate
         ParentFont = False
         TabOrder = 1
         OnClick = Button1Click
-        ExplicitLeft = 15
-        ExplicitTop = 64
-        ExplicitWidth = 161
-        ExplicitHeight = 41
       end
     end
   end
   object Panel2: TPanel
-    Left = 232
+    Left = 212
     Top = 8
-    Width = 249
-    Height = 209
+    Width = 353
+    Height = 273
     BevelOuter = bvNone
     TabOrder = 1
     Visible = False
@@ -137,9 +125,9 @@ object CourseCreate: TCourseCreate
     end
     object ListBox1: TListBox
       Left = 0
-      Top = 37
-      Width = 249
-      Height = 172
+      Top = 25
+      Width = 353
+      Height = 248
       Style = lbOwnerDrawVariable
       Align = alClient
       Font.Charset = DEFAULT_CHARSET
@@ -179,9 +167,10 @@ object CourseCreate: TCourseCreate
     end
     object ListBox2: TListBox
       Left = 0
-      Top = 37
+      Top = 25
       Width = 249
-      Height = 172
+      Height = 184
+      Style = lbOwnerDrawFixed
       Align = alClient
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -192,10 +181,11 @@ object CourseCreate: TCourseCreate
       ParentFont = False
       TabOrder = 0
       OnDblClick = ListBox2DblClick
+      OnDrawItem = ListBox2DrawItem
     end
   end
   object Panel4: TPanel
-    Left = 504
+    Left = 572
     Top = 8
     Width = 255
     Height = 209
@@ -218,9 +208,9 @@ object CourseCreate: TCourseCreate
     end
     object ListBox3: TListBox
       Left = 0
-      Top = 37
+      Top = 25
       Width = 255
-      Height = 172
+      Height = 184
       Align = alClient
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -234,23 +224,23 @@ object CourseCreate: TCourseCreate
     end
   end
   object Panel5: TPanel
-    Left = 342
+    Left = 328
     Top = 363
-    Width = 417
+    Width = 431
     Height = 57
     BevelOuter = bvNone
     TabOrder = 4
     Visible = False
     DesignSize = (
-      417
+      431
       57)
     object Label4: TLabel
       Left = 4
       Top = 16
-      Width = 177
+      Width = 195
       Height = 25
       Anchors = [akLeft]
-      Caption = #1050#1086#1083'-'#1074#1086' '#1089#1090#1091#1076#1077#1085#1090#1086#1074':'
+      Caption = #1050#1086#1083'-'#1074#1086' '#1089#1083#1091#1096#1072#1090#1077#1083#1077#1081':'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -21
@@ -259,7 +249,7 @@ object CourseCreate: TCourseCreate
       ParentFont = False
     end
     object Label5: TLabel
-      Left = 264
+      Left = 278
       Top = 16
       Width = 76
       Height = 25
@@ -271,11 +261,12 @@ object CourseCreate: TCourseCreate
       Font.Name = 'Tahoma'
       Font.Style = []
       ParentFont = False
+      ExplicitLeft = 264
     end
     object Edit1: TEdit
-      Left = 188
+      Left = 205
       Top = 13
-      Width = 62
+      Width = 59
       Height = 33
       Anchors = [akLeft, akRight]
       Font.Charset = DEFAULT_CHARSET
@@ -289,7 +280,7 @@ object CourseCreate: TCourseCreate
       OnKeyDown = Edit1KeyDown
     end
     object Button3: TButton
-      Left = 356
+      Left = 370
       Top = 13
       Width = 51
       Height = 33

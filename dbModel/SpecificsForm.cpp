@@ -35,23 +35,6 @@ __fastcall TSpecificsForm::TSpecificsForm(TComponent* Owner):TComplexEntitiesFor
 __fastcall TSpecificsForm::~TSpecificsForm(){
 	App::db->detachHandler(this);
 }
-void TSpecificsForm::Handle(std::vector<EntEvent> &entities){
-	if(this->Visible==false)return;
-	for(int i=0;i<entities.size();++i){
-		if(entities[i].eventType==SDODBImage::EventType::Delete){
-			for(int j=0;j<panel->rows.size();++j){
-				if(panel->rows[j]->initEntity->getID()==entities[i].id){
-					panel->rows[j]->hideInPanel();
-					panel->deletedRows.push_back(panel->rows[j]);
-					panel->rows.erase(panel->rows.begin()+j);
-				}
-			}
-		}
-		if(entities[i].eventType==SDODBImage::EventType::Create){
-			panel->addRow(App::db->getSpecifics()->getById(entities[i].id));
-		}
-	}
-}
 SpecificRow::SpecificRow(ARowsPanel *parent, int size):AEntityRow(parent,size){
 	name=new TEdit((HWND)0);
 	name->Font->Size=12;
